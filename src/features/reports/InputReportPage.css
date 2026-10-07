@@ -1,0 +1,23 @@
+.input-page { overflow-x: clip; animation: report-enter 240ms ease-out both; }
+.input-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.input-heading h1 { margin: 6px 0 3px; color: var(--ink); font-family: var(--font-display); font-size: 27px; letter-spacing: 0; }
+.input-heading p { color: var(--muted); font-size: 12px; }
+.input-controls { display: flex; align-items: flex-end; gap: 9px; }
+.input-controls > label { display: grid; gap: 5px; color: #78877f; font-size: 9px; font-weight: 600; }
+.input-period { display: flex; height: 38px; align-items: center; gap: 8px; padding: 0 11px; color: #61726b; background: #fff; border: 1px solid var(--line); border-radius: 5px; }
+.input-period select { max-width: 180px; color: #34443e; background: transparent; border: 0; outline: 0; font-size: 11px; }
+.input-demo-note { margin-bottom: 13px; padding: 10px 13px; color: #705b25; background: #fff9e9; border: 1px solid #f1e5c3; border-radius: 5px; font-size: 10px; }
+.period-state { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 12px 14px; background: #edf5ef; border: 1px solid #dce9df; border-radius: 5px; }
+.period-state.is-locked { background: #f3f0f8; border-color: #e5def0; }
+.period-state-icon { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; color: #39765e; background: #dcece1; border-radius: 6px; }
+.is-locked .period-state-icon { color: #67568d; background: #e7e0f0; }
+.period-state > div { display: flex; flex: 1; flex-direction: column; gap: 3px; }.period-state strong { color: #345442; font-size: 11px; }.is-locked strong { color: #534671; }.period-state small { color: #75867b; font-size: 10px; }.completion-count { color: #64766c; white-space: nowrap; font-size: 10px; }
+.input-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+.input-table { width: 100%; min-width: 1050px; border-collapse: collapse; text-align: left; }
+.input-table th { padding: 11px 12px; color: #7e8c84; background: #fbfcfb; border-bottom: 1px solid var(--line); font-size: 8px; letter-spacing: .05em; }
+.input-table td { padding: 11px 10px; color: #5d6c64; border-bottom: 1px solid #edf1ed; vertical-align: top; font-size: 10px; }
+.input-table tr:last-child td { border-bottom: 0; }.input-table th:nth-child(1) { width: 25%; }.input-table th:nth-child(2) { width: 10%; }.input-table th:nth-child(3), .input-table th:nth-child(4) { width: 11%; }.input-table th:nth-child(5) { width: 13%; }.input-table th:nth-child(6) { width: 30%; }
+.indicator-cell strong, .indicator-cell small, .indicator-cell > span { display: block; }.indicator-cell strong { color: #35483e; font-size: 10px; line-height: 1.5; }.indicator-cell small { margin-top: 4px; color: #839088; line-height: 1.5; }.indicator-cell > span { margin-top: 7px; color: #9aa59f; font-size: 8px; }
+.standard-cell { color: #40564a !important; font-weight: 600; }.input-table input, .input-table select, .input-table textarea { width: 100%; min-width: 70px; padding: 7px 8px; color: #34473d; background: #fff; border: 1px solid #dfe7e0; border-radius: 4px; outline: 0; font-size: 10px; }.input-table textarea { min-width: 230px; resize: vertical; line-height: 1.45; }.input-table input:focus, .input-table select:focus, .input-table textarea:focus { border-color: #70a187; box-shadow: 0 0 0 2px #e7f1e9; }.input-table input:disabled, .input-table select:disabled, .input-table textarea:disabled { color: #75817a; background: #f2f4f2; border-color: #e9ede9; cursor: not-allowed; }.value-input { display: flex; align-items: center; gap: 6px; }.value-input span { color: #89958f; white-space: nowrap; font-size: 9px; }.achievement-value { color: #325d47; font-size: 11px; }.not-applicable { color: #a1aaa4; font-size: 9px; }
+.input-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 13px; color: #829088; font-size: 10px; }.input-footer > span { display: inline-flex; align-items: center; gap: 6px; }.input-footer > span svg { color: #438163; }
+@media (max-width: 680px) { .input-heading { align-items: flex-start; flex-direction: column; }.input-heading h1 { font-size: 24px; }.input-controls { width: 100%; flex-wrap: wrap; }.input-controls > label { flex: 1 1 100%; }.input-period select { max-width: none; flex: 1; }.period-state { align-items: flex-start; flex-wrap: wrap; }.completion-count { margin-left: 38px; } }

@@ -1,0 +1,50 @@
+.reports-page { overflow-x: clip; animation: report-enter 240ms ease-out both; }.reports-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 20px; }.reports-heading h1 { margin: 6px 0 3px; color: var(--ink); font-family: var(--font-display); font-size: 27px; font-weight: 700; letter-spacing: 0; }.reports-heading p { color: var(--muted); font-size: 12px; }
+.secondary-button { display: inline-flex; height: 36px; align-items: center; gap: 7px; padding: 0 12px; color: #53645d; background: #fff; border: 1px solid var(--line); border-radius: 5px; font-size: 10px; font-weight: 600; }.secondary-button:disabled { cursor: not-allowed; opacity: .55; }
+.reports-demo-note { margin-bottom: 15px; padding: 10px 13px; color: #705b25; background: #fff9e9; border: 1px solid #f1e5c3; border-radius: 5px; font-size: 10px; }.reports-toolbar { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }.search-field, .filter-select { display: flex; height: 36px; align-items: center; gap: 8px; padding: 0 10px; color: #829089; background: #fff; border: 1px solid var(--line); border-radius: 5px; }.search-field { width: min(100%, 320px); }.search-field input { width: 100%; color: #34443e; background: transparent; border: 0; outline: 0; font-size: 10px; }.search-field input::placeholder { color: #a0aaa4; }.filter-select select { color: #51625a; background: transparent; border: 0; outline: 0; font-size: 10px; }.result-count { margin-left: auto; color: #839089; font-size: 10px; }
+.reports-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }.reports-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }.reports-table th { padding: 12px 14px; color: #89958f; background: #fbfcfb; border-bottom: 1px solid var(--line); font-size: 8px; font-weight: 700; letter-spacing: .06em; }.reports-table td { padding: 13px 14px; color: #66756e; border-bottom: 1px solid #eff2ef; font-size: 10px; }.reports-table tr:last-child td { border-bottom: 0; }.reports-table td strong { color: #35463f; font-weight: 600; }.report-id { color: #72857c !important; font-size: 9px !important; }.report-updated { color: #89958f !important; font-size: 9px !important; }
+.table-progress { display: flex; align-items: center; gap: 7px; }.table-progress > span { width: 62px; height: 5px; overflow: hidden; background: #edf0ed; border-radius: 5px; }.table-progress i { display: block; height: 100%; background: #4b9675; border-radius: 5px; }.table-progress small { color: #77857e; font-size: 9px; }.status-badge { display: inline-flex; min-height: 21px; align-items: center; padding: 0 8px; border-radius: 4px; font-size: 9px; font-weight: 600; }.status-approved { color: #317355; background: #e9f3ec; }.status-review { color: #916a1b; background: #fbf3df; }.status-revision { color: #a8533d; background: #faece7; }.status-empty { color: #687875; background: #edf1ef; }
+.empty-state { padding: 36px 16px; color: #7d8a84; text-align: center; font-size: 11px; }.report-format-note { margin-top: 14px; padding: 12px 14px; color: #74817b; background: #edf4ef; border-left: 3px solid #599476; font-size: 10px; }.report-format-note strong { color: #355344; }.reports-page .table-progress i { background: #4b9675; }
+@keyframes report-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.reports-page .status-saved { color: #317355; background: #e9f3ec; }
+.reports-page .status-locked { color: #67558b; background: #f0edf7; }
+@media (max-width: 680px) { .reports-heading { align-items: flex-start; flex-direction: column; }.reports-heading h1 { font-size: 24px; }.reports-toolbar { flex-wrap: wrap; }.search-field { flex: 1 1 100%; }.result-count { margin-left: 0; } }
+
+.report-filters { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding: 13px; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+.report-filter { display: grid; gap: 5px; color: #87938d; font-size: 8px; font-weight: 700; letter-spacing: .05em; }
+.report-filter select, .report-search input { height: 34px; padding: 0 10px; color: #3e5047; background: #fff; border: 1px solid #dfe7e0; border-radius: 4px; outline: 0; font-size: 10px; }
+.report-filter select:focus, .report-search input:focus { border-color: #70a187; box-shadow: 0 0 0 2px #e7f1e9; }
+.report-search { display: flex; height: 34px; min-width: 190px; align-items: center; gap: 7px; margin-left: auto; padding: 0 9px; color: #89958f; border: 1px solid #dfe7e0; border-radius: 4px; }
+.report-search input { width: 100%; height: 30px; padding: 0; border: 0; font-size: 10px; }
+.period-tabs { display: flex; align-items: center; gap: 4px; margin: 15px 0 0; padding: 4px; background: #e9efea; border-radius: 6px 6px 0 0; width: fit-content; }
+.period-tab { display: inline-flex; min-height: 32px; align-items: center; gap: 6px; padding: 0 11px; color: #718078; background: transparent; border: 0; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.period-tab:hover { color: #315443; background: #f7faf7; }
+.period-tab.is-active { color: #244d3b; background: #fff; box-shadow: 0 1px 3px #193d3015; }
+.report-period-summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 14px; background: #fff; border: 1px solid var(--line); border-bottom: 0; }
+.report-period-summary > div { display: flex; flex-direction: column; gap: 3px; }
+.report-period-summary strong { color: #354a3e; font-size: 11px; }
+.report-period-summary span { color: #849189; font-size: 9px; }
+.report-columns-hint { text-align: right; }
+.period-report-table { min-width: 1180px; }
+.period-report-table.is-monthly { min-width: 1280px; }
+.period-report-table th:first-child, .period-report-table td:first-child { width: 45px; text-align: center; }
+.period-report-table th:nth-child(2) { min-width: 250px; }
+.period-report-table .report-indicator-cell { min-width: 250px; max-width: 330px; white-space: normal; }
+.report-indicator-cell strong, .report-indicator-cell small, .report-indicator-cell span { display: block; }
+.report-indicator-cell strong { color: #35463f; line-height: 1.45; }
+.report-indicator-cell small { margin-top: 4px; color: #84918a; line-height: 1.45; }
+.report-indicator-cell span { margin-top: 6px; color: #9aa49e; font-size: 8px; }
+.period-report-table th:not(:nth-child(2)), .period-report-table td:not(:nth-child(2)) { min-width: 92px; }
+.period-report-table.is-monthly th:last-child, .period-report-table.is-monthly td:last-child { min-width: 230px; max-width: 280px; white-space: normal; }
+.period-value { color: #365b46 !important; font-weight: 600; }
+.period-report-table .no-period-data { color: #a0aaa3; font-size: 9px; font-style: italic; }
+.period-report-table.is-monthly .no-period-data { text-align: left; }
+@media (max-width: 680px) {
+	.report-filters { align-items: stretch; gap: 9px; padding: 10px; }
+	.report-filter { flex: 1 1 calc(50% - 9px); }
+	.report-filter select { width: 100%; min-width: 0; }
+	.report-search { flex: 1 1 100%; min-width: 0; margin-left: 0; }
+	.period-tabs { width: 100%; }
+	.period-tab { flex: 1; justify-content: center; padding-inline: 6px; }
+	.report-period-summary { align-items: flex-start; flex-direction: column; }
+	.report-columns-hint { text-align: left; }
+}

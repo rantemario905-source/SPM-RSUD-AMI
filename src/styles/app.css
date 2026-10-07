@@ -1,0 +1,5 @@
+.coming-soon { max-width: 760px; padding: 42px 0; animation: page-enter 240ms ease-out both; }
+.coming-soon h1 { margin: 10px 0 8px; color: var(--ink); font-family: var(--font-display); font-size: 30px; font-weight: 650; letter-spacing: 0; }
+.coming-soon p { max-width: 560px; color: var(--muted); }
+.coming-soon-note { margin-top: 28px; padding: 16px 18px; border-left: 3px solid var(--saffron); background: #fff9e8; color: #654f1e; font-size: 13px; }
+@keyframes page-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
