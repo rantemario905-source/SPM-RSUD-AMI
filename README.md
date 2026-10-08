@@ -7,8 +7,8 @@ Fondasi aplikasi pelaporan Standar Pelayanan Minimal berbasis React, TypeScript,
 1. Jalankan `npm install`.
 2. Salin `.env.example` menjadi `.env.local`.
 3. Isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dari pengaturan proyek Supabase.
-4. Jalankan migrasi SQL dalam `supabase/migrations` melalui Supabase SQL Editor.
-5. Buat pengguna melalui Supabase Auth, lalu tambahkan profil dan unit dengan peran yang sesuai.
+4. Untuk database baru, jalankan berurutan `supabase/migrations/202610060001_initial_spm_schema.sql` dan `supabase/migrations/202610080001_connect_app_data.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
+5. Buat akun pertama di Supabase Auth dan profil administrator melalui SQL tepercaya. Setelah login sebagai admin, gunakan halaman **Unit & pengguna** untuk menambah unit atau menautkan UID akun Auth lain ke profil.
 6. Jalankan `npm run dev`.
 
 Jika variabel Supabase belum diisi, aplikasi hanya membuka **mode pratinjau berisi data simulasi**. Mode tersebut bukan tempat memasukkan laporan sebenarnya.
@@ -18,12 +18,12 @@ Jika variabel Supabase belum diisi, aplikasi hanya membuka **mode pratinjau beri
 - Gunakan hanya Supabase publishable/anon key pada frontend. Jangan pernah menaruh `service_role` key atau kata sandi di kode atau file yang masuk Git.
 - RLS pada migrasi membatasi laporan petugas ke unitnya; manajemen dapat melihat lintas unit sesuai peran. Perubahan laporan dan entri dicatat di `report_audit`.
 - Nonaktifkan pendaftaran publik di Supabase Auth; akun dibuat oleh administrator. Profil yang berisi peran dan unit harus diprovisikan melalui proses admin tepercaya.
-- Tambahkan `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` sebagai GitHub Actions secrets/variables. Variabel frontend bukan pengganti RLS; kebijakan database tetap menjadi batas keamanan.
+- Untuk GitHub Pages, tambahkan `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` sebagai GitHub Actions secrets. Publishable/anon key memang dipakai di browser; RLS tetap wajib membatasi akses data.
 - Jangan menyimpan nama, nomor rekam medis, atau identitas pasien. Gunakan data capaian agregat SPM.
 
 ## Deployment GitHub Pages
 
-Workflow `.github/workflows/deploy.yml` membangun dan menerbitkan aplikasi ketika ada push ke branch `main`. Tambahkan dua repository secrets bernama `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY`, lalu aktifkan Pages dengan source **GitHub Actions**. Jika branch utama bukan `main`, sesuaikan pemicu workflow.
+Deploy tidak berjalan otomatis saat upload/push file. Setelah file terbaru diunggah ke branch `main`, buka **Actions → Deploy to GitHub Pages → Run workflow** untuk menerbitkan versi tersebut. Aktifkan Pages dengan source **GitHub Actions** dan isi repository secrets `VITE_SUPABASE_URL` serta `VITE_SUPABASE_ANON_KEY`.
 
 ## Perintah
 

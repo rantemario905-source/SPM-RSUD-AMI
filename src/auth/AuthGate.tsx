@@ -47,7 +47,7 @@ function AuthGate({ children }: AuthGateProps) {
   }
 
   if (!client) {
-    return <AuthContext.Provider value={{ isPreview: true, email: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
   }
 
   if (loading) return <div className="auth-loading" role="status">Memeriksa sesi pengguna...</div>
@@ -72,7 +72,7 @@ function AuthGate({ children }: AuthGateProps) {
     )
   }
 
-  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, signOut }}>{children}</AuthContext.Provider>
 }
 
 export default AuthGate

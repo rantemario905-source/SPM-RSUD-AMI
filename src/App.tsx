@@ -6,6 +6,7 @@ import IndicatorsPage from './features/indicators/IndicatorsPage'
 import InputReportPage from './features/reports/InputReportPage'
 import ReportsPage from './features/reports/ReportsPage'
 import PeriodsPage from './features/settings/PeriodsPage'
+import UsersPage from './features/users/UsersPage'
 import type { AppPage } from './types/spm'
 import './styles/app.css'
 
@@ -20,14 +21,7 @@ function App() {
       {activePage === 'periods' && <PeriodsPage />}
       {activePage === 'audit' && <AuditPage />}
       {activePage === 'indicators' && <IndicatorsPage />}
-      {activePage === 'users' && (
-        <section className="coming-soon">
-          <span className="eyebrow">AKSES APLIKASI</span>
-          <h1>Unit &amp; Pengguna</h1>
-          <p>Pengaturan akun dan pembagian akses per unit akan tersedia setelah Supabase dikonfigurasi.</p>
-          <div className="coming-soon-note">Jangan gunakan data simulasi ini untuk laporan resmi.</div>
-        </section>
-      )}
+      {activePage === 'users' && <UsersPage />}
     </AppShell>
   )
 }
