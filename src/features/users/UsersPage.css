@@ -17,5 +17,8 @@
 .users-table-wrap td { padding: 10px 9px; color: #596a61; border-bottom: 1px solid #f0f2f0; font-size: 11px; }
 .users-table-wrap tbody tr:last-child td { border-bottom: 0; }
 .users-table-wrap code { color: #829088; font-size: 9px; }
+.users-table-wrap .row-delete { display: grid; width: 28px; height: 28px; place-items: center; color: #a34e3a; background: #faece7; border: 1px solid #f0d7cf; border-radius: 4px; transition: background 150ms ease, color 150ms ease, border-color 150ms ease; }
+.users-table-wrap .row-delete:hover:not(:disabled) { color: #fff; background: #bd654e; border-color: #bd654e; }
+.users-table-wrap .row-delete:disabled { cursor: progress; opacity: .6; }
 .users-table-wrap > p { padding: 14px 9px; color: #829088; font-size: 11px; }
 @media (max-width: 760px) { .users-grid { grid-template-columns: 1fr; } }
