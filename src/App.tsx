@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useAuth } from './auth/AuthContext'
+import { getSupabaseClient } from './lib/supabase'
 import AppShell from './components/layout/AppShell'
 import { useProgress } from './components/feedback/progressContext'
 import AuditPage from './features/audit/AuditPage'
@@ -13,8 +15,15 @@ import './styles/app.css'
 
 function App() {
   const [activePage, setActivePage] = useState<AppPage>('dashboard')
+  const auth = useAuth()
+  const client = getSupabaseClient()
   const progress = useProgress()
   const firstRender = useRef(true)
+
+  useEffect(() => {
+    if (!client || auth.isPreview) return
+    void client.rpc('spm_lock_past_periods').then(() => undefined, () => undefined)
+  }, [client, auth.isPreview])
 
   useEffect(() => {
     if (firstRender.current) {

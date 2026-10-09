@@ -7,7 +7,7 @@ Fondasi aplikasi pelaporan Standar Pelayanan Minimal berbasis React, TypeScript,
 1. Jalankan `npm install`.
 2. Salin `.env.example` menjadi `.env.local`.
 3. Isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dari pengaturan proyek Supabase.
-4. Untuk database baru, jalankan berurutan `supabase/migrations/202610060001_initial_spm_schema.sql` dan `supabase/migrations/202610080001_connect_app_data.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
+4. Untuk database baru, jalankan berurutan `supabase/migrations/202610060001_initial_spm_schema.sql`, `supabase/migrations/202610080001_connect_app_data.sql`, lalu `supabase/migrations/202610090001_auto_lock_past_periods.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
 5. Buat akun pertama di Supabase Auth dan profil administrator melalui SQL tepercaya. Setelah login sebagai admin, gunakan halaman **Unit & pengguna** untuk menambah unit atau menautkan UID akun Auth lain ke profil.
 6. Jalankan `npm run dev`.
 
@@ -30,5 +30,9 @@ Deploy tidak berjalan otomatis saat upload/push file. Setelah file terbaru diung
 - `npm run dev` menjalankan server pengembangan.
 - `npm run lint` menjalankan Oxlint.
 - `npm run build` melakukan typecheck dan build produksi.
+
+## Penguncian periode otomatis
+
+Bulan yang sudah berakhir otomatis berubah menjadi `locked` lewat fungsi `public.spm_lock_past_periods()` (mengunci periode `open` yang `period_end` sudah lewat dan tidak dibuka manual). Penjadwalan harian memakai `pg_cron` (job `spm-lock-past-periods`). Jika `pg_cron` belum diaktifkan di proyek Supabase, aplikasi tetap memanggil fungsi tersebut setiap kali dibuka. Pengelola periode dapat membuka kembali bulan lampau lewat halaman **Periode**; pembukaan manual ditandai `manually_opened = true` agar tidak terkunci ulang otomatis.
 
 Skema dan aturan RLS adalah fondasi awal; uji pada proyek Supabase non-produksi sebelum menghubungkan data RSUD.

@@ -33,6 +33,7 @@ Aplikasi pelaporan Standar Pelayanan Minimal (SPM) RSUD, dibangun dengan:
 - Jangan pernah menaruh `service_role` key atau kata sandi di kode/Git. Hanya publishable/anon key di frontend.
 - Jangan simpan data identitas pasien; hanya capaian agregat SPM.
 - Ikuti pola yang sudah ada pada fitur tetangga sebelum membuat pola baru.
+- Periode laporan: bulan lampau otomatis dikunci oleh fungsi `public.spm_lock_past_periods()` (dipanggil `pg_cron`/saat app dibuka). Pembukaan manual oleh pengelola menandai `report_periods.manually_opened = true` agar tidak terkunci ulang.
 
 ## Perintah
 
