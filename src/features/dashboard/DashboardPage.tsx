@@ -41,7 +41,7 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [units, setUnits] = useState<SpmUnit[]>([])
   const [rows, setRows] = useState<DashboardRow[]>(auth.isPreview ? demoReports : [])
   const [progress, setProgress] = useState(auth.isPreview ? serviceProgress : [])
-  const [totals, setTotals] = useState(auth.isPreview ? { recorded: 28, total: 36, locked: 1, completion: 84 } : { recorded: 0, total: 0, locked: 0, completion: 0 })
+  const [totals, setTotals] = useState(auth.isPreview ? { recorded: 28, total: 36, completion: 84 } : { recorded: 0, total: 0, completion: 0 })
   const [loading, setLoading] = useState(!auth.isPreview)
   const [error, setError] = useState('')
 
@@ -110,7 +110,7 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
         setError('')
         setRows(nextRows.sort((left, right) => right.completion - left.completion))
         setProgress(progressRows)
-        setTotals({ recorded, total: expected, locked: selectedPeriod?.state === 'locked' ? 1 : 0, completion: expected ? Math.round(recorded / expected * 100) : 0 })
+        setTotals({ recorded, total: expected, completion: expected ? Math.round(recorded / expected * 100) : 0 })
       }
     }
     void loadDashboardData()
@@ -129,7 +129,6 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
       {error && <div className="data-notice" role="alert"><CircleAlert size={16} /><span>{error}</span></div>}
       <section className="metric-grid" aria-label="Ringkasan periode">
         <article className="metric-card"><div className="metric-top"><span>Data sudah dicatat</span><span className="metric-icon green-icon"><FileDown size={16} /></span></div><strong className="metric-value">{loading ? '…' : totals.recorded} <small>/ {totals.total}</small></strong><div className="metric-foot"><span className="metric-subtle">indikator terisi lengkap</span></div></article>
-        <article className="metric-card"><div className="metric-top"><span>Periode terkunci</span><span className="metric-icon amber-icon"><LockKeyhole size={16} /></span></div><strong className="metric-value">{totals.locked}</strong><div className="metric-foot"><span className="metric-subtle">{period}</span></div></article>
         <article className="metric-card"><div className="metric-top"><span>Kelengkapan input</span><span className="metric-icon green-icon"><Check size={16} /></span></div><strong className="metric-value">{totals.completion}<small>%</small></strong><div className="metric-foot"><span className="metric-subtle">dari indikator aktif</span></div></article>
         <article className="metric-card"><div className="metric-top"><span>Belum lengkap</span><span className="metric-icon coral-icon"><CircleAlert size={16} /></span></div><strong className="metric-value">{Math.max(0, totals.total - totals.recorded)}</strong><div className="metric-foot"><span className="metric-subtle">indikator belum lengkap</span></div></article>
       </section>
