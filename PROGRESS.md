@@ -5,27 +5,19 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** ada perubahan belum di-commit (ganti logo RSUD AMI + perombakan tampilan login)
+- **Kondisi working tree:** bersih (semua perubahan sudah di-commit & push)
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SELESAI)
 
-**Judul:** Rombak tampilan halaman login (tema hijau dashboard)
-
-Rincian:
-- `AuthGate.css`: latar halaman bergaya gradien hijau (`#173e36` → `#1f5a4a`) selaras sidebar dashboard; kartu login putih, sudut membulat, bayangan lembut, isi dipusatkan.
-- `AuthGate.tsx`: judul `Masuk ke sistem` → `STANDAR PELAYANAN MINIMAL`; subjudul → `----Masukkan Email & Kata Sandi Anda----`; tombol `Masuk dengan aman` → `MASUK`; eyebrow `AKSES PENGGUNA` dihapus agar lebih sederhana.
-- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- Belum di-commit; menunggu perintah commit & push dari pengguna.
-
-## Tugas sebelumnya (BELUM DI-COMMIT)
-
-**Judul:** Ganti logo lama dengan logo RSUD AMI
+**Judul:** Pasang logo RSUD AMI + rombak tampilan login (tema hijau dashboard)
 
 Rincian:
 - `src/assets/logo-rsud-ami.png` dipakai sebagai logo di sidebar (`AppShell.tsx`) dan halaman login (`AuthGate.tsx`).
 - `public/logo-rsud-ami.png` dipakai sebagai favicon & apple-touch-icon (`index.html`).
-- `AppShell.css` menyesuaikan `.brand-mark img`; `AuthGate.css` menyesuaikan `.login-mark img`.
+- `AuthGate.css`: latar halaman bergaya gradien hijau (`#173e36` → `#1f5a4a`) selaras sidebar dashboard; kartu login putih, sudut membulat, bayangan lembut, isi dipusatkan.
+- `AuthGate.tsx`: judul `Masuk ke sistem` → `STANDAR PELAYANAN MINIMAL`; subjudul → `----Masukkan Email & Kata Sandi Anda----`; tombol `Masuk dengan aman` → `MASUK`; eyebrow `AKSES PENGGUNA` dihapus agar lebih sederhana.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Commit: `303e4a8` Apply RSUD AMI logo and redesign login page with green theme (sudah di-push ke `main`).
 
 ## Tugas sebelum (SELESAI)
 
