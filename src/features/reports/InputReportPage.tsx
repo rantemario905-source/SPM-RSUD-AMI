@@ -56,7 +56,9 @@ function InputReportPage() {
         setPeriods(nextPeriods)
         setProfile(nextProfile)
         setUnitId(availableUnits[0]?.id ?? '')
-        setPeriodStart(nextPeriods[0]?.period_start ?? '')
+        const runningNow = new Date()
+        const runningStart = `${runningNow.getFullYear()}-${String(runningNow.getMonth() + 1).padStart(2, '0')}-01`
+        setPeriodStart(nextPeriods.find((item) => item.period_start === runningStart)?.period_start ?? nextPeriods[0]?.period_start ?? '')
       })
       .catch((loadError: unknown) => {
         if (active) {
