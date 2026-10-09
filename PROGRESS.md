@@ -5,9 +5,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** ada perubahan belum di-commit (top progress bar hijau + perbaikan teks halaman Unit & pengguna)
+- **Kondisi working tree:** bersih (semua perubahan sudah di-commit & push)
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SELESAI)
 
 **Judul:** Perbaikan teks halaman Unit & pengguna
 
@@ -16,8 +16,9 @@ Rincian:
 - Label `UID pengguna Auth` → `UID Pengguna`.
 - Placeholder `UUID dari Supabase Auth` → `Masukan UID`.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Commit: `5a2c04d` Simplify Unit and user management copy (sudah di-push ke `main`).
 
-## Tugas sebelumnya (BELUM DI-COMMIT)
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Top progress/loading bar hijau saat login & buka menu
 
@@ -27,7 +28,7 @@ Rincian:
 - `AuthGate.tsx`: bar jalan saat memeriksa sesi & saat submit login.
 - `App.tsx`: bar jalan tiap `activePage` berubah (buka menu).
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- Belum di-commit; menunggu perintah commit & push.
+- Commit: `fdae42f` Add green top progress bar for login and navigation (sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SELESAI)
 
