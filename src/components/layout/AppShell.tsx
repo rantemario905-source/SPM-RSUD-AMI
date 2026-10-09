@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
-import { Activity, BarChart3, Bell, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { Activity, BarChart3, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { allowedPages } from '../../lib/access'
+import NotificationBell from './NotificationBell'
 import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import type { AppPage } from '../../types/spm'
 import './AppShell.css'
@@ -49,7 +50,7 @@ function AppShell({ activePage, onNavigate, children }: AppShellProps) {
         <div className="sidebar-bottom"><div className="security-note"><ShieldCheck size={17} /><span>{auth.isPreview ? 'Mode simulasi' : 'Sesi terlindungi'}<br /><strong>{auth.isPreview ? 'Data contoh saja' : 'Pengguna terautentikasi'}</strong></span></div><button className="profile-button" type="button" onClick={() => void auth.signOut()} aria-label="Keluar dari akun"><span className="profile-avatar">{displayName.slice(0, 2).toUpperCase()}</span><span className="profile-copy"><strong>{displayName}</strong><small>{roleLabel}</small></span>{!auth.isPreview && <LogOut size={16} />}</button></div>
       </aside>
       <div className="main-column">
-        <header className="topbar"><div className="breadcrumb"><span>SPM RSUD</span><span className="breadcrumb-divider">/</span><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`preview-pill${auth.isPreview ? '' : ' session-pill'}`}><span />{auth.isPreview ? 'MODE PRATINJAU' : 'SESI AKTIF'}</span><button className="icon-button notification-button" type="button" aria-label="Notifikasi"><Bell size={18} /><i /></button></div></header>
+        <header className="topbar"><div className="breadcrumb"><span>SPM RSUD</span><span className="breadcrumb-divider">/</span><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`preview-pill${auth.isPreview ? '' : ' session-pill'}`}><span />{auth.isPreview ? 'MODE PRATINJAU' : 'SESI AKTIF'}</span><NotificationBell onNavigate={onNavigate} /></div></header>
         <main className="page-content">{children}</main>
         <footer className="app-footer"><span>RSUD AMI · Pelaporan Standar Pelayanan Minimal</span><span><Settings2 size={13} /> Sistem internal</span></footer>
       </div>

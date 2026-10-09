@@ -9,9 +9,9 @@ export const demoReports: UnitReport[] = [
 ]
 
 export const demoAudit = [
-  { field: 'Waktu tanggap dokter', before: '6 menit', after: '4,5 menit', person: 'Siti Rahma', date: '6 Okt 2026, 09.42' },
-  { field: 'Analisa kepuasan pelanggan', before: 'Belum diisi', after: 'Capaian sesuai standar', person: 'Dewi Lestari', date: '6 Okt 2026, 08.18' },
-  { field: 'Standar jam buka IGD', before: '24 jam', after: '24 jam', person: 'Admin SPM', date: '1 Okt 2026, 14.05' },
+  { title: 'Entri indikator diperbarui · Waktu tanggap dokter', changes: 'Numerator: 6 → 4,5', person: 'Siti Rahma', date: '6 Okt 2026, 09.42' },
+  { title: 'Entri indikator diperbarui · Analisa kepuasan pelanggan', changes: 'Analisa: kosong → Capaian sesuai standar', person: 'Dewi Lestari', date: '6 Okt 2026, 08.18' },
+  { title: 'Laporan dibuat · Gawat Darurat', changes: 'Periode: Oktober 2026', person: 'Admin SPM', date: '1 Okt 2026, 14.05' },
 ]
 
 export const serviceProgress = [

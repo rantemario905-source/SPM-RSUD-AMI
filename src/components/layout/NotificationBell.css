@@ -1,0 +1,13 @@
+.notification-bell { position: relative; display: inline-flex; }
+.notification-bell .notification-badge { position: absolute; top: 1px; right: 1px; display: grid; min-width: 15px; height: 15px; padding: 0 3px; place-items: center; color: #fff; background: #c86d52; border: 1px solid #fff; border-radius: 999px; font-size: 8px; font-weight: 700; font-style: normal; line-height: 1; }
+.notification-panel { position: absolute; z-index: 40; top: calc(100% + 10px); right: 0; width: 340px; max-width: 90vw; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 34px rgba(23, 62, 54, .16); }
+.notification-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #eef2ee; }
+.notification-head strong { color: #35483f; font-size: 11px; }.notification-head span { display: grid; min-width: 19px; height: 19px; padding: 0 5px; place-items: center; color: #4a7c62; background: #e8f1e9; border-radius: 999px; font-size: 9px; font-weight: 700; }
+.notification-list { max-height: 360px; overflow-y: auto; }
+.notification-item { display: flex; gap: 10px; width: 100%; padding: 11px 14px; background: transparent; border: 0; border-bottom: 1px solid #eef2ee; text-align: left; cursor: pointer; }
+.notification-item:last-child { border-bottom: 0; }.notification-item:hover { background: #f6f9f6; }
+.notification-item-icon { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border-radius: 6px; }
+.tone-danger .notification-item-icon { color: #a4452f; background: #fbeae4; }.tone-warning .notification-item-icon { color: #8a6a1b; background: #faf1dc; }.tone-info .notification-item-icon { color: #2f6b8a; background: #e6f0f6; }
+.notification-item-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }.notification-item-copy strong { color: #35483f; font-size: 11px; font-weight: 600; }.notification-item-copy small { color: #87938c; font-size: 10px; }
+.notification-empty { margin: 0; padding: 16px 14px; color: #87938c; font-size: 10px; }
+@media (max-width: 680px) { .notification-panel { position: fixed; top: 60px; right: 12px; left: 12px; width: auto; max-width: none; } }

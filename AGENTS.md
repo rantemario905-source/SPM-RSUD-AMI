@@ -15,7 +15,7 @@ Aplikasi pelaporan Standar Pelayanan Minimal (SPM) RSUD, dibangun dengan:
 
 - `src/App.tsx` — router sederhana berbasis state (`AppPage`), memetakan halaman ke komponen fitur.
 - `src/features/` — kode per fitur: `dashboard`, `reports`, `indicators`, `audit`, `settings`, `users`.
-- `src/components/` — komponen bersama: `layout/AppShell` dan `feedback/ProgressBar` (top progress bar hijau global via `ProgressProvider` + hook `useProgress`).
+- `src/components/` — komponen bersama: `layout/AppShell`, `layout/NotificationBell` (dropdown notifikasi di topbar), dan `feedback/ProgressBar` (top progress bar hijau global via `ProgressProvider` + hook `useProgress`).
 - `src/auth/` — autentikasi. Tampilan login memakai tema hijau selaras dashboard (`--forest` / `#173e36`).
 - `src/assets/` — aset yang di-bundle Vite (mis. `logo-rsud-ami.png` untuk UI).
 - `public/` — aset statis disajikan di root (mis. `logo-rsud-ami.png` untuk favicon).
@@ -36,6 +36,7 @@ Aplikasi pelaporan Standar Pelayanan Minimal (SPM) RSUD, dibangun dengan:
 - Akses data: semua pengguna terautentikasi boleh **membaca** laporan/entri semua unit, tetapi hanya boleh **menulis** untuk unit pada profilnya (`manage_users`/`view_all_reports` boleh semua unit). UI Input laporan menampilkan semua unit, unit lain hanya-baca.
 - Akses menu per peran ada di `src/lib/access.ts` (`allowedPages`): officer = Ringkasan/Input/Rekap; unit_head & quality & leadership = + Indikator SPM; admin = semua. `AppShell` memfilter navigasi dan `App.tsx` mengalihkan halaman terlarang ke Ringkasan. `role` & `permissions` disediakan `AuthGate` lewat `AuthContext`.
 - Periode laporan: `public.spm_ensure_periods()` membuat periode tahun berjalan otomatis (tanpa menghapus tahun lampau), dan `public.spm_lock_past_periods()` mengunci bulan lampau (dipanggil `pg_cron`/saat app dibuka). Pembukaan manual oleh pengelola menandai `report_periods.manually_opened = true` agar tidak terkunci ulang. Filter tahun di Rekap bersumber dari periode nyata.
+- Notifikasi (`NotificationBell`) dihitung di klien dari tabel yang ada (tanpa tabel/migrasi baru): kelengkapan unit pada periode berjalan, capaian indikator di bawah `indicators.standard` (bandingkan angka pada teks standar: arah `≤` = batas atas, selain itu minimum), dan penguncian periode (terkunci/akan terkunci ≤ 7 hari). Cakupan unit mengikuti `profiles.unit_id` (kosong = semua unit). Mode pratinjau memakai data contoh.
 
 ## Perintah
 

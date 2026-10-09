@@ -5,9 +5,34 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** hanya penyesuaian `PROGRESS.md` pasca-push (belum di-commit)
+- **Kondisi working tree:** ada perubahan belum di-commit (rapikan tampilan menu Perubahan + fitur notifikasi lonceng)
 
-## Tugas terakhir (SELESAI)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Fungsi tombol notifikasi (lonceng) di topbar
+
+Rincian:
+- `src/components/layout/NotificationBell.tsx` (+ `.css`) BARU: dropdown notifikasi di topbar `AppShell`, badge jumlah (merah) untuk item `danger`/`warning`, klik item menuju halaman terkait, tutup saat klik di luar. Mode pratinjau menampilkan contoh notifikasi statis.
+- Sumber data hanya dari tabel yang ada (tanpa migrasi/tabel baru): `report_periods`, `units`, `indicators`, `reports`, `report_entries`, `profiles`.
+- Tiga jenis notifikasi (pilihan pengguna): (1) **Kelengkapan unit** — unit belum mengisi/belum lengkap pada periode berjalan (menuju `entry`); (2) **Indikator di bawah standar** — capaian vs `standard` (bandingkan angka pada `standard`, arah `≤` = batas atas, selain itu minimum), menuju `reports`; (3) **Periode & penguncian** — periode berjalan terkunci atau akan dikunci ≤ 7 hari (menuju `periods` untuk admin, selain itu `reports`).
+- Cakupan unit mengikuti profil: `unit_id` diisi → hanya unit itu; kosong (admin/quality/leadership) → semua unit.
+- `AppShell.tsx`: tombol lonceng statis diganti `<NotificationBell onNavigate={onNavigate} />`; impor `Bell` dipindah ke komponen.
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (BELUM DI-COMMIT)
+
+**Judul:** Rapikan tampilan menu Perubahan (Audit)
+
+Rincian:
+- `AuditPage.tsx`: tidak lagi menampilkan UUID. `indicator_id`/`unit_id` di-resolve ke nama indikator/unit dan dipakai sebagai konteks pada judul (mis. "Entri indikator diperbarui · Waktu tanggap dokter").
+- Hanya menampilkan field yang benar-benar berubah, dengan label ramah (Numerator, Denominator, Analisa, Catatan bukti, Periode) dan format `nilai lama → nilai baru`; judul + "Diubah oleh <nama>" tetap.
+- `AuditPage.css`: `.audit-values` (dua kotak) diganti `.audit-changes` (satu blok teks).
+- `data/demo.ts`: `demoAudit` disesuaikan ke bentuk baru (`title`, `changes`, `person`, `date`).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Akses menu & hak tulis sesuai peran
 
@@ -128,7 +153,7 @@ Commit terkait:
 
 ## Langkah berikutnya
 
-- _Belum ada tugas berikutnya yang ditentukan._ Tambahkan di sini saat ada permintaan baru.
+- Menunggu perintah pengguna untuk commit & push (mencakup rapikan menu Perubahan + notifikasi lonceng), lalu deploy via **Actions → Deploy to GitHub Pages → Run workflow**.
 
 ## Riwayat singkat (git)
 

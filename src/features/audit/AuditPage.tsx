@@ -3,12 +3,30 @@ import { CircleAlert, History } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { demoAudit } from '../../data/demo'
 import { getSupabaseClient } from '../../lib/supabase'
+import { periodLabel } from '../../lib/spm-data'
 import './AuditPage.css'
+
+interface AuditItem { title: string; changes: string; person: string; date: string }
+
+const fieldLabels: Record<string, string> = {
+  numerator: 'Numerator',
+  denominator: 'Denominator',
+  analysis: 'Analisa',
+  evidence_note: 'Catatan bukti',
+  period_start: 'Periode',
+}
+
+const actionTitles: Record<string, string> = {
+  report_created: 'Laporan dibuat',
+  report_updated: 'Laporan diperbarui',
+  entry_created: 'Entri indikator dibuat',
+  entry_updated: 'Entri indikator diperbarui',
+}
 
 function AuditPage() {
   const auth = useAuth()
   const client = getSupabaseClient()
-  const [items, setItems] = useState(auth.isPreview ? demoAudit : [])
+  const [items, setItems] = useState<AuditItem[]>(auth.isPreview ? demoAudit : [])
   const [loading, setLoading] = useState(!auth.isPreview)
   const [error, setError] = useState('')
 
@@ -23,22 +41,47 @@ function AuditPage() {
         .order('created_at', { ascending: false })
         .limit(100)
       if (queryError) throw queryError
-      const profileIds = [...new Set((data ?? []).map((row) => row.actor_id).filter((id): id is string => Boolean(id)))]
-      let names = new Map<string, string>()
-      if (profileIds.length) {
-        const { data: profiles, error: profileError } = await supabase.from('profiles').select('id, full_name').in('id', profileIds)
+      const rows = data ?? []
+      const actorIds = [...new Set(rows.map((row) => row.actor_id).filter((id): id is string => Boolean(id)))]
+      const names = new Map<string, string>()
+      if (actorIds.length) {
+        const { data: profiles, error: profileError } = await supabase.from('profiles').select('id, full_name').in('id', actorIds)
         if (profileError) throw profileError
-        names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]))
+        for (const profile of profiles ?? []) names.set(profile.id, profile.full_name)
       }
-      return (data ?? []).map((row) => {
+      const { data: indicators } = await supabase.from('indicators').select('id, name')
+      const indicatorNames = new Map((indicators ?? []).map((indicator) => [indicator.id, indicator.name]))
+      const { data: units } = await supabase.from('units').select('id, name')
+      const unitNames = new Map((units ?? []).map((unit) => [unit.id, unit.name]))
+
+      const resolve = (key: string, value: unknown) => {
+        if (value === null || value === undefined || value === '') return 'kosong'
+        if (key === 'indicator_id') return indicatorNames.get(String(value)) ?? 'Indikator'
+        if (key === 'unit_id') return unitNames.get(String(value)) ?? 'Unit'
+        if (key === 'period_start') return periodLabel(String(value))
+        return String(value)
+      }
+      const labelOf = (key: string) => fieldLabels[key] ?? key
+
+      return rows.map((row) => {
         const oldValues = row.old_values && typeof row.old_values === 'object' ? row.old_values as Record<string, unknown> : {}
         const newValues = row.new_values && typeof row.new_values === 'object' ? row.new_values as Record<string, unknown> : {}
-        const field = row.action === 'report_created' ? 'Laporan dibuat' : row.action === 'report_updated' ? 'Laporan diperbarui' : row.action === 'entry_created' ? 'Entri indikator dibuat' : 'Entri indikator diperbarui'
-        const format = (values: Record<string, unknown>) => Object.entries(values).map(([key, value]) => `${key}: ${value ?? 'kosong'}`).join(' · ') || 'Belum ada nilai sebelumnya'
+        const isCreated = String(row.action).endsWith('created')
+        const indicatorId = newValues.indicator_id ?? oldValues.indicator_id
+        const unitId = newValues.unit_id ?? oldValues.unit_id
+        const context = indicatorId ? indicatorNames.get(String(indicatorId)) : unitId ? unitNames.get(String(unitId)) : undefined
+        const base = actionTitles[String(row.action)] ?? 'Perubahan data'
+        const keys = Object.keys(isCreated ? newValues : { ...oldValues, ...newValues })
+          .filter((key) => key !== 'indicator_id' && key !== 'unit_id')
+        const parts = keys.flatMap((key) => {
+          const before = resolve(key, oldValues[key])
+          const after = resolve(key, newValues[key])
+          if (isCreated) return after === 'kosong' ? [] : [`${labelOf(key)}: ${after}`]
+          return before === after ? [] : [`${labelOf(key)}: ${before} → ${after}`]
+        })
         return {
-          field,
-          before: format(oldValues),
-          after: format(newValues),
+          title: context ? `${base} · ${context}` : base,
+          changes: parts.join(' · ') || 'Tidak ada perubahan nilai tercatat',
           person: row.actor_id ? names.get(row.actor_id) ?? 'Pengguna terautentikasi' : 'Sistem',
           date: new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(row.created_at)),
         }
@@ -56,7 +99,7 @@ function AuditPage() {
       <div className="reports-heading"><div><span className="eyebrow">AKUNTABILITAS DATA</span><h1>Jejak perubahan</h1><p>Riwayat mencatat siapa yang mengubah, waktu perubahan, serta nilai sebelum dan sesudah.</p></div></div>
       {auth.isPreview && <div className="reports-demo-note">Riwayat berikut hanya data simulasi untuk pratinjau aplikasi.</div>}
       {error && <div className="reports-demo-note" role="alert"><CircleAlert size={15} /> {error}</div>}
-      <div className="audit-list">{items.map((item) => <article className="audit-row" key={`${item.field}-${item.date}`}><span className="audit-icon"><History size={16} /></span><div className="audit-main"><div className="audit-topline"><strong>{item.field}</strong><time>{item.date}</time></div><div className="audit-values"><span>{item.before}</span><b aria-hidden="true">→</b><span>{item.after}</span></div><small>Diubah oleh {item.person}</small></div></article>)}{items.length === 0 && <div className="audit-empty">{loading ? 'Memuat riwayat…' : 'Belum ada perubahan yang tercatat.'}</div>}</div>
+      <div className="audit-list">{items.map((item, index) => <article className="audit-row" key={`${index}-${item.date}`}><span className="audit-icon"><History size={16} /></span><div className="audit-main"><div className="audit-topline"><strong>{item.title}</strong><time>{item.date}</time></div><p className="audit-changes">{item.changes}</p><small>Diubah oleh {item.person}</small></div></article>)}{items.length === 0 && <div className="audit-empty">{loading ? 'Memuat riwayat…' : 'Belum ada perubahan yang tercatat.'}</div>}</div>
       <p className="audit-retention">Riwayat tidak menyediakan kolom alasan dan tidak menghapus nilai sebelumnya.</p>
     </section>
   )
