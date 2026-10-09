@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { LockKeyhole, ShieldCheck } from 'lucide-react'
+import logoRsudAmi from '../assets/logo-rsud-ami.png'
 import { AuthContext } from './AuthContext'
 import { getSupabaseClient } from '../lib/supabase'
 import './AuthGate.css'
@@ -56,15 +57,14 @@ function AuthGate({ children }: AuthGateProps) {
     return (
       <main className="auth-page">
         <section className="login-panel">
-          <div className="login-brand"><span className="login-mark"><ShieldCheck size={21} /></span><span><strong>RSUD AMI</strong><small>PELAPORAN SPM</small></span></div>
-          <span className="eyebrow">AKSES PENGGUNA</span>
-          <h1>Masuk ke sistem</h1>
-          <p>Gunakan akun yang diberikan oleh administrator RSUD.</p>
+          <div className="login-brand"><span className="login-mark"><img src={logoRsudAmi} alt="Logo RSUD AMI" /></span><span><strong>RSUD AMI</strong><small>PELAPORAN SPM</small></span></div>
+          <h1>STANDAR PELAYANAN MINIMAL</h1>
+          <p>----Masukkan Email &amp; Kata Sandi Anda----</p>
           <form className="login-form" onSubmit={handleLogin}>
             <label>Email<input autoComplete="username" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
             <label>Kata sandi<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
             {error && <p className="login-error" role="alert">{error}</p>}
-            <button className="login-submit" type="submit" disabled={submitting}><LockKeyhole size={16} />{submitting ? 'Memeriksa...' : 'Masuk dengan aman'}</button>
+            <button className="login-submit" type="submit" disabled={submitting}><LockKeyhole size={16} />{submitting ? 'Memeriksa...' : 'MASUK'}</button>
           </form>
           <div className="login-footnote"><ShieldCheck size={15} />Akses laporan dibatasi sesuai peran dan unit pengguna.</div>
         </section>

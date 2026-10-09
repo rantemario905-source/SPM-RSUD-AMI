@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Activity, BarChart3, Bell, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
+import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import type { AppPage } from '../../types/spm'
 import './AppShell.css'
 
@@ -28,7 +29,7 @@ function AppShell({ activePage, onNavigate, children }: AppShellProps) {
   return (
     <div className="app-frame">
       <aside className="sidebar">
-        <button className="brand" type="button" onClick={() => onNavigate('dashboard')} aria-label="Ke ringkasan SPM"><span className="brand-mark"><Activity size={20} strokeWidth={2.4} /></span><span className="brand-copy"><strong>RSUD AMI</strong><small>STANDAR PELAYANAN MINIMAL</small></span></button>
+        <button className="brand" type="button" onClick={() => onNavigate('dashboard')} aria-label="Ke ringkasan SPM"><span className="brand-mark"><img src={logoRsudAmi} alt="Logo RSUD AMI" /></span><span className="brand-copy"><strong>RSUD AMI</strong><small>STANDAR PELAYANAN MINIMAL</small></span></button>
         <nav className="side-navigation" aria-label="Navigasi utama">
           {navigation.map((group) => <div className="nav-group" key={group.section}>
             <p className="nav-section-label">{group.section}</p>
