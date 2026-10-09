@@ -137,11 +137,51 @@ function ReportsPage() {
     return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
   }
 
+  function csvCell(value: string) {
+    return /[",;\\\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+  }
+
+  function downloadReport() {
+    const unitCode = unit?.code ?? 'unit'
+    const periodName = period === 'monthly' ? months[month - 1] : period === 'quarterly' ? `Triwulan ${quarter}` : 'Tahunan'
+    const lines: string[] = []
+    lines.push('RSUD AMI - Rekap & Laporan SPM')
+    lines.push(`Unit: ${unit?.name ?? 'Semua unit'} | Periode: ${periodName} ${year} | Diunduh: ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date())}`)
+    lines.push('')
+    const baseHeaders = ['No', 'Indikator', 'Definisi operasional', 'Standar']
+    const periodHeaders = period === 'monthly'
+      ? ['Numerator', 'Denominator', 'Capaian', 'Analisa']
+      : periodMonths.map((monthNumber) => months[monthNumber - 1])
+    lines.push([...baseHeaders, ...periodHeaders].map(csvCell).join(';'))
+    for (const [index, entry] of visibleIndicators.entries()) {
+      const stored = getStoredEntry(entry, month)
+      const row = [String(index + 1), entry.name, entry.definition, entry.standard]
+      const periodCells = period === 'monthly'
+        ? [
+            stored?.numerator ?? '—',
+            stored?.denominator ?? '—',
+            getMonthlyValue(entry, month),
+            stored?.analysis || '—',
+          ]
+        : periodMonths.map((monthNumber) => getMonthlyValue(entry, monthNumber))
+      lines.push([...row, ...periodCells].map(csvCell).join(';'))
+    }
+    const blob = new Blob([`\uFEFF${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `SPM_${unitCode}_${periodName.replace(/\s+/g, '')}_${year}.csv`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <section className="reports-page">
       <div className="reports-heading">
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
-        <button className="secondary-button" type="button" disabled><ArrowDownToLine size={15} /> Unduh laporan</button>
+        <button className="secondary-button" type="button" disabled={loading || visibleIndicators.length === 0} onClick={downloadReport}><ArrowDownToLine size={15} /> Unduh laporan</button>
       </div>
       {auth.isPreview && <div className="reports-demo-note">Data simulasi untuk pratinjau; bukan data laporan resmi.</div>}
       {error && <div className="reports-demo-note" role="alert"><CircleAlert size={15} /> {error}</div>}
