@@ -7,7 +7,7 @@ Fondasi aplikasi pelaporan Standar Pelayanan Minimal berbasis React, TypeScript,
 1. Jalankan `npm install`.
 2. Salin `.env.example` menjadi `.env.local`.
 3. Isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dari pengaturan proyek Supabase.
-4. Untuk database baru, jalankan berurutan `supabase/migrations/202610060001_initial_spm_schema.sql`, `supabase/migrations/202610080001_connect_app_data.sql`, `supabase/migrations/202610090001_auto_lock_past_periods.sql`, `supabase/migrations/202610090002_ensure_reporting_periods.sql`, lalu `supabase/migrations/202610090003_cross_unit_read.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
+4. Untuk database baru, jalankan berurutan `supabase/migrations/202610060001_initial_spm_schema.sql`, `supabase/migrations/202610080001_connect_app_data.sql`, `supabase/migrations/202610090001_auto_lock_past_periods.sql`, `supabase/migrations/202610090002_ensure_reporting_periods.sql`, `supabase/migrations/202610090003_cross_unit_read.sql`, lalu `supabase/migrations/202610090004_cross_unit_write.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
 5. Buat akun pertama di Supabase Auth dan profil administrator melalui SQL tepercaya. Setelah login sebagai admin, gunakan halaman **Unit & pengguna** untuk menambah unit atau menautkan UID akun Auth lain ke profil.
 6. Jalankan `npm run dev`.
 
@@ -36,6 +36,18 @@ Deploy tidak berjalan otomatis saat upload/push file. Setelah file terbaru diung
 - `public.spm_ensure_periods()` memastikan periode Januari–Desember **tahun berjalan** tersedia (membuat baris yang belum ada, tanpa menyentuh tahun sebelumnya). Penjadwalan harian `pg_cron` job `spm-ensure-periods`; aplikasi juga memanggilnya setiap dibuka. Saat tahun baru tiba, periode tahun tersebut otomatis muncul di halaman **Periode**; tahun lampau tetap tersimpan untuk audit.
 - `public.spm_lock_past_periods()` mengunci periode `open` yang `period_end` sudah lewat dan tidak dibuka manual. Penjadwalan harian `pg_cron` job `spm-lock-past-periods`; aplikasi juga memanggilnya setiap dibuka. Pengelola periode dapat membuka kembali bulan lampau lewat halaman **Periode**; pembukaan manual ditandai `manually_opened = true` agar tidak terkunci ulang otomatis.
 - Filter **Tahun** di halaman **Rekap & unduh** bersumber dari periode yang benar-benar ada, sehingga tidak menampilkan tahun tanpa data.
+
+## Akses menu per peran
+
+| Peran | Ringkasan | Input laporan | Rekap & unduh | Indikator SPM | Periode | Perubahan | Unit & pengguna |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Petugas unit (`officer`) | ya | ya | ya | - | - | - | - |
+| Kepala unit (`unit_head`) | ya | ya | ya | ya (edit) | - | - | - |
+| Mutu (`quality`) | ya | ya | ya | ya (edit) | - | - | - |
+| Pimpinan (`leadership`) | ya | ya | ya | ya (edit) | - | - | - |
+| Administrator (`admin`) | ya | ya | ya | ya | ya | ya | ya |
+
+Menu difilter di `src/components/layout/AppShell.tsx` berdasarkan peta peran di `src/lib/access.ts`; `App.tsx` juga menjaga agar halaman terlarang tidak dirender (dialihkan ke Ringkasan).
 
 ## Akses baca dan tulis
 

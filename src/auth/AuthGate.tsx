@@ -12,6 +12,7 @@ interface AuthGateProps { children: ReactNode }
 function AuthGate({ children }: AuthGateProps) {
   const client = getSupabaseClient()
   const [session, setSession] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<{ id: string; role: string; permissions: Record<string, boolean> } | null>(null)
   const [loading, setLoading] = useState(Boolean(client))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,6 +41,23 @@ function AuthGate({ children }: AuthGateProps) {
     }
   }, [client])
 
+  useEffect(() => {
+    if (!client || !session?.user.id) return
+    let active = true
+    const userId = session.user.id
+    void client.from('profiles').select('role, permissions').eq('id', userId).maybeSingle()
+      .then(({ data }) => {
+        if (!active) return
+        const row = data as { role: string; permissions: Record<string, boolean> } | null
+        setProfile(row ? { id: userId, role: row.role, permissions: row.permissions } : null)
+      })
+    return () => { active = false }
+  }, [client, session])
+
+  const activeProfile = profile && session?.user.id === profile.id ? profile : null
+  const role = activeProfile?.role ?? null
+  const permissions = activeProfile?.permissions ?? null
+
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!client) return
@@ -55,7 +73,7 @@ function AuthGate({ children }: AuthGateProps) {
   }
 
   if (!client) {
-    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, role: null, permissions: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
   }
 
   if (loading) return <div className="auth-loading" role="status">Memeriksa sesi pengguna...</div>
@@ -79,7 +97,7 @@ function AuthGate({ children }: AuthGateProps) {
     )
   }
 
-  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, role, permissions, signOut }}>{children}</AuthContext.Provider>
 }
 
 export default AuthGate

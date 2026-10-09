@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './auth/AuthContext'
+import { allowedPages } from './lib/access'
 import { getSupabaseClient } from './lib/supabase'
 import AppShell from './components/layout/AppShell'
 import { useProgress } from './components/feedback/progressContext'
@@ -19,6 +20,7 @@ function App() {
   const client = getSupabaseClient()
   const progress = useProgress()
   const firstRender = useRef(true)
+  const allowed = useMemo(() => allowedPages(auth.role, auth.isPreview), [auth.role, auth.isPreview])
 
   useEffect(() => {
     if (!client || auth.isPreview) return
@@ -37,15 +39,17 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [activePage, progress])
 
+  const page = allowed.includes(activePage) ? activePage : 'dashboard'
+
   return (
-    <AppShell activePage={activePage} onNavigate={setActivePage}>
-      {activePage === 'dashboard' && <DashboardPage onNavigate={setActivePage} />}
-      {activePage === 'reports' && <ReportsPage />}
-      {activePage === 'entry' && <InputReportPage />}
-      {activePage === 'periods' && <PeriodsPage />}
-      {activePage === 'audit' && <AuditPage />}
-      {activePage === 'indicators' && <IndicatorsPage />}
-      {activePage === 'users' && <UsersPage />}
+    <AppShell activePage={page} onNavigate={setActivePage}>
+      {page === 'dashboard' && <DashboardPage onNavigate={setActivePage} />}
+      {page === 'reports' && <ReportsPage />}
+      {page === 'entry' && <InputReportPage />}
+      {page === 'periods' && <PeriodsPage />}
+      {page === 'audit' && <AuditPage />}
+      {page === 'indicators' && <IndicatorsPage />}
+      {page === 'users' && <UsersPage />}
     </AppShell>
   )
 }

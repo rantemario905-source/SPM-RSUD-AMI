@@ -12,6 +12,13 @@ const roleNames: Record<string, string> = {
   admin: 'Administrator', officer: 'Petugas unit', unit_head: 'Kepala unit', quality: 'Mutu', leadership: 'Pimpinan',
 }
 
+const rolePermissions: Record<UserRole, Record<string, boolean>> = {
+  officer: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: false, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
+  unit_head: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
+  quality: { view_dashboard: true, input_reports: true, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
+  leadership: { view_dashboard: true, input_reports: true, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
+}
+
 function UsersPage() {
   const auth = useAuth()
   const client = getSupabaseClient()
@@ -76,11 +83,7 @@ function UsersPage() {
     setSaving(true)
     setError('')
     setNotice('')
-    const permissions = role === 'quality'
-      ? { view_dashboard: true, input_reports: false, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: true, manage_users: false, edit_locked_periods: false }
-      : role === 'leadership'
-        ? { view_dashboard: true, input_reports: false, view_own_unit_reports: false, view_all_reports: true, manage_indicators: false, manage_periods: false, view_audit: true, manage_users: false, edit_locked_periods: false }
-        : { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: false, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false }
+    const permissions = rolePermissions[role]
     const { data, error: insertError } = await client.from('profiles').insert({
       id: userId.trim(),
       full_name: fullName.trim(),

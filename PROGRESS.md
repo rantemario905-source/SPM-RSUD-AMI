@@ -5,9 +5,28 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** ada perubahan belum di-commit (filter tahun Rekap, pembuatan periode otomatis, baca lintas unit)
+- **Kondisi working tree:** ada perubahan belum di-commit (akses menu sesuai peran)
 
 ## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Akses menu & hak tulis sesuai peran
+
+Rincian:
+- `src/lib/access.ts` (BARU): peta `allowedPages(role, isPreview)`. officer = Ringkasan/Input/Rekap; unit_head, quality, leadership = + Indikator SPM; admin = semua; preview = semua.
+- `src/auth/AuthContext.ts`: `AuthState` ditambah `role` dan `permissions`.
+- `src/auth/AuthGate.tsx`: memuat `profiles.role` & `permissions` setelah sesi ada, menyediakannya lewat context.
+- `src/components/layout/AppShell.tsx`: navigasi difilter per peran (grup kosong disembunyikan) + label peran di profil.
+- `src/App.tsx`: halaman terlarang dialihkan ke Ringkasan (derivasi saat render, bukan efek).
+- `src/features/users/UsersPage.tsx`: preset `permissions` per peran disamakan dengan spec (unit_head/quality/leadership dapat `manage_indicators`; quality/leadership `input_reports` true & `view_audit` false).
+- `src/features/reports/InputReportPage.tsx`: pengguna `view_all_reports`/`manage_users` bisa input unit mana pun; petugas tetap hanya unit sendiri.
+- Migrasi `supabase/migrations/202610090004_cross_unit_write.sql`: policy insert/update `reports` & `report_entries` juga mengizinkan `view_all_reports` (Mutu/Pimpinan menulis lintas unit).
+- Keputusan: Pimpinan & Mutu punya menu Indikator SPM (lihat & edit), sama seperti Kepala unit; input laporan lintas unit karena tidak terikat unit.
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- **Perlu tindak lanjut pengguna:** jalankan migrasi `202610090004_cross_unit_write.sql` di Supabase SQL Editor.
+- Permission profil lama (officer/unit_head/quality/leadership) **sudah dinormalkan** pengguna via `update public.profiles ... case role ...` (2026-10-09).
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Filter tahun + periode otomatis + baca lintas unit (tulis tetap unit sendiri)
 
@@ -19,8 +38,9 @@ Rincian:
 - `App.tsx`: memanggil `spm_ensure_periods()` lalu `spm_lock_past_periods()` saat aplikasi dibuka.
 - `README.md` & `AGENTS.md`: dokumentasi diperbarui (bagian "Akses baca dan tulis").
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Perlu tindak lanjut pengguna:** jalankan migrasi `202610090003_cross_unit_read.sql` di Supabase SQL Editor.
-- Belum di-commit; menunggu perintah commit & push.
+- Migrasi `202610090002` dan `202610090003` **sudah dijalankan** pengguna di Supabase SQL Editor (2026-10-09).
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Commit: `8d725da` Add cross-unit read, auto periods, and year filter from real periods (sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SELESAI)
 
@@ -112,6 +132,8 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `8d725da` Add cross-unit read, auto periods, and year filter from real periods
+- `0805809` Tidy PROGRESS task history
 - `e8baccb` Update PROGRESS for delete, dashboard, and period locking
 - `3c93150` Auto-lock past reporting periods and allow admin reopen
 - `d158552` Remove locked-period metric card from dashboard

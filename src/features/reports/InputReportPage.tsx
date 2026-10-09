@@ -103,8 +103,9 @@ function InputReportPage() {
   const isLocked = selectedPeriod?.state === 'locked'
   const selectedUnit = units.find((item) => item.id === unitId)
   const ownUnit = units.find((item) => item.id === profile?.unit_id)
-  const ownsSelectedUnit = !profile?.unit_id || unitId === profile.unit_id
-  const canInput = auth.isPreview || (Boolean(profile?.permissions.input_reports) && (ownsSelectedUnit || Boolean(profile?.permissions.manage_users)))
+  const canEditAnyUnit = Boolean(profile?.permissions.view_all_reports) || Boolean(profile?.permissions.manage_users)
+  const ownsSelectedUnit = auth.isPreview || canEditAnyUnit || (Boolean(profile?.unit_id) && unitId === profile?.unit_id)
+  const canInput = auth.isPreview || (Boolean(profile?.permissions.input_reports) && ownsSelectedUnit)
   const completedCount = useMemo(() => entries.filter((entry) => entry.analysis.trim() && entry.numerator !== '' && entry.denominator !== '').length, [entries])
 
   function updateEntry(index: number, field: 'numerator' | 'denominator' | 'analysis', value: string) {
