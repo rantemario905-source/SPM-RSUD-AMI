@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { LockKeyhole, ShieldCheck } from 'lucide-react'
 import logoRsudAmi from '../assets/logo-rsud-ami.png'
+import { useProgress } from '../components/feedback/progressContext'
 import { AuthContext } from './AuthContext'
 import { getSupabaseClient } from '../lib/supabase'
 import './AuthGate.css'
@@ -16,6 +17,12 @@ function AuthGate({ children }: AuthGateProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const progress = useProgress()
+
+  useEffect(() => {
+    if (loading || submitting) progress.start()
+    else progress.done()
+  }, [loading, submitting, progress])
 
   useEffect(() => {
     if (!client) return

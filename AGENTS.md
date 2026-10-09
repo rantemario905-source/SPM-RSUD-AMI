@@ -15,7 +15,7 @@ Aplikasi pelaporan Standar Pelayanan Minimal (SPM) RSUD, dibangun dengan:
 
 - `src/App.tsx` — router sederhana berbasis state (`AppPage`), memetakan halaman ke komponen fitur.
 - `src/features/` — kode per fitur: `dashboard`, `reports`, `indicators`, `audit`, `settings`, `users`.
-- `src/components/` — komponen bersama (termasuk `layout/AppShell`).
+- `src/components/` — komponen bersama: `layout/AppShell` dan `feedback/ProgressBar` (top progress bar hijau global via `ProgressProvider` + hook `useProgress`).
 - `src/auth/` — autentikasi. Tampilan login memakai tema hijau selaras dashboard (`--forest` / `#173e36`).
 - `src/assets/` — aset yang di-bundle Vite (mis. `logo-rsud-ami.png` untuk UI).
 - `public/` — aset statis disajikan di root (mis. `logo-rsud-ami.png` untuk favicon).

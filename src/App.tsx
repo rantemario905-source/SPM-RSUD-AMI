@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AppShell from './components/layout/AppShell'
+import { useProgress } from './components/feedback/progressContext'
 import AuditPage from './features/audit/AuditPage'
 import DashboardPage from './features/dashboard/DashboardPage'
 import IndicatorsPage from './features/indicators/IndicatorsPage'
@@ -12,6 +13,18 @@ import './styles/app.css'
 
 function App() {
   const [activePage, setActivePage] = useState<AppPage>('dashboard')
+  const progress = useProgress()
+  const firstRender = useRef(true)
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    progress.start()
+    const timer = window.setTimeout(() => progress.done(), 520)
+    return () => window.clearTimeout(timer)
+  }, [activePage, progress])
 
   return (
     <AppShell activePage={activePage} onNavigate={setActivePage}>

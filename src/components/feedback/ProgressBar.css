@@ -1,0 +1,4 @@
+.top-progress { position: fixed; z-index: 999; top: 0; left: 0; right: 0; height: 3px; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+.top-progress.is-visible { opacity: 1; }
+.top-progress-bar { display: block; height: 100%; background: linear-gradient(90deg, #1f5a4a, #3d8b70 45%, #6cc39a); box-shadow: 0 0 10px rgba(61, 139, 112, .6), 0 0 4px rgba(61, 139, 112, .45); transition: width 240ms ease; }
+@media (prefers-reduced-motion: reduce) { .top-progress-bar { transition: none; } }
