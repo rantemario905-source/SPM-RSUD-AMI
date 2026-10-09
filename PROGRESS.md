@@ -5,9 +5,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** ada perubahan belum di-commit (akses menu sesuai peran)
+- **Kondisi working tree:** hanya penyesuaian `PROGRESS.md` pasca-push (belum di-commit)
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SELESAI)
 
 **Judul:** Akses menu & hak tulis sesuai peran
 
@@ -24,7 +24,7 @@ Rincian:
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
 - **Perlu tindak lanjut pengguna:** jalankan migrasi `202610090004_cross_unit_write.sql` di Supabase SQL Editor.
 - Permission profil lama (officer/unit_head/quality/leadership) **sudah dinormalkan** pengguna via `update public.profiles ... case role ...` (2026-10-09).
-- Belum di-commit; menunggu perintah commit & push.
+- Commit: `a6110d0` Add role-based menu access and cross-unit write for quality and leadership (sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SELESAI)
 
@@ -132,6 +132,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `a6110d0` Add role-based menu access and cross-unit write for quality and leadership
 - `8d725da` Add cross-unit read, auto periods, and year filter from real periods
 - `0805809` Tidy PROGRESS task history
 - `e8baccb` Update PROGRESS for delete, dashboard, and period locking
