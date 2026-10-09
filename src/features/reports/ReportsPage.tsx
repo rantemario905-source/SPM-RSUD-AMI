@@ -3,7 +3,7 @@ import { ArrowDownToLine, CalendarDays, CircleAlert, Search } from 'lucide-react
 import { useAuth } from '../../auth/AuthContext'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadProfile, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadProfile, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
 import './ReportsPage.css'
 
 type ReportPeriod = 'monthly' | 'quarterly' | 'yearly'
@@ -46,6 +46,7 @@ function ReportsPage() {
   const [month, setMonth] = useState(10)
   const [quarter, setQuarter] = useState(4)
   const [currentYear] = useState(() => new Date().getFullYear())
+  const [years, setYears] = useState<string[]>(auth.isPreview ? [String(currentYear)] : [])
   const [year, setYear] = useState(String(currentYear))
   const [indicators, setIndicators] = useState<SpmIndicator[]>([])
   const [entriesByMonth, setEntriesByMonth] = useState<Record<string, { numerator: number | null; denominator: number | null; analysis: string }>>({})
@@ -56,11 +57,19 @@ function ReportsPage() {
   useEffect(() => {
     if (!client || !auth.userId) return
     let active = true
-    Promise.all([loadUnits(client), loadProfile(client, auth.userId)])
-      .then(([nextUnits, profile]) => {
+    Promise.all([loadUnits(client), loadProfile(client, auth.userId), loadPeriods(client)])
+      .then(([nextUnits, profile, nextPeriods]) => {
         if (!active) return
         setUnits(profile.unit_id ? nextUnits.filter((item) => item.id === profile.unit_id) : nextUnits)
         setUnitId(profile.unit_id ?? nextUnits[0]?.id ?? '')
+        const availableYears = Array.from(new Set(nextPeriods.map((item) => item.period_start.slice(0, 4)))).sort((left, right) => right.localeCompare(left))
+        setYears(availableYears)
+        setYear((current) => {
+          if (availableYears.includes(current)) return current
+          const thisYear = String(currentYear)
+          if (availableYears.includes(thisYear)) return thisYear
+          return availableYears[0] ?? thisYear
+        })
       })
       .catch((loadError: unknown) => {
         if (active) {
@@ -69,7 +78,7 @@ function ReportsPage() {
         }
       })
     return () => { active = false }
-  }, [client, auth.userId])
+  }, [client, auth.userId, currentYear])
 
   useEffect(() => {
     if (!client || auth.isPreview || !unitId) return
@@ -188,7 +197,7 @@ function ReportsPage() {
 
       <div className="report-filters">
         <label className="report-filter"><span>UNIT / INSTALASI</span><select value={unitId} onChange={(event) => { setLoading(true); setUnitId(event.target.value) }} aria-label="Pilih unit rekap">{units.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-        <label className="report-filter"><span>TAHUN</span><select value={year} onChange={(event) => { setLoading(true); setYear(event.target.value) }} aria-label="Pilih tahun">{[currentYear - 1, currentYear, currentYear + 1].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label className="report-filter"><span>TAHUN</span><select value={year} onChange={(event) => { setLoading(true); setYear(event.target.value) }} aria-label="Pilih tahun">{(years.length ? years : [String(currentYear)]).map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         {period === 'monthly' && <label className="report-filter"><span>BULAN</span><select value={month} onChange={(event) => setMonth(Number(event.target.value))} aria-label="Pilih bulan">{months.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select></label>}
         {period === 'quarterly' && <label className="report-filter"><span>TRIWULAN</span><select value={quarter} onChange={(event) => setQuarter(Number(event.target.value))} aria-label="Pilih triwulan"><option value={1}>Triwulan I · Jan–Mar</option><option value={2}>Triwulan II · Apr–Jun</option><option value={3}>Triwulan III · Jul–Sep</option><option value={4}>Triwulan IV · Okt–Des</option></select></label>}
         <label className="report-search"><span className="sr-only">Cari indikator</span><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari indikator" /></label>

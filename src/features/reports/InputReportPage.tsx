@@ -51,11 +51,10 @@ function InputReportPage() {
     Promise.all([loadUnits(client), loadPeriods(client), loadProfile(client, auth.userId)])
       .then(([nextUnits, nextPeriods, nextProfile]) => {
         if (!active) return
-        const availableUnits = nextProfile.unit_id ? nextUnits.filter((unit) => unit.id === nextProfile.unit_id) : nextUnits
-        setUnits(availableUnits)
+        setUnits(nextUnits)
         setPeriods(nextPeriods)
         setProfile(nextProfile)
-        setUnitId(availableUnits[0]?.id ?? '')
+        setUnitId(nextProfile.unit_id ?? nextUnits[0]?.id ?? '')
         const runningNow = new Date()
         const runningStart = `${runningNow.getFullYear()}-${String(runningNow.getMonth() + 1).padStart(2, '0')}-01`
         setPeriodStart(nextPeriods.find((item) => item.period_start === runningStart)?.period_start ?? nextPeriods[0]?.period_start ?? '')
@@ -102,7 +101,10 @@ function InputReportPage() {
 
   const selectedPeriod = periods.find((period) => period.period_start === periodStart)
   const isLocked = selectedPeriod?.state === 'locked'
-  const canInput = auth.isPreview || Boolean(profile?.permissions.input_reports)
+  const selectedUnit = units.find((item) => item.id === unitId)
+  const ownUnit = units.find((item) => item.id === profile?.unit_id)
+  const ownsSelectedUnit = !profile?.unit_id || unitId === profile.unit_id
+  const canInput = auth.isPreview || (Boolean(profile?.permissions.input_reports) && (ownsSelectedUnit || Boolean(profile?.permissions.manage_users)))
   const completedCount = useMemo(() => entries.filter((entry) => entry.analysis.trim() && entry.numerator !== '' && entry.denominator !== '').length, [entries])
 
   function updateEntry(index: number, field: 'numerator' | 'denominator' | 'analysis', value: string) {
@@ -161,9 +163,10 @@ function InputReportPage() {
       {auth.isPreview && <div className="input-demo-note">Mode pratinjau. Nilai contoh belum disimpan ke database RSUD.</div>}
       {error && <div className="input-demo-note" role="alert"><CircleAlert size={15} /> {error}</div>}
       {periods.length === 0 && !loadingSetup && <div className="input-demo-note">Belum ada periode pelaporan. Jalankan migration data aplikasi di Supabase.</div>}
+      {!ownsSelectedUnit && <div className="input-demo-note">Mode lihat saja. Anda hanya dapat menginput data unit {ownUnit?.name ?? 'Anda'}.</div>}
       <div className={`period-state${isLocked ? ' is-locked' : ''}`}><span className="period-state-icon">{isLocked ? <LockKeyhole size={16} /> : <Check size={16} />}</span><div><strong>{isLocked ? 'Periode terkunci' : 'Periode terbuka'}</strong><small>{isLocked ? 'Input hanya dapat diubah oleh petugas yang memiliki akses khusus.' : 'Perubahan nilai akan dicatat pada laporan periode ini.'}</small></div><span className="completion-count">{completedCount}/{entries.length} indikator terisi</span></div>
       <div className="input-table-wrap"><table className="input-table"><thead><tr><th>INDIKATOR / DEFINISI OPERASIONAL</th><th>STANDAR</th><th>NUMERATOR</th><th>DENOMINATOR</th><th>CAPAIAN</th><th>ANALISA</th></tr></thead><tbody>{entries.map((entry, index) => <tr key={entry.indicatorId}><td className="indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span>{entry.code}</span></td><td className="standard-cell">{entry.standard}</td><td><input aria-label={`Numerator ${entry.name}`} type="number" min="0" step="any" value={entry.numerator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'numerator', event.target.value)} /></td><td><input aria-label={`Denominator ${entry.name}`} type="number" min="0" step="any" value={entry.denominator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'denominator', event.target.value)} /></td><td><strong className="achievement-value">{getAchievement(entry)}</strong></td><td><textarea aria-label={`Analisa ${entry.name}`} value={entry.analysis} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'analysis', event.target.value)} rows={2} /></td></tr>)}</tbody></table>{entries.length === 0 && <div className="input-demo-note">{loadingSetup || loadingEntries ? 'Memuat data input…' : 'Belum ada indikator aktif untuk unit dan periode ini.'}</div>}</div>
-      <div className="input-footer"><span>{saved ? <><Check size={15} /> {auth.isPreview ? 'Tersimpan di pratinjau' : 'Tersimpan di database'}</> : !canInput ? 'Akun ini tidak memiliki izin input laporan.' : 'Simpan perubahan sebelum berpindah halaman.'}</span><button className="primary-button" type="button" disabled={saveDisabled} onClick={() => void saveEntries()}><Save size={15} /> {saving ? 'Menyimpan…' : 'Simpan input'}</button></div>
+      <div className="input-footer"><span>{saved ? <><Check size={15} /> {auth.isPreview ? 'Tersimpan di pratinjau' : 'Tersimpan di database'}</> : !canInput ? (ownsSelectedUnit ? 'Akun ini tidak memiliki izin input laporan.' : `Mode lihat saja untuk ${selectedUnit?.name ?? 'unit lain'}.`) : 'Simpan perubahan sebelum berpindah halaman.'}</span><button className="primary-button" type="button" disabled={saveDisabled} onClick={() => void saveEntries()}><Save size={15} /> {saving ? 'Menyimpan…' : 'Simpan input'}</button></div>
     </section>
   )
 }

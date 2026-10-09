@@ -22,7 +22,9 @@ function App() {
 
   useEffect(() => {
     if (!client || auth.isPreview) return
-    void client.rpc('spm_lock_past_periods').then(() => undefined, () => undefined)
+    void client.rpc('spm_ensure_periods')
+      .then(() => client.rpc('spm_lock_past_periods'), () => undefined)
+      .then(() => undefined, () => undefined)
   }, [client, auth.isPreview])
 
   useEffect(() => {

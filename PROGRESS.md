@@ -5,9 +5,24 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** bersih (semua perubahan sudah di-commit & push)
+- **Kondisi working tree:** ada perubahan belum di-commit (filter tahun Rekap, pembuatan periode otomatis, baca lintas unit)
 
-## Tugas terakhir (SELESAI)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Filter tahun + periode otomatis + baca lintas unit (tulis tetap unit sendiri)
+
+Rincian:
+- Task 1: `ReportsPage.tsx` — pilihan TAHUN diambil dari `report_periods` yang benar-benar ada (semua tahun, termasuk tahun lampau untuk audit), bukan lagi `tahunIni ± 1`; default ke tahun berjalan bila tersedia.
+- Task 2: migrasi `supabase/migrations/202610090002_ensure_reporting_periods.sql` — fungsi `public.spm_ensure_periods()` (security definer) membuat periode Jan–Des tahun berjalan tanpa menghapus tahun lampau; dijadwalkan `pg_cron` `spm-ensure-periods` (best-effort).
+- Task 3: migrasi `supabase/migrations/202610090003_cross_unit_read.sql` — RLS SELECT `reports`, `report_entries`, dan `indicators` aktif dibuka untuk semua `authenticated`; policy insert/update TIDAK diubah sehingga penulisan tetap terbatas unit sendiri (`manage_users` boleh semua unit).
+- `InputReportPage.tsx`: dropdown unit menampilkan semua unit; unit selain milik profil ditampilkan **hanya-baca** (input & tombol simpan nonaktif) dengan catatan "Mode lihat saja".
+- `App.tsx`: memanggil `spm_ensure_periods()` lalu `spm_lock_past_periods()` saat aplikasi dibuka.
+- `README.md` & `AGENTS.md`: dokumentasi diperbarui (bagian "Akses baca dan tulis").
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Perlu tindak lanjut pengguna:** jalankan migrasi `202610090003_cross_unit_read.sql` di Supabase SQL Editor.
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Penguncian otomatis bulan lampau + pembukaan oleh admin
 
