@@ -5,9 +5,31 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** bersih (semua perubahan sudah di-commit & push)
+- **Kondisi working tree:** ada perubahan belum di-commit (top progress bar hijau + perbaikan teks halaman Unit & pengguna)
 
-## Tugas terakhir (SELESAI)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Perbaikan teks halaman Unit & pengguna
+
+Rincian:
+- Hapus catatan `Buat akun terlebih dahulu di Supabase Authentication...` (div `users-security-note`) beserta impor `CircleAlert` di `UsersPage.tsx`.
+- Label `UID pengguna Auth` → `UID Pengguna`.
+- Placeholder `UUID dari Supabase Auth` → `Masukan UID`.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas sebelumnya (BELUM DI-COMMIT)
+
+**Judul:** Top progress/loading bar hijau saat login & buka menu
+
+Rincian:
+- Komponen `src/components/feedback/ProgressBar.tsx` (+ `ProgressBar.css`) dan hook `src/components/feedback/progressContext.ts`.
+- `ProgressProvider` dipasang di `main.tsx`; bar hijau 3px di atas layar, animasi maju bertahap lalu selesai.
+- `AuthGate.tsx`: bar jalan saat memeriksa sesi & saat submit login.
+- `App.tsx`: bar jalan tiap `activePage` berubah (buka menu).
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Pasang logo RSUD AMI + rombak tampilan login (tema hijau dashboard)
 
