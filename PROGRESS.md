@@ -18,9 +18,9 @@ Rincian:
 - Cakupan unit mengikuti profil: `unit_id` diisi → hanya unit itu; kosong (admin/quality/leadership) → semua unit.
 - `AppShell.tsx`: tombol lonceng statis diganti `<NotificationBell onNavigate={onNavigate} />`; impor `Bell` dipindah ke komponen.
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
-- Belum di-commit; menunggu perintah commit & push.
+- Commit: `de9078f` Add topbar notification bell and tidy audit page display (sudah di-push ke `main`).
 
-## Tugas sebelumnya (BELUM DI-COMMIT)
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Rapikan tampilan menu Perubahan (Audit)
 
@@ -30,7 +30,7 @@ Rincian:
 - `AuditPage.css`: `.audit-values` (dua kotak) diganti `.audit-changes` (satu blok teks).
 - `data/demo.ts`: `demoAudit` disesuaikan ke bentuk baru (`title`, `changes`, `person`, `date`).
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
-- Belum di-commit; menunggu perintah commit & push.
+- Commit: `de9078f` (digabung dengan fitur notifikasi lonceng).
 
 ## Tugas sebelumnya (SELESAI)
 
@@ -157,6 +157,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `de9078f` Add topbar notification bell and tidy audit page display
 - `a6110d0` Add role-based menu access and cross-unit write for quality and leadership
 - `8d725da` Add cross-unit read, auto periods, and year filter from real periods
 - `0805809` Tidy PROGRESS task history
