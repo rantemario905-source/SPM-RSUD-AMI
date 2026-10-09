@@ -5,9 +5,48 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** bersih (semua perubahan sudah di-commit & push)
+- **Kondisi working tree:** ada perubahan belum di-commit (penguncian periode lampau otomatis)
 
-## Tugas terakhir (SELESAI)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Penguncian otomatis bulan lampau + pembukaan oleh admin
+
+Rincian:
+- Migrasi baru `supabase/migrations/202610090001_auto_lock_past_periods.sql`:
+  - Kolom `report_periods.manually_opened boolean not null default false`.
+  - Fungsi `public.spm_lock_past_periods()` (security definer): mengunci periode `open` dengan `period_end < current_date` dan `manually_opened = false`.
+  - Jadwal harian `pg_cron` job `spm-lock-past-periods` (best-effort; lanjut tanpa error bila pg_cron belum aktif).
+- `App.tsx`: memanggil `rpc('spm_lock_past_periods')` tiap aplikasi dibuka (fallback bila pg_cron mati).
+- `PeriodsPage.tsx`: tombol Buka/Kunci hanya tampil untuk `admin`/permission `manage_periods`; toggle membuka menandai `manually_opened = true`; teks diperbarui.
+- `README.md`: dokumentasi migrasi 003 + bagian penguncian otomatis.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Migrasi 003 `202610090001_auto_lock_past_periods.sql` **sudah dijalankan** oleh pengguna di Supabase SQL Editor (2026-10-09).
+- Catatan: bila `pg_cron` belum aktif, auto-lock tetap berjalan saat aplikasi dibuka; aktifkan ekstensi `pg_cron` bila ingin penjadwalan harian murni dari database.
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (BELUM DI-COMMIT)
+
+**Judul:** Hapus kartu metrik "Periode terkunci" di Ringkasan
+
+Rincian:
+- Kartu dianggap tidak penting/duplikat dengan panel "Perlu perhatian" & kolom KONDISI.
+- `DashboardPage.tsx`: hapus `<article>` kartu + properti `locked` dari state `totals`.
+- `DashboardPage.css`: `.metric-grid` dari 4 → 3 kolom.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas sebelumnya (BELUM DI-COMMIT)
+
+**Judul:** Hapus unit terdaftar & profil pengguna oleh admin
+
+Rincian:
+- `UsersPage.tsx`: tambah kolom `AKSI` + tombol hapus (`Trash2`) di tabel unit terdaftar & profil pengguna.
+- Tombol hanya tampil bila pengguna saat ini berperan `admin` atau punya permission `manage_users` (dicek dari profil sendiri).
+- Aksi hapus pakai `window.confirm`, memanggil `delete()` ke tabel `units`/`profiles`, lalu memperbarui daftar & menampilkan pesan sukses/galat.
+- Hapus profil hanya melepas baris profil (akun Auth tidak dihapus); RLS & FK tetap menjaga integritas.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Belum di-commit; menunggu perintah commit & push.
+
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Perbaikan teks halaman Unit & pengguna
 
