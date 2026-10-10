@@ -5,9 +5,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-10
-- **Kondisi working tree:** ada perubahan belum di-commit (fitur cetak PDF laporan resmi di halaman Rekap & unduh)
+- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `5e628fa`)
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Cetak PDF laporan resmi (kop, judul, periode, tabel, tanda tangan)
 
@@ -22,6 +22,7 @@ Rincian:
 - `ReportsPage.css`: gaya `.reports-heading-actions` + `@media print` (sembunyikan sidebar/topbar/footer & elemen non-cetak, header tabel berulang antar-halaman, baris tidak terpotong).
 - Tabel cetak memakai **semua** indikator unit (bukan hasil filter pencarian layar).
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Commit: `5e628fa` Add printable PDF report with letterhead and drop CSV export (sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SELESAI)
 
@@ -177,11 +178,13 @@ Commit terkait:
 
 ## Langkah berikutnya
 
-- Menunggu perintah pengguna untuk commit & push (mencakup fitur cetak PDF), lalu deploy via **Actions → Deploy to GitHub Pages → Run workflow**.
+- Pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web untuk menerbitkan fitur cetak PDF.
 - Lanjut ke **Rekap lintas unit** (per bulan), kemudian **manajemen pengguna lengkap**.
+- Pengaturan **blok tanda tangan** cetak PDF menyusul setelah pengguna berdiskusi dengan atasan.
 
 ## Riwayat singkat (git)
 
+- `5e628fa` Add printable PDF report with letterhead and drop CSV export
 - `3d8b7ff` Update PROGRESS after notification bell
 - `de9078f` Add topbar notification bell and tidy audit page display
 - `a6110d0` Add role-based menu access and cross-unit write for quality and leadership
