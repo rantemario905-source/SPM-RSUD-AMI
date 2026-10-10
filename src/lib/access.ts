@@ -1,13 +1,13 @@
 import type { AppPage } from '../types/spm'
 
-const allPages: AppPage[] = ['dashboard', 'entry', 'reports', 'indicators', 'periods', 'audit', 'users']
+const allPages: AppPage[] = ['dashboard', 'entry', 'reports', 'crossunit', 'indicators', 'periods', 'audit', 'users']
 const basePages: AppPage[] = ['dashboard', 'entry', 'reports']
 
 const rolePages: Record<string, AppPage[]> = {
   officer: ['dashboard', 'entry', 'reports'],
   unit_head: ['dashboard', 'entry', 'reports', 'indicators'],
-  quality: ['dashboard', 'entry', 'reports', 'indicators'],
-  leadership: ['dashboard', 'entry', 'reports', 'indicators'],
+  quality: ['dashboard', 'entry', 'reports', 'crossunit', 'indicators'],
+  leadership: ['dashboard', 'entry', 'reports', 'crossunit', 'indicators'],
   admin: allPages,
 }
 

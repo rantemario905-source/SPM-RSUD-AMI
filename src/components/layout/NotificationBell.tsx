@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, CircleAlert, Info } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, type SpmIndicator } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel } from '../../lib/spm-data'
+import { achievement, formatValue, meetsStandard, parseTarget } from '../../lib/spm-achievement'
 import type { AppPage } from '../../types/spm'
 import './NotificationBell.css'
 
@@ -17,29 +18,6 @@ const previewNotifications: NotificationItem[] = [
 ]
 
 const toneIcon = { danger: CircleAlert, warning: CircleAlert, info: Info }
-
-function parseTarget(standard: string) {
-  const text = (standard ?? '').trim()
-  const match = text.match(/(\d+(?:[.,]\d+)?)/)
-  if (!match) return null
-  const target = Number(match[1].replace(',', '.'))
-  const comparator = text.startsWith('≤') || text.startsWith('<') ? '<=' : '>='
-  return { comparator, target }
-}
-
-function achievement(entry: { numerator: number | null; denominator: number | null }, indicator: SpmIndicator) {
-  const numerator = entry.numerator
-  const denominator = entry.denominator
-  if (numerator === null || denominator === null || denominator <= 0) return null
-  if (indicator.calculation_method === 'average') return numerator / denominator
-  if (indicator.calculation_method === 'numerator') return numerator
-  if (indicator.calculation_method === 'scaled') return (numerator / denominator) * (indicator.calculation_scale ?? 1000)
-  return (numerator / denominator) * 100
-}
-
-function formatValue(value: number) {
-  return value.toLocaleString('id-ID', { maximumFractionDigits: 2 })
-}
 
 function NotificationBell({ onNavigate }: NotificationBellProps) {
   const auth = useAuth()
@@ -117,7 +95,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
             const target = parseTarget(indicator.standard)
             const value = achievement(entry, indicator)
             if (!target || value === null) continue
-            const failing = target.comparator === '<=' ? value > target.target : value < target.target
+            const failing = !meetsStandard(value, target)
             if (!failing) continue
             belowStandard += 1
             if (belowStandard <= 4) {

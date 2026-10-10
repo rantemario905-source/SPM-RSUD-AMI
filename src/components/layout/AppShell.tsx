@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Activity, BarChart3, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { Activity, BarChart3, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, ShieldCheck, Table2, Users } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { allowedPages } from '../../lib/access'
 import NotificationBell from './NotificationBell'
@@ -18,6 +18,7 @@ const navigation: { section: string; items: { id: AppPage; label: string; icon: 
     { id: 'dashboard', label: 'Ringkasan', icon: LayoutDashboard },
     { id: 'entry', label: 'Input laporan', icon: ClipboardList },
     { id: 'reports', label: 'Rekap & unduh', icon: FileSpreadsheet },
+    { id: 'crossunit', label: 'Rekap lintas unit', icon: Table2 },
   ] },
   { section: 'PENGELOLAAN', items: [
     { id: 'indicators', label: 'Indikator SPM', icon: BarChart3 },

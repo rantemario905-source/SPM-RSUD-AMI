@@ -9,6 +9,7 @@ import DashboardPage from './features/dashboard/DashboardPage'
 import IndicatorsPage from './features/indicators/IndicatorsPage'
 import InputReportPage from './features/reports/InputReportPage'
 import ReportsPage from './features/reports/ReportsPage'
+import CrossUnitPage from './features/reports/CrossUnitPage'
 import PeriodsPage from './features/settings/PeriodsPage'
 import UsersPage from './features/users/UsersPage'
 import type { AppPage } from './types/spm'
@@ -45,6 +46,7 @@ function App() {
     <AppShell activePage={page} onNavigate={setActivePage}>
       {page === 'dashboard' && <DashboardPage onNavigate={setActivePage} />}
       {page === 'reports' && <ReportsPage />}
+      {page === 'crossunit' && <CrossUnitPage />}
       {page === 'entry' && <InputReportPage />}
       {page === 'periods' && <PeriodsPage />}
       {page === 'audit' && <AuditPage />}

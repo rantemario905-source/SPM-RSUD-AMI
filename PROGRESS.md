@@ -5,9 +5,29 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-10
-- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `5e628fa`)
+- **Kondisi working tree:** ada perubahan **belum di-commit** (fitur Rekap lintas unit). Commit terakhir `440892b`.
 
-## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Rekap lintas unit per bulan (matriks indikator × unit)
+
+Rincian:
+- File baru `src/lib/spm-achievement.ts`: util capaian bersama — `parseTarget(standard)` (arah `≤`/`<` = batas atas, selain itu minimum), `achievement(entry, indicator)` (percentage/average/scaled/numerator; `null` bila denominator ≤ 0), `meetsStandard`, `formatValue`, `formatAchievement`. `NotificationBell.tsx` direfaktor memakai util ini (definisi lokal dihapus).
+- `src/types/spm.ts`: `AppPage` ditambah `'crossunit'`.
+- `src/lib/access.ts`: `crossunit` untuk `quality`, `leadership`, `admin` (bukan officer/unit_head).
+- `src/components/layout/AppShell.tsx`: item menu **Rekap lintas unit** (ikon `Table2`) di grup RUANG KERJA.
+- `src/App.tsx`: impor & render `CrossUnitPage` untuk `page === 'crossunit'`.
+- File baru `src/features/reports/CrossUnitPage.tsx` + `CrossUnitPage.css`:
+  - Filter **Periode** (default bulan berjalan), **Unit**, dan **Cari indikator**.
+  - **A. Ringkasan per unit** — kolom Unit · Indikator · Terisi · Kelengkapan (%) · Memenuhi standar (met/total + %) · Status. Diurut status terburuk lalu kelengkapan terendah. Klik baris → buka **C**.
+  - **B. Matriks indikator × unit** — baris = indikator, kolom = unit; sel hijau (memenuhi standar), merah (di bawah), `–` (belum ada data / tidak berlaku), scroll horizontal.
+  - **C. Detail unit** — Indikator · Standar · Numerator · Denominator · Capaian · Status · Analisa, muncul saat baris ringkasan dipilih.
+  - Aturan Status: **Baik** (kelengkapan 100% & semua memenuhi), **Cukup** (kelengkapan ≥ 80%), **Perlu perhatian** (< 80%), **Belum diisi** (0 entri). "Memenuhi standar" = pembilang indikator yang memenuhi, penyebut jumlah indikator aktif unit.
+  - Indikator berlaku per unit = `active` dengan `unit_id` kosong (global) atau milik unit.
+  - Mode pratinjau memakai `sampleUnits`. Cetak PDF halaman ini **ditunda** (keputusan pengguna).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+
+## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Cetak PDF laporan resmi (kop, judul, periode, tabel, tanda tangan)
 
@@ -170,16 +190,17 @@ Commit terkait:
 
 ## Rencana fitur yang disetujui (belum dikerjakan)
 
-- **Rekap lintas unit** (matriks unit × indikator, per **bulan** dulu; menu untuk admin/mutu/pimpinan). Agregasi triwulan/tahunan menyusul.
 - **Manajemen pengguna lengkap**: edit profil, aktif/nonaktif (`profiles.active` + cek RLS/AuthGate), dan reset kata sandi dari admin via `resetPasswordForEmail` (butuh kolom `profiles.email` + halaman atur ulang kata sandi + Redirect URL Supabase).
+- **Agregasi triwulan/tahunan** untuk Rekap lintas unit (saat ini baru per bulan).
+- **Cetak PDF halaman Rekap lintas unit** (ditunda atas keputusan pengguna).
 
 - **Blok tanda tangan** pada cetak PDF sementara dibiarkan apa adanya (Dibuat oleh / Diverifikasi oleh / Disahkan oleh) — **pengaturan penandatangan menunggu diskusi pengguna dengan atasan**.
 - **Status fitur cetak PDF:** dianggap **cukup untuk sementara** oleh pengguna (kop & format sudah disetujui).
 
 ## Langkah berikutnya
 
-- Pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web untuk menerbitkan fitur cetak PDF.
-- Lanjut ke **Rekap lintas unit** (per bulan), kemudian **manajemen pengguna lengkap**.
+- Perintahkan **commit & push** fitur Rekap lintas unit (setelah diverifikasi di lokal), lalu pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web.
+- Lanjut ke **manajemen pengguna lengkap**.
 - Pengaturan **blok tanda tangan** cetak PDF menyusul setelah pengguna berdiskusi dengan atasan.
 
 ## Riwayat singkat (git)

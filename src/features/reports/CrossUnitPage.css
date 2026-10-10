@@ -1,0 +1,70 @@
+.cross-page { animation: cross-enter 240ms ease-out both; }
+.cross-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.cross-page .eyebrow { color: #82918a; font-size: 9px; font-weight: 700; letter-spacing: .13em; }
+.cross-heading h1 { margin: 6px 0 3px; color: var(--ink); font-family: var(--font-display); font-size: 27px; font-weight: 700; line-height: 1.25; }
+.cross-heading p { color: var(--muted); font-size: 12px; }
+.cross-note { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; padding: 10px 13px; color: #705b25; background: #fff9e9; border: 1px solid #f1e5c3; border-radius: 5px; font-size: 10px; }
+.cross-note[role='alert'] { color: #a8533d; background: #faece7; border-color: #f0d5cc; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.cross-filters { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; padding: 13px; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+.cross-filter { display: grid; gap: 5px; color: #87938d; font-size: 8px; font-weight: 700; letter-spacing: .05em; }
+.cross-filter select { height: 34px; padding: 0 10px; color: #3e5047; background: #fff; border: 1px solid #dfe7e0; border-radius: 4px; outline: 0; font-size: 10px; }
+.cross-filter select:focus, .cross-search input:focus { border-color: #70a187; box-shadow: 0 0 0 2px #e7f1e9; }
+.cross-search { display: flex; height: 34px; min-width: 200px; align-items: center; gap: 7px; margin-left: auto; padding: 0 9px; color: #89958f; border: 1px solid #dfe7e0; border-radius: 4px; }
+.cross-search input { width: 100%; color: #34443e; background: transparent; border: 0; outline: 0; font-size: 10px; }
+.cross-section { margin-bottom: 20px; }
+.cross-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+.cross-section-head h2 { margin: 0; color: var(--ink); font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+.cross-section-head > span { color: #839089; font-size: 10px; }
+.cross-close { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; color: #53645d; background: #fff; border: 1px solid var(--line); border-radius: 5px; font-size: 9px; font-weight: 600; }
+.cross-close:hover { color: #315443; background: #f7faf7; }
+.cross-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+.cross-summary-table, .cross-matrix-table, .cross-detail-table { width: 100%; border-collapse: collapse; text-align: left; }
+.cross-summary-table { white-space: nowrap; }
+.cross-matrix-table { white-space: nowrap; }
+.cross-summary-table th, .cross-matrix-table th, .cross-detail-table th { padding: 11px 12px; color: #89958f; background: #fbfcfb; border-bottom: 1px solid var(--line); font-size: 8px; font-weight: 700; letter-spacing: .06em; }
+.cross-summary-table td, .cross-matrix-table td, .cross-detail-table td { padding: 11px 12px; color: #66756e; border-bottom: 1px solid #eff2ef; font-size: 10px; }
+.cross-summary-table tr:last-child td, .cross-matrix-table tr:last-child td, .cross-detail-table tr:last-child td { border-bottom: 0; }
+.cross-summary-table td strong, .cross-indicator-cell strong { color: #35463f; font-weight: 600; }
+.cross-summary-table tbody tr { cursor: pointer; }
+.cross-summary-table tbody tr:hover { background: #f7faf7; }
+.cross-summary-table tbody tr.is-selected { background: #eef5f0; }
+.cross-summary-table td small, .cross-detail-table td small { margin-left: 2px; color: #9aa49e; font-size: 8px; }
+.cross-progress { display: flex; align-items: center; gap: 7px; }
+.cross-progress > span { width: 62px; height: 5px; overflow: hidden; background: #edf0ed; border-radius: 5px; }
+.cross-progress i { display: block; height: 100%; background: #4b9675; border-radius: 5px; }
+.cross-progress small { color: #77857e; font-size: 9px; }
+.cross-status { display: inline-flex; min-height: 21px; align-items: center; padding: 0 8px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+.status-baik { color: #317355; background: #e9f3ec; }
+.status-cukup { color: #916a1b; background: #fbf3df; }
+.status-perhatian { color: #a8533d; background: #faece7; }
+.status-kosong { color: #687875; background: #edf1ef; }
+.cross-indicator-col { min-width: 240px; }
+.cross-indicator-cell { min-width: 240px; max-width: 320px; white-space: normal; }
+.cross-indicator-cell strong, .cross-indicator-cell small { display: block; }
+.cross-indicator-cell small { margin-top: 3px; color: #84918a; line-height: 1.4; }
+.cross-standard-cell { color: #4b5a53; }
+.cross-cell { text-align: center; font-variant-numeric: tabular-nums; }
+.cross-cell.tone-good { color: #2f7a54; background: #eef7f0; font-weight: 600; }
+.cross-cell.tone-bad { color: #b1503a; background: #fdf0ec; font-weight: 600; }
+.cross-cell.tone-empty, .cross-cell.tone-na { color: #a0aaa3; }
+.cross-cell.tone-na { background: #f8faf8; }
+.cross-detail-table { table-layout: fixed; min-width: 980px; }
+.cross-detail-table th:nth-child(1) { width: 24%; }
+.cross-detail-table th:nth-child(2) { width: 13%; }
+.cross-detail-table th:nth-child(3), .cross-detail-table th:nth-child(4) { width: 9%; }
+.cross-detail-table th:nth-child(5) { width: 12%; }
+.cross-detail-table th:nth-child(6) { width: 12%; }
+.cross-analysis-cell { color: #66756e; white-space: normal; line-height: 1.5; }
+.cross-empty { padding: 30px 16px; color: #7d8a84; text-align: center; font-size: 11px; }
+.cross-footnote { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; padding: 11px 13px; color: #74817b; background: #edf4ef; border-left: 3px solid #599476; font-size: 10px; }
+.cross-footnote b { color: #355344; }
+@keyframes cross-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 680px) {
+  .cross-heading { align-items: flex-start; flex-direction: column; }
+  .cross-heading h1 { font-size: 24px; }
+  .cross-filters { align-items: stretch; gap: 9px; padding: 10px; }
+  .cross-filter { flex: 1 1 calc(50% - 9px); }
+  .cross-filter select { width: 100%; min-width: 0; }
+  .cross-search { flex: 1 1 100%; min-width: 0; margin-left: 0; }
+}
