@@ -5,9 +5,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-10
-- **Kondisi working tree:** ada perubahan **belum di-commit** (fitur Rekap lintas unit). Commit terakhir `440892b`.
+- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `a1b07b3`).
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Rekap lintas unit per bulan (matriks indikator × unit)
 
@@ -26,6 +26,7 @@ Rincian:
   - Indikator berlaku per unit = `active` dengan `unit_id` kosong (global) atau milik unit.
   - Mode pratinjau memakai `sampleUnits`. Cetak PDF halaman ini **ditunda** (keputusan pengguna).
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Commit: `a1b07b3` Add cross-unit monthly recap with indicator-by-unit matrix (sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -199,12 +200,14 @@ Commit terkait:
 
 ## Langkah berikutnya
 
-- Perintahkan **commit & push** fitur Rekap lintas unit (setelah diverifikasi di lokal), lalu pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web.
+- Pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web untuk menerbitkan fitur Rekap lintas unit.
 - Lanjut ke **manajemen pengguna lengkap**.
 - Pengaturan **blok tanda tangan** cetak PDF menyusul setelah pengguna berdiskusi dengan atasan.
 
 ## Riwayat singkat (git)
 
+- `a1b07b3` Add cross-unit monthly recap with indicator-by-unit matrix
+- `440892b` Update PROGRESS after PDF report commit
 - `5e628fa` Add printable PDF report with letterhead and drop CSV export
 - `3d8b7ff` Update PROGRESS after notification bell
 - `de9078f` Add topbar notification bell and tidy audit page display
