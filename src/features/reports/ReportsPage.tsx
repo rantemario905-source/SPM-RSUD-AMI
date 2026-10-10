@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowDownToLine, CalendarDays, CircleAlert, Search } from 'lucide-react'
+import { CalendarDays, CircleAlert, Printer, Search } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
+import logoRsudAmi from '../../assets/logo-rsud-ami.png'
+import logoKutaiKartanegara from '../../assets/logo kutai kartanegara.png'
 import './ReportsPage.css'
 
 type ReportPeriod = 'monthly' | 'quarterly' | 'yearly'
 
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+const printDate = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
 
 function getAchievement(entry: IndicatorEntry) {
   const numerator = Number(entry.numerator)
@@ -146,51 +150,13 @@ function ReportsPage() {
     return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
   }
 
-  function csvCell(value: string) {
-    return /[",;\\\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
-  }
-
-  function downloadReport() {
-    const unitCode = unit?.code ?? 'unit'
-    const periodName = period === 'monthly' ? months[month - 1] : period === 'quarterly' ? `Triwulan ${quarter}` : 'Tahunan'
-    const lines: string[] = []
-    lines.push('RSUD AMI - Rekap & Laporan SPM')
-    lines.push(`Unit: ${unit?.name ?? 'Semua unit'} | Periode: ${periodName} ${year} | Diunduh: ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date())}`)
-    lines.push('')
-    const baseHeaders = ['No', 'Indikator', 'Definisi operasional', 'Standar']
-    const periodHeaders = period === 'monthly'
-      ? ['Numerator', 'Denominator', 'Capaian', 'Analisa']
-      : periodMonths.map((monthNumber) => months[monthNumber - 1])
-    lines.push([...baseHeaders, ...periodHeaders].map(csvCell).join(';'))
-    for (const [index, entry] of visibleIndicators.entries()) {
-      const stored = getStoredEntry(entry, month)
-      const row = [String(index + 1), entry.name, entry.definition, entry.standard]
-      const periodCells = period === 'monthly'
-        ? [
-            stored?.numerator ?? '—',
-            stored?.denominator ?? '—',
-            getMonthlyValue(entry, month),
-            stored?.analysis || '—',
-          ]
-        : periodMonths.map((monthNumber) => getMonthlyValue(entry, monthNumber))
-      lines.push([...row, ...periodCells].map(csvCell).join(';'))
-    }
-    const blob = new Blob([`\uFEFF${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `SPM_${unitCode}_${periodName.replace(/\s+/g, '')}_${year}.csv`
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <section className="reports-page">
       <div className="reports-heading">
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
-        <button className="secondary-button" type="button" disabled={loading || visibleIndicators.length === 0} onClick={downloadReport}><ArrowDownToLine size={15} /> Unduh laporan</button>
+        <div className="reports-heading-actions">
+          <button className="secondary-button" type="button" disabled={loading || indicatorEntries.length === 0} onClick={() => window.print()}><Printer size={15} /> Cetak PDF</button>
+        </div>
       </div>
       {auth.isPreview && <div className="reports-demo-note">Data simulasi untuk pratinjau; bukan data laporan resmi.</div>}
       {error && <div className="reports-demo-note" role="alert"><CircleAlert size={15} /> {error}</div>}
@@ -218,6 +184,57 @@ function ReportsPage() {
       </div>
 
       <div className="report-format-note"><strong>Format rekap:</strong> bulanan memuat numerator, denominator, capaian, dan analisa. Rekap triwulan menampilkan Januari–Maret, April–Juni, Juli–September, atau Oktober–Desember sebagai kolom terpisah. Rekap tahunan menampilkan Januari–Desember.</div>
+
+      <div className="report-print" aria-hidden="true">
+        <header className="report-print-kop">
+          <img className="report-print-logo" src={logoKutaiKartanegara} alt="Logo Kutai Kartanegara" />
+          <div className="report-print-identity">
+            <strong>PEMERINTAH KUTAI KARTANEGARA</strong>
+            <strong>DINAS KESEHATAN</strong>
+            <strong>UNIT ORGANISASI BERSIFAT KHUSUS</strong>
+            <strong>RUMAH SAKIT UMUM DAERAH AJI MUHAMMAD IDRIS</strong>
+            <span>Jalan Poros Muara Badak-Marangkayu, RT02 Sambera Jembatan, Desa Tanjung Limau,</span>
+            <span>Kecamatan Muara Badak, Kode Pos 75382, Pos-el : rsudajimuhammadidris1@gmail.com</span>
+          </div>
+          <img className="report-print-logo" src={logoRsudAmi} alt="Logo RSUD AMI" />
+        </header>
+        <h1 className="report-print-title">Laporan Capaian Standar Pelayanan Minimal</h1>
+        <dl className="report-print-meta">
+          <div><dt>Unit / Instalasi</dt><dd>{unit?.name ?? '—'}</dd></div>
+          <div><dt>Periode</dt><dd>{periodName} {year}</dd></div>
+          <div><dt>Jumlah indikator</dt><dd>{indicatorEntries.length}</dd></div>
+        </dl>
+        <table className="report-print-table">
+          <colgroup>
+            <col style={{ width: '4%' }} />
+            <col style={{ width: period === 'monthly' ? '19%' : period === 'yearly' ? '20%' : '21%' }} />
+            <col style={{ width: period === 'monthly' ? '22%' : period === 'yearly' ? '21%' : '24%' }} />
+            <col style={{ width: period === 'monthly' ? '9%' : period === 'yearly' ? '7%' : '10%' }} />
+            {period === 'monthly'
+              ? <><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '19%' }} /></>
+              : periodMonths.map((monthNumber) => <col key={monthNumber} style={{ width: `${(period === 'yearly' ? 48 : 41) / periodMonths.length}%` }} />)}
+          </colgroup>
+          <thead><tr><th>No</th><th>Indikator</th><th>Definisi Operasional</th><th className="rp-center">Standar</th>{period === 'monthly' ? <><th className="rp-center">Numerator</th><th className="rp-center">Denominator</th><th className="rp-center">Capaian</th><th>Analisa</th></> : periodMonths.map((monthNumber) => <th key={monthNumber} className="rp-center">{period === 'yearly' ? shortMonths[monthNumber - 1] : months[monthNumber - 1]}</th>)}</tr></thead>
+          <tbody>{indicatorEntries.map((entry, index) => {
+            const stored = getStoredEntry(entry, month)
+            return <tr key={entry.code}>
+              <td className="rp-center">{index + 1}</td>
+              <td className="report-print-indicator">{entry.name}</td>
+              <td className="report-print-definition">{entry.definition}</td>
+              <td className="rp-center">{entry.standard}</td>
+              {period === 'monthly'
+                ? <><td className="rp-center">{stored?.numerator || '—'}</td><td className="rp-center">{stored?.denominator || '—'}</td><td className="rp-center">{getMonthlyValue(entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
+                : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getMonthlyValue(entry, monthNumber)}</td>)}
+            </tr>
+          })}</tbody>
+        </table>
+        <p className="report-print-place">{printDate}</p>
+        <div className="report-print-signatures">
+          <div className="report-print-signature"><span>Dibuat oleh,</span><em>Petugas {unit?.name ?? 'Unit'}</em><i /><strong>(..........................................)</strong></div>
+          <div className="report-print-signature"><span>Diverifikasi oleh,</span><em>Panitia Mutu</em><i /><strong>(..........................................)</strong></div>
+          <div className="report-print-signature"><span>Disahkan oleh,</span><em>Direktur RSUD AMI</em><i /><strong>(..........................................)</strong></div>
+        </div>
+      </div>
     </section>
   )
 }

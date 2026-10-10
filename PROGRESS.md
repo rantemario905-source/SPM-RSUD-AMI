@@ -4,10 +4,26 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 ## Status saat ini
 
-- **Tanggal update terakhir:** 2026-10-09
-- **Kondisi working tree:** ada perubahan belum di-commit (rapikan tampilan menu Perubahan + fitur notifikasi lonceng)
+- **Tanggal update terakhir:** 2026-10-10
+- **Kondisi working tree:** ada perubahan belum di-commit (fitur cetak PDF laporan resmi di halaman Rekap & unduh)
 
 ## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Cetak PDF laporan resmi (kop, judul, periode, tabel, tanda tangan)
+
+Rincian:
+- `ReportsPage.tsx`: **tombol "Unduh laporan" (CSV) dihapus**; kini hanya tombol **Cetak PDF** (`Printer`). Fungsi `downloadReport`/`csvCell` dan impor `ArrowDownToLine` ikut dihapus. Blok `.report-print` (tersembunyi di layar, `aria-hidden`) berisi **kop RSUD** (logo + nama), **judul** "Laporan Capaian Standar Pelayanan Minimal", **meta** (unit, periode, jumlah indikator), **tabel**, tanggal cetak, dan **blok tanda tangan** 3 kolom (Petugas unit, Panitia Mutu, Direktur RSUD AMI).
+- Format cetak: **landscape ukuran 8.5 × 13 in**, **font Times New Roman**, kolom dibuat ramping (`table-layout: fixed` + `<colgroup>`), kolom **Definisi Operasional** ditambahkan **setelah Indikator** (wrap text), kolom Standar/Numerator/Denominator/Capaian **rata tengah (middle)**, **kode indikator tidak dicetak**.
+- Penyesuaian lebar kolom: khusus **tahunan**, kolom Standar dikecilkan (10% → 7%) dan Definisi (24% → 21%) agar 12 kolom bulan lebih lebar (±48% total); triwulan/bulanan tetap.
+- Label bulan pada cetakan **tahunan** disingkat (`shortMonths`: Jan, Feb, Mar, Apr, Mei, Jun, Jul, Agu, Sep, Okt, Nov, Des). Hanya memengaruhi header cetak tahunan; triwulan, bulanan, tampilan layar, dan database tidak berubah.
+- Kop cetak diperbarui: **dua logo berdampingan** di kiri (logo `assets/logo kutai kartanegara.png` lalu `assets/logo-rsud-ami.png`), disusul teks tengah 4 baris tebal (PEMERINTAH KUTAI KARTANEGARA / DINAS KESEHATAN / UNIT ORGANISASI BERSIFAT KHUSUS / RUMAH SAKIT UMUM DAERAH AJI MUHAMMAD IDRIS) + 2 baris alamat kecil tanpa tebal (Jl. Poros Muara Badak-Marangkayu … Kode Pos 75382, Pos-el). Judul laporan & blok tanda tangan tetap.
+- Tata letak kop lanjutan: **logo Kutai Kartanegara di kiri teks, logo RSUD AMI di kanan teks**; tinggi logo disamakan dengan tinggi blok teks kop (`height: 100px`, `aspect-ratio: 1`, `object-fit: contain`); `letter-spacing` ditambah (`.06em` untuk 4 baris judul, `.02em` untuk alamat) agar rapi.
+- Cetak memakai `window.print()` tanpa dependensi baru; `printDate` dihitung niveau modul (mengikuti pola `DashboardPage`) agar lolos aturan react purity.
+- `ReportsPage.css`: gaya `.reports-heading-actions` + `@media print` (sembunyikan sidebar/topbar/footer & elemen non-cetak, header tabel berulang antar-halaman, baris tidak terpotong).
+- Tabel cetak memakai **semua** indikator unit (bukan hasil filter pencarian layar).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+
+## Tugas sebelumnya (SELESAI)
 
 **Judul:** Fungsi tombol notifikasi (lonceng) di topbar
 
@@ -151,12 +167,22 @@ Commit terkait:
 - Setiap ada perubahan kode/file, `PROGRESS.md` DAN `AGENTS.md` harus diperbarui pada perubahan yang sama (lihat alur kerja di `AGENTS.md`).
 - **Alur commit/push/deploy:** pengguna memerintahkan commit & push setelah fix lokal selesai → agen otomatis push ke `main` di GitHub → pengguna tinggal menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web. Jangan commit/push tanpa perintah eksplisit.
 
+## Rencana fitur yang disetujui (belum dikerjakan)
+
+- **Rekap lintas unit** (matriks unit × indikator, per **bulan** dulu; menu untuk admin/mutu/pimpinan). Agregasi triwulan/tahunan menyusul.
+- **Manajemen pengguna lengkap**: edit profil, aktif/nonaktif (`profiles.active` + cek RLS/AuthGate), dan reset kata sandi dari admin via `resetPasswordForEmail` (butuh kolom `profiles.email` + halaman atur ulang kata sandi + Redirect URL Supabase).
+
+- **Blok tanda tangan** pada cetak PDF sementara dibiarkan apa adanya (Dibuat oleh / Diverifikasi oleh / Disahkan oleh) — **pengaturan penandatangan menunggu diskusi pengguna dengan atasan**.
+- **Status fitur cetak PDF:** dianggap **cukup untuk sementara** oleh pengguna (kop & format sudah disetujui).
+
 ## Langkah berikutnya
 
-- Menunggu perintah pengguna untuk commit & push (mencakup rapikan menu Perubahan + notifikasi lonceng), lalu deploy via **Actions → Deploy to GitHub Pages → Run workflow**.
+- Menunggu perintah pengguna untuk commit & push (mencakup fitur cetak PDF), lalu deploy via **Actions → Deploy to GitHub Pages → Run workflow**.
+- Lanjut ke **Rekap lintas unit** (per bulan), kemudian **manajemen pengguna lengkap**.
 
 ## Riwayat singkat (git)
 
+- `3d8b7ff` Update PROGRESS after notification bell
 - `de9078f` Add topbar notification bell and tidy audit page display
 - `a6110d0` Add role-based menu access and cross-unit write for quality and leadership
 - `8d725da` Add cross-unit read, auto periods, and year filter from real periods
