@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { KeyRound, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { LockKeyhole, ShieldCheck } from 'lucide-react'
 import logoRsudAmi from '../assets/logo-rsud-ami.png'
 import { useProgress } from '../components/feedback/progressContext'
 import { AuthContext } from './AuthContext'
@@ -18,11 +18,6 @@ function AuthGate({ children }: AuthGateProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [recovery, setRecovery] = useState(() => typeof window !== 'undefined' && window.location.hash.includes('type=recovery'))
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [recoveryError, setRecoveryError] = useState('')
-  const [notice, setNotice] = useState('')
   const progress = useProgress()
 
   useEffect(() => {
@@ -39,9 +34,8 @@ function AuthGate({ children }: AuthGateProps) {
         setLoading(false)
       }
     })
-    const { data: { subscription } } = client.auth.onAuthStateChange((event, nextSession) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
-      if (event === 'PASSWORD_RECOVERY') setRecovery(true)
     })
     return () => {
       active = false
@@ -88,48 +82,11 @@ function AuthGate({ children }: AuthGateProps) {
     if (client) await client.auth.signOut()
   }
 
-  async function handleUpdatePassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!client) return
-    setRecoveryError('')
-    if (newPassword.length < 8) { setRecoveryError('Kata sandi minimal 8 karakter.'); return }
-    if (newPassword !== confirmPassword) { setRecoveryError('Konfirmasi kata sandi tidak sama.'); return }
-    setSubmitting(true)
-    const { error: updateError } = await client.auth.updateUser({ password: newPassword })
-    setSubmitting(false)
-    if (updateError) { setRecoveryError(updateError.message); return }
-    setNewPassword('')
-    setConfirmPassword('')
-    setRecovery(false)
-    setNotice('Kata sandi berhasil diperbarui. Silakan masuk dengan kata sandi baru.')
-    if (typeof window !== 'undefined') window.history.replaceState(null, '', window.location.pathname)
-    await client.auth.signOut()
-  }
-
   if (!client) {
-    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, role: null, permissions: null, accessToken: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, role: null, permissions: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
   }
 
   if (loading) return <div className="auth-loading" role="status">Memeriksa sesi pengguna...</div>
-
-  if (recovery && session) {
-    return (
-      <main className="auth-page">
-        <section className="login-panel">
-          <div className="login-brand"><span className="login-mark"><img src={logoRsudAmi} alt="Logo RSUD AMI" /></span><span><strong>RSUD AMI</strong><small>PELAPORAN SPM</small></span></div>
-          <h1>ATUR ULANG KATA SANDI</h1>
-          <p>----Masukkan Kata Sandi Baru Anda----</p>
-          <form className="login-form" onSubmit={handleUpdatePassword}>
-            <label>Kata sandi baru<input autoComplete="new-password" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
-            <label>Konfirmasi kata sandi<input autoComplete="new-password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></label>
-            {recoveryError && <p className="login-error" role="alert">{recoveryError}</p>}
-            <button className="login-submit" type="submit" disabled={submitting}><KeyRound size={16} />{submitting ? 'Menyimpan...' : 'SIMPAN KATA SANDI'}</button>
-          </form>
-          <div className="login-footnote"><ShieldCheck size={15} />Gunakan kata sandi yang kuat dan mudah Anda ingat.</div>
-        </section>
-      </main>
-    )
-  }
 
   if (!session) {
     return (
@@ -141,7 +98,6 @@ function AuthGate({ children }: AuthGateProps) {
           <form className="login-form" onSubmit={handleLogin}>
             <label>Email<input autoComplete="username" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
             <label>Kata sandi<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
-            {notice && <p className="login-notice" role="status">{notice}</p>}
             {error && <p className="login-error" role="alert">{error}</p>}
             <button className="login-submit" type="submit" disabled={submitting}><LockKeyhole size={16} />{submitting ? 'Memeriksa...' : 'MASUK'}</button>
           </form>
@@ -151,7 +107,7 @@ function AuthGate({ children }: AuthGateProps) {
     )
   }
 
-  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, role, permissions, accessToken: session.access_token ?? null, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, role, permissions, signOut }}>{children}</AuthContext.Provider>
 }
 
 export default AuthGate

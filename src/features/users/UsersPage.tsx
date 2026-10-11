@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Building2, Check, KeyRound, Mail, Pencil, Plus, Power, Trash2, UserRoundPlus, X } from 'lucide-react'
+import { Building2, Check, Pencil, Plus, Power, Trash2, UserRoundPlus, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadUnits, type SpmUnit } from '../../lib/spm-data'
@@ -42,11 +42,10 @@ interface ProfileForm {
   role: UserRole
   unitId: string
   permissions: Record<string, boolean>
-  password: string
 }
 
 function profileForm(units: SpmUnit[]): ProfileForm {
-  return { id: null, userId: '', email: '', fullName: '', role: 'officer', unitId: units[0]?.id ?? '', permissions: { ...rolePermissions.officer }, password: '' }
+  return { id: null, userId: '', email: '', fullName: '', role: 'officer', unitId: units[0]?.id ?? '', permissions: { ...rolePermissions.officer } }
 }
 
 function UsersPage() {
@@ -184,39 +183,10 @@ function UsersPage() {
         const next = exists ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]
         return next.sort((left, right) => left.full_name.localeCompare(right.full_name))
       })
-      let passwordNote = ''
-      const passwordValue = form.password.trim()
-      if (passwordValue) {
-        if (passwordValue.length < 8) {
-          passwordNote = ' Kata sandi tidak diubah: minimal 8 karakter.'
-        } else if (await setPasswordForUser(saved.id, passwordValue)) {
-          passwordNote = ' Kata sandi sudah diperbarui.'
-        }
-      }
-      setNotice(form.id ? `Profil ${saved.full_name} diperbarui.${passwordNote}` : `Profil ${saved.full_name} ditautkan ke akun Auth.${passwordNote}`)
+      setNotice(form.id ? `Profil ${saved.full_name} diperbarui.` : `Profil ${saved.full_name} ditautkan ke akun Auth.`)
       setForm(profileForm(units))
     }
     setSaving(false)
-  }
-
-  async function setPasswordForUser(userId: string, password: string) {
-    const url = import.meta.env.VITE_SUPABASE_URL
-    const token = auth.accessToken
-    if (!client || !url || !token) {
-      setError('Ganti kata sandi gagal: konfigurasi Supabase atau sesi tidak lengkap.')
-      return false
-    }
-    const response = await fetch(`${url}/functions/v1/set-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ userId, password }),
-    })
-    const payloadJson: { error?: string } = await response.json().catch(() => ({}))
-    if (!response.ok || payloadJson.error) {
-      setError(payloadJson.error ?? 'Ganti kata sandi gagal. Pastikan Edge Function set-password sudah di-deploy di Supabase.')
-      return false
-    }
-    return true
   }
 
   function startEditProfile(profile: UserProfile) {
@@ -229,7 +199,6 @@ function UsersPage() {
       role,
       unitId: profile.unit_id ?? units[0]?.id ?? '',
       permissions: { ...(rolePermissions[profile.role as UserRole] ?? rolePermissions.officer), ...(profile.permissions ?? {}) },
-      password: '',
     })
     setError('')
     setNotice('')
@@ -292,23 +261,6 @@ function UsersPage() {
     setSaving(false)
   }
 
-  async function resetPassword(profile: UserProfile) {
-    if (!client) return
-    if (!profile.email) { setError(`Profil ${profile.full_name} belum memiliki email. Tambahkan lewat tombol Edit.`); return }
-    if (!window.confirm(`Kirim tautan atur ulang kata sandi ke ${profile.email}?`)) return
-    setSaving(true)
-    setError('')
-    setNotice('')
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}${import.meta.env.BASE_URL}` : undefined
-    const { error: resetError } = await client.auth.resetPasswordForEmail(profile.email, { redirectTo })
-    setSaving(false)
-    if (resetError) { setError(resetError.message); setToast(`Reset sandi gagal: ${resetError.message}`) }
-    else {
-      setNotice(`Tautan atur ulang kata sandi dikirim ke ${profile.email}.`)
-      setToast(`Tautan atur ulang kata sandi dikirim ke ${profile.email}.`)
-    }
-  }
-
   if (auth.isPreview) {
     return <section className="users-page"><div className="reports-heading"><div><span className="eyebrow">AKSES APLIKASI</span><h1>Unit &amp; pengguna</h1><p>Pengelolaan unit dan profil tersedia setelah Supabase dikonfigurasi.</p></div></div></section>
   }
@@ -326,7 +278,6 @@ function UsersPage() {
             <label>UID Pengguna<input required value={form.userId} readOnly={Boolean(form.id)} disabled={Boolean(form.id)} onChange={(event) => setForm((current) => ({ ...current, userId: event.target.value }))} placeholder="Masukan UID" /></label>
             <label>Email<input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="nama@rsud-ami.go.id" /></label>
             <label>Nama lengkap<input required value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} /></label>
-            <label>Kata sandi (opsional)<input autoComplete="new-password" type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} placeholder="Minimal 8 karakter — kosongkan bila tidak diubah" /></label>
             <label>Peran<select value={form.role} onChange={(event) => selectRole(event.target.value as UserRole)}>{roleChoices.map((value) => <option key={value} value={value}>{roleNames[value]}</option>)}</select></label>
             {needsUnit && <label>Unit<select required value={form.unitId} onChange={(event) => setForm((current) => ({ ...current, unitId: event.target.value }))}>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>}
             <fieldset className="permission-fieldset"><legend>Izin akses</legend><div className="permission-grid">{permissionLabels.map(({ key, label }) => <label className="permission-item" key={key}><input type="checkbox" checked={Boolean(form.permissions[key])} onChange={() => togglePermission(key)} /><span>{label}</span></label>)}</div></fieldset>
@@ -346,9 +297,8 @@ function UsersPage() {
       </section>
       <section className="users-section users-list-section">
         <h2>Profil pengguna ({profiles.length})</h2>
-        <div className="users-table-wrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>UNIT</th><th>EMAIL</th><th>STATUS</th><th>UID</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{profiles.map((profile) => <tr key={profile.id}><td>{profile.full_name}</td><td>{roleNames[profile.role] ?? profile.role}</td><td>{units.find((unit) => unit.id === profile.unit_id)?.name ?? 'Semua unit'}</td><td>{profile.email ?? '—'}</td><td>{profile.active === false ? <span className="status-badge is-inactive">Nonaktif</span> : <span className="status-badge is-active">Aktif</span>}</td><td><code>{profile.id}</code></td>{canManage && <td className="row-actions"><button className={`row-toggle ${profile.active === false ? 'is-off' : ''}`} type="button" onClick={() => void toggleActive(profile)} disabled={saving || profile.id === auth.userId} title={profile.active === false ? 'Aktifkan pengguna' : 'Nonaktifkan pengguna'} aria-label={`${profile.active === false ? 'Aktifkan' : 'Nonaktifkan'} ${profile.full_name}`}><Power size={14} /></button><button className="row-edit" type="button" onClick={() => startEditProfile(profile)} disabled={saving} title="Edit profil" aria-label={`Edit profil ${profile.full_name}`}><Pencil size={14} /></button><button className="row-key" type="button" onClick={() => void resetPassword(profile)} disabled={saving} title="Kirim reset kata sandi" aria-label={`Reset kata sandi ${profile.full_name}`}><KeyRound size={14} /></button><button className="row-delete" type="button" onClick={() => void removeProfile(profile)} disabled={saving} aria-label={`Hapus profil ${profile.full_name}`} title="Hapus profil"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table>{!profiles.length && <p>{loading ? 'Memuat profil…' : 'Belum ada profil.'}</p>}</div>
+        <div className="users-table-wrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>UNIT</th><th>EMAIL</th><th>STATUS</th><th>UID</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{profiles.map((profile) => <tr key={profile.id}><td>{profile.full_name}</td><td>{roleNames[profile.role] ?? profile.role}</td><td>{units.find((unit) => unit.id === profile.unit_id)?.name ?? 'Semua unit'}</td><td>{profile.email ?? '—'}</td><td>{profile.active === false ? <span className="status-badge is-inactive">Nonaktif</span> : <span className="status-badge is-active">Aktif</span>}</td><td><code>{profile.id}</code></td>{canManage && <td className="row-actions"><button className={`row-toggle ${profile.active === false ? 'is-off' : ''}`} type="button" onClick={() => void toggleActive(profile)} disabled={saving || profile.id === auth.userId} title={profile.active === false ? 'Aktifkan pengguna' : 'Nonaktifkan pengguna'} aria-label={`${profile.active === false ? 'Aktifkan' : 'Nonaktifkan'} ${profile.full_name}`}><Power size={14} /></button><button className="row-edit" type="button" onClick={() => startEditProfile(profile)} disabled={saving} title="Edit profil" aria-label={`Edit profil ${profile.full_name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => void removeProfile(profile)} disabled={saving} aria-label={`Hapus profil ${profile.full_name}`} title="Hapus profil"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table>{!profiles.length && <p>{loading ? 'Memuat profil…' : 'Belum ada profil.'}</p>}</div>
       </section>
-      <p className="users-hint"><Mail size={14} /> Reset kata sandi mengirim tautan ke email profil. Pastikan Redirect URL aplikasi ini terdaftar di pengaturan Authentication Supabase.</p>
       {toast && <div className="users-toast" role="status">{toast}</div>}
     </section>
   )

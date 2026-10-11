@@ -5,7 +5,21 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** bersih. HEAD `82ba5d7` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan kode penghapusan sistem reset/ganti kata sandi (belum dicommit). HEAD `3dc112b`.
+
+## Tugas terakhir (BELUM DI-COMMIT — penghapusan sistem reset/ganti kata sandi)
+
+**Judul:** Hapus seluruh sistem reset kata sandi & ganti kata sandi (2026-10-11)
+
+Keputusan pengguna: sistem reset kata sandi dihapus total (karena rate limit email bawaan Supabase 2/jam & butuh custom SMTP). Yang dihapus:
+- `src/auth/AuthGate.tsx`: layar "ATUR ULANG KATA SANDI" (recovery), `handleUpdatePassword`, state `recovery`/`newPassword`/`confirmPassword`/`recoveryError`/`notice`, deteksi `PASSWORD_RECOVERY`, impor `KeyRound`, dan `accessToken` pada Provider.
+- `src/auth/AuthContext.ts`: field `accessToken` dihapus.
+- `src/features/users/UsersPage.tsx`: field "Kata sandi (opsional)" di form, `resetPassword` (tombol kunci `KeyRound`), `setPasswordForUser`, baris hint reset sandi, impor `KeyRound` & `Mail`.
+- `UsersPage.css`: gaya `.row-key` dihapus. `AuthGate.css`: `.login-notice` dihapus.
+- Edge Function `supabase/functions/set-password/index.ts` Dihapus dari repo.
+- Kolom `profiles.email` **tetap** (dipakai untuk tampilan/edit profil), migrasi `202610110002` tetap.
+- `README.md`, `AGENTS.md`, `PROGRESS.md`: bagian reset/ganti kata sandi dihapus/diperbarui.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
 
 ## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -30,7 +44,7 @@ Rincian perbaikan (semua 3 dipilih pengguna):
 - **Input kata sandi di form Edit** — field "Kata sandi (opsional)" (min. 8 karakter, kosongkan bila tidak diubah). Saat diisi, `saveProfile` memanggil Edge Function **`set-password`** (`supabase/functions/set-password/index.ts`) setelah profil tersimpan. Karena `service_role` tidak boleh di frontend, ganti sandi admin memakai Edge Function yang memverifikasi JWT sesi + cek `manage_users`/admin, lalu `admin.updateUserById`. `AuthContext`/`AuthGate` kini mengekspos `accessToken`.
 - **Umpan balik reset sandi** — `resetPassword`/`toggleActive`/hapus unit/profil kini juga menampilkan **toast** di pojok kanan bawah (auto-hide 4 dtk) selain pesan di atas, jadi sukses/gagal terlihat dari mana pun layar berada.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Perlu tindak lanjut pengguna:** deploy Edge Function `set-password` di Supabase (Dashboard → Edge Functions → Create → tempel isi `supabase/functions/set-password/index.ts`) agar input kata sandi berfungsi. Commit `82ba5d7` (sudah di-push ke `main`).
+- **Status saat ini:** fitur di atas **dibatalkan** — sistem reset/ganti kata sandi dihapus total atas permintaan pengguna (lihat tugas terakhir). Yang bertahan: auto-scroll+sorot form saat Edit dan toast umpan balik. Commit `82ba5d7`.
 
 ## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -261,7 +275,7 @@ Commit terkait:
 
 ## Rencana fitur yang disetujui (belum dikerjakan)
 
-- **Manajemen pengguna lengkap**: edit profil, aktif/nonaktif (`profiles.active` + cek RLS/AuthGate), dan reset kata sandi dari admin via `resetPasswordForEmail` (butuh kolom `profiles.email` + halaman atur ulang kata sandi + Redirect URL Supabase).
+- **Manajemen pengguna lengkap**: edit profil, aktif/nonaktif (`profiles.active` + cek RLS/AuthGate). Sistem **reset/ganti kata sandi sudah dihapus total** (2026-10-11) karena rate limit email bawaan Supabase. Kalaupun ingin lagi di masa depan: pakai custom SMTP + kemungkinan butuh migrasi/halaman atur ulang.
 - **Agregasi triwulan/tahunan** untuk Rekap lintas unit (saat ini baru per bulan).
 - **Cetak PDF halaman Rekap lintas unit** (ditunda atas keputusan pengguna).
 - **Penyederhanaan tampilan form Tambah/Edit indikator** — usulan Tahap 1 + pratinjau sudah disiapkan (label rumus jadi "nama jenis hasil", pengelompokan 3 seksi, kartu pilihan rumus, panel pratinjau capaian & arah standar, bantuan arah `≥`/`≤`, satuan otomatis, tahun berlaku dinamis; tanpa ubah DB). **DITUNDA/DIABAIKAN dulu** (2026-10-10) — pengguna akan berdiskusi dengan atasan mengenai tampilan yang diinginkan sebelum dilanjutkan. Belum ada perubahan kode.

@@ -55,12 +55,4 @@ Menu difilter di `src/components/layout/AppShell.tsx` berdasarkan peta peran di 
 - **Tulis terbatas unit:** pengguna hanya dapat membuat/mengubah laporan untuk unit yang ditautkan pada profilnya. Pengguna dengan izin `manage_users` dapat menginput untuk unit mana pun.
 - Di halaman **Input laporan**, dropdown unit menampilkan semua unit; unit selain unit pengguna tampil **hanya-baca** (tidak bisa diisi/disimpan).
 
-## Ganti kata sandi & reset kata sandi
-
-- **Reset kata sandi (tombol kunci di halaman Unit & pengguna):** mengirim email berisi tautan atur ulang sandi via `resetPasswordForEmail`. Pastikan Redirect URL aplikasi terdaftar di pengaturan Authentication Supabase.
-- **Set kata sandi langsung dari form Edit profil:** admin mengisi field "Kata sandi (opsional)" (min. 8 karakter). Frontend memanggil Edge Function **`set-password`** karena `service_role` tidak boleh ada di frontend. Deploy fungsi ini sekali di Supabase:
-  1. Dashboard Supabase → **Edge Functions** → **Create a new function** (nama `set-password`).
-  2. Tempel isi `supabase/functions/set-password/index.ts` Lalu **Deploy**.
-- Function `set-password` memverifikasi JWT sesi, menolak non-admin/non-`manage_users`, lalu memperbarui kata sandi via `admin.updateUserById` dengan `service_role` runtime (env `SUPABASE_SERVICE_ROLE_KEY` disediakan Supabase, tidak pernah masuk kode/Git).
-
 Skema dan aturan RLS adalah fondasi awal; uji pada proyek Supabase non-produksi sebelum menghubungkan data RSUD.
