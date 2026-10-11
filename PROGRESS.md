@@ -5,9 +5,23 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `d56e320`).
+- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `b1e9371`).
 
 ## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
+
+**Judul:** Manajemen pengguna & unit (edit, izin per pengguna, reset sandi, atur ulang sandi)
+
+Rincian:
+- Migrasi `supabase/migrations/202610110002_profiles_email.sql`: tambah kolom `profiles.email` untuk `resetPasswordForEmail`.
+- `AuthGate.tsx`: halaman set ulang kata sandi (`type=recovery`), `updateUser`, pesan sukses & logout.
+- `AuthGate.css`: `.login-notice`.
+- `UsersPage.tsx`: edit unit (kode/nama), edit profil (nama/email/peran/unit), ganti peran lama, atur permission per pengguna, kirim reset sandi ke email profil, mode create/edit.
+- `UsersPage.css`: responsif + gaya checkbox/tombol aksi.
+- Perlu dijalankan: `supabase/migrations/202610110002_profiles_email.sql`; pastikan Redirect URL Supabase mengarah ke base URL GitHub Pages.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Commit: `b1e9371`.
+
+## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Rumus capaian baru "Nilai capaian langsung" (tanpa numerator/denominator)
 
@@ -240,6 +254,8 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `b1e9371` Add user management improvements: edit unit/profile, permissions, reset password, recovery screen
+- `1a033e1` Update PROGRESS after direct achievement method commit
 - `d56e320` Add direct achievement method and numerator-only capaian
 - `194f4bd` Update PROGRESS after cross-unit recap commit
 - `a1b07b3` Add cross-unit monthly recap with indicator-by-unit matrix
