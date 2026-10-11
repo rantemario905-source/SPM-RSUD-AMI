@@ -72,10 +72,10 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
       ])
       if (reportResult.error) throw reportResult.error
       const reports = reportResult.data ?? []
-      let entries: { report_id: string; numerator: number | null; denominator: number | null; analysis: string; updated_at: string }[] = []
+      let entries: { report_id: string; indicator_id: string; numerator: number | null; denominator: number | null; analysis: string; updated_at: string }[] = []
       if (reports.length) {
         const { data, error: entryError } = await supabase.from('report_entries')
-          .select('report_id, numerator, denominator, analysis, updated_at')
+          .select('report_id, indicator_id, numerator, denominator, analysis, updated_at')
           .in('report_id', reports.map((report) => report.id))
         if (entryError) throw entryError
         entries = data ?? []
@@ -84,11 +84,16 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
       const entryByReport = new Map<string, typeof entries>()
       for (const entry of entries) entryByReport.set(entry.report_id, [...(entryByReport.get(entry.report_id) ?? []), entry])
       const selectedPeriod = periods.find((item) => item.period_start === periodStart)
+      const indicatorById = new Map(indicators.map((indicator) => [indicator.id, indicator]))
       const nextRows = units.map((unit): DashboardRow => {
         const report = reportByUnit.get(unit.id)
         const reportEntries = report ? entryByReport.get(report.id) ?? [] : []
         const unitIndicators = indicators.filter((indicator) => indicator.active && (indicator.unit_id === null || indicator.unit_id === unit.id))
-        const completed = reportEntries.filter((entry) => entry.numerator !== null && entry.denominator !== null && entry.analysis.trim()).length
+        const completed = reportEntries.filter((entry) => {
+          const indicator = indicatorById.get(entry.indicator_id)
+          const needsDenominator = indicator ? indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct' : true
+          return entry.numerator !== null && (!needsDenominator || entry.denominator !== null) && entry.analysis.trim() !== ''
+        }).length
         const completion = unitIndicators.length ? Math.min(100, Math.round(completed / unitIndicators.length * 100)) : 0
         const latest = reportEntries.reduce((date, entry) => entry.updated_at > date ? entry.updated_at : date, report?.updated_at ?? '')
         return {

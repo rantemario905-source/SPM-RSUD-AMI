@@ -44,6 +44,7 @@ const calculationLabel: Record<IndicatorCalculation, string> = {
   average: 'Numerator ÷ denominator (rerata)',
   scaled: 'Rasio × skala',
   numerator: 'Nilai numerator',
+  direct: 'Nilai capaian langsung',
 }
 
 function getCalculation(indicator: IndicatorEntry): IndicatorCalculation {
@@ -68,7 +69,7 @@ function fromDatabase(indicator: SpmIndicator): CatalogIndicator {
     name: indicator.name,
     definition: indicator.operational_definition,
     standard: indicator.standard,
-    type: calculation === 'average' ? 'duration' : calculation === 'numerator' ? 'number' : 'ratio',
+    type: calculation === 'average' ? 'duration' : calculation === 'numerator' || calculation === 'direct' ? 'number' : 'ratio',
     calculation,
     unit: indicator.unit_label,
     scale: indicator.calculation_scale ?? undefined,
@@ -160,7 +161,7 @@ function IndicatorsPage() {
       name: form.name.trim(),
       definition: form.definition.trim(),
       standard: form.standard.trim(),
-      type: form.calculation === 'average' ? 'duration' : form.calculation === 'numerator' ? 'number' : 'ratio',
+      type: form.calculation === 'average' ? 'duration' : form.calculation === 'numerator' || form.calculation === 'direct' ? 'number' : 'ratio',
       calculation: form.calculation,
       unit: form.unit.trim(),
       scale: form.calculation === 'scaled' ? Number(form.scale) : undefined,
@@ -237,7 +238,7 @@ function IndicatorsPage() {
       <div className="indicator-summary">
         <div><span>Total indikator</span><strong>{loading ? '…' : indicators.length}</strong></div>
         <div><span>Unit terdaftar</span><strong>{units.length}</strong></div>
-        <div><span>Rumus capaian</span><strong>4</strong></div>
+        <div><span>Rumus capaian</span><strong>5</strong></div>
       </div>
 
       <div className="indicator-toolbar">
@@ -280,7 +281,7 @@ function IndicatorsPage() {
             <label>Nama indikator<input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
             <label>Definisi operasional<textarea required rows={3} value={form.definition} onChange={(event) => setForm((current) => ({ ...current, definition: event.target.value }))} /></label>
             <div className="indicator-form-grid"><label>Standar<input required value={form.standard} onChange={(event) => setForm((current) => ({ ...current, standard: event.target.value }))} placeholder="Contoh: ≥ 80%" /></label><label>Rumus capaian<select value={form.calculation} onChange={(event) => setForm((current) => ({ ...current, calculation: event.target.value as IndicatorCalculation }))}>{Object.entries(calculationLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
-            <div className="indicator-form-grid"><label>Satuan hasil<input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder="%, menit, jam, tim" /></label>{form.calculation === 'scaled' ? <label>Pengali skala<input type="number" min="1" step="any" value={form.scale} onChange={(event) => setForm((current) => ({ ...current, scale: event.target.value }))} placeholder="Contoh: 1.000" /></label> : <div className="formula-preview"><span>HASIL CAPAIAN</span><strong>{form.calculation === 'percentage' ? 'Persentase' : form.calculation === 'average' ? `Rerata${form.unit ? ` (${form.unit})` : ''}` : 'Nilai numerator'}</strong></div>}</div>
+            <div className="indicator-form-grid"><label>Satuan hasil<input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder="%, menit, jam, tim" /></label>{form.calculation === 'scaled' ? <label>Pengali skala<input type="number" min="1" step="any" value={form.scale} onChange={(event) => setForm((current) => ({ ...current, scale: event.target.value }))} placeholder="Contoh: 1.000" /></label> : <div className="formula-preview"><span>HASIL CAPAIAN</span><strong>{form.calculation === 'percentage' ? 'Persentase' : form.calculation === 'average' ? `Rerata${form.unit ? ` (${form.unit})` : ''}` : form.calculation === 'direct' ? 'Nilai capaian langsung' : 'Nilai numerator'}</strong></div>}</div>
             {form.calculation === 'scaled' && <label>Satuan hasil skala<input value={form.resultUnit} onChange={(event) => setForm((current) => ({ ...current, resultUnit: event.target.value }))} placeholder="Contoh: per 1.000 pasien" /></label>}
             <div className="indicator-form-actions"><button className="secondary-button" type="button" onClick={() => setDialog(null)}>Batal</button><button className="primary-button" type="submit" disabled={saving || units.length === 0}><Check size={15} />{saving ? 'Menyimpan…' : 'Simpan indikator'}</button></div>
           </form>

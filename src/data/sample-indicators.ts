@@ -1,5 +1,5 @@
 export type IndicatorInputType = 'ratio' | 'number' | 'duration' | 'category' | 'text'
-export type IndicatorCalculation = 'percentage' | 'average' | 'scaled' | 'numerator'
+export type IndicatorCalculation = 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct'
 
 export interface IndicatorEntry {
   code: string
@@ -30,6 +30,7 @@ export const sampleUnits = [
       { code: 'IGD-06', name: 'Kepuasan pelanggan Gawat Darurat', definition: 'Persentase penilaian puas pada survei pelanggan IGD.', standard: '≥ 70%', type: 'ratio', unit: '%', numerator: '36', denominator: '50', value: '', analysis: 'Hasil survei kepuasan mencapai 72%.' },
       { code: 'IGD-07', name: 'Kematian pasien < 24 jam', definition: 'Jumlah kematian kurang dari 24 jam per jumlah pasien yang ditangani.', standard: '≤ 2 per 1.000 pasien', type: 'ratio', calculation: 'scaled', unit: '', scale: 1000, resultUnit: 'per 1.000 pasien', numerator: '1', denominator: '1000', value: '', analysis: 'Terdapat 1 kematian per 1.000 pasien.' },
       { code: 'IGD-08', name: 'Tidak ada pasien yang diharuskan membayar uang muka', definition: 'Pasien yang tidak diminta uang muka dibanding pasien yang membutuhkan layanan.', standard: '100%', type: 'ratio', unit: '%', numerator: '42', denominator: '42', value: '', analysis: 'Tidak ada pasien yang diminta membayar uang muka.' },
+      { code: 'IGD-09', name: 'Skor kepuasan pelanggan Gawat Darurat', definition: 'Nilai rata-rata skor kepuasan pelanggan pada pelayanan gawat darurat bulan berjalan.', standard: '≥ 4', type: 'number', calculation: 'direct', unit: 'skor', numerator: '4.2', denominator: '', value: '', analysis: 'Rerata skor kepuasan pelanggan 4,2 dari skala 5.' },
     ] satisfies IndicatorEntry[],
   },
   {

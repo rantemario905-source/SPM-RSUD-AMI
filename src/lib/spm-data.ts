@@ -13,7 +13,7 @@ export interface SpmIndicator {
   name: string
   operational_definition: string
   standard: string
-  calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator'
+  calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct'
   unit_label: string
   calculation_scale: number | null
   result_unit: string

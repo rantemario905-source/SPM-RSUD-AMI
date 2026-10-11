@@ -4,10 +4,39 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 ## Status saat ini
 
-- **Tanggal update terakhir:** 2026-10-10
-- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `a1b07b3`).
+- **Tanggal update terakhir:** 2026-10-11
+- **Kondisi working tree:** ada perubahan belum di-commit (PROGRESS.md, logo kutai kartanegara, perbaikan capaian numerator, rumus capaian langsung). HEAD `194f4bd`.
 
-## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Rumus capaian baru "Nilai capaian langsung" (tanpa numerator/denominator)
+
+Rincian:
+- Pilihan rumus capaian ke-5 `direct` — pengguna langsung mengisi nilai capaian tanpa numerator/denominator. Nilai capaian disimpan di kolom `report_entries.numerator` (denominator `null`), jadi **tanpa** perubahan skema tabel data.
+- Tipe: `IndicatorCalculation` (`sample-indicators.ts`), `SpmIndicator.calculation_method` (`spm-data.ts`), `AchievementIndicator.calculation_method` (`spm-achievement.ts`) ditambah `'direct'`.
+- `src/lib/spm-achievement.ts`: `achievement()` mengembalikan `numerator` untuk `direct` (sama seperti `numerator`); `achievementUnit()` pakai `unit_label`.
+- `src/features/indicators/IndicatorsPage.tsx`: label `direct: 'Nilai capaian langsung'`; ringkasan "Rumus capaian" 4→5; pemetaan `type` `direct` → `number`; pratinjau hasil menampilkan "Nilai capaian langsung".
+- `src/features/reports/InputReportPage.tsx`: helper `entryCalculation()`; baris `direct` menampilkan satu input **Capaian** (kolom numerator) dan `—` di kolom denominator; `getAchievement()`/`completedCount` memperlakukan `direct` seperti `numerator`.
+- `src/features/reports/ReportsPage.tsx`: `getAchievement()` + pemetaan `type` disamakan.
+- Kelengkapan: `CrossUnitPage.tsx`, `NotificationBell.tsx`, `DashboardPage.tsx` (`needsDenominator` false untuk `numerator` **dan** `direct`).
+- Data contoh: indikator `IGD-09` "Skor kepuasan pelanggan Gawat Darurat" (`direct`) ditambah untuk mode pratinjau.
+- Migrasi baru `supabase/migrations/202610110001_allow_direct_calculation.sql`: memperbarui check constraint `indicators_calculation_method_check` agar mengizinkan `'direct'`. **Perlu dijalankan pengguna** di Supabase SQL Editor.
+- `README.md`: daftar migrasi diperbarui.
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+
+## Tugas sebelumnya (BELUM DI-COMMIT)
+
+**Judul:** Capaian formula "Nilai numerator" cukup dengan numerator
+
+Rincian:
+- Masalah: indikator berformula `numerator` (label "Nilai numerator") baru menampilkan capaian bila denominator juga diisi. Denominator tidak dibutuhkan untuk formula ini.
+- `src/lib/spm-achievement.ts`: `achievement()` mengembalikan `numerator` lebih dulu saat `calculation_method === 'numerator'`; syarat denominator hanya untuk `average`/`scaled`/`percentage`.
+- `src/features/reports/InputReportPage.tsx`: `getAchievement()` menghitung `calculation` lebih dulu; metode `numerator` cukup numerator (denominator kosong tetap keluar capaian). `completedCount` menghitung "terisi" tanpa denominator untuk metode `numerator`.
+- `src/features/reports/ReportsPage.tsx`: `getAchievement()` disamakan.
+- Perhitungan kelengkapan disamakan agar konsisten: `CrossUnitPage.tsx` (`summary`), `NotificationBell.tsx` (notifikasi kelengkapan unit), `DashboardPage.tsx` (query `report_entries` kini ikut `indicator_id` untuk memetakan metode).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+
+## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Rekap lintas unit per bulan (matriks indikator × unit)
 
@@ -194,14 +223,17 @@ Commit terkait:
 - **Manajemen pengguna lengkap**: edit profil, aktif/nonaktif (`profiles.active` + cek RLS/AuthGate), dan reset kata sandi dari admin via `resetPasswordForEmail` (butuh kolom `profiles.email` + halaman atur ulang kata sandi + Redirect URL Supabase).
 - **Agregasi triwulan/tahunan** untuk Rekap lintas unit (saat ini baru per bulan).
 - **Cetak PDF halaman Rekap lintas unit** (ditunda atas keputusan pengguna).
+- **Penyederhanaan tampilan form Tambah/Edit indikator** — usulan Tahap 1 + pratinjau sudah disiapkan (label rumus jadi "nama jenis hasil", pengelompokan 3 seksi, kartu pilihan rumus, panel pratinjau capaian & arah standar, bantuan arah `≥`/`≤`, satuan otomatis, tahun berlaku dinamis; tanpa ubah DB). **DITUNDA/DIABAIKAN dulu** (2026-10-10) — pengguna akan berdiskusi dengan atasan mengenai tampilan yang diinginkan sebelum dilanjutkan. Belum ada perubahan kode.
 
 - **Blok tanda tangan** pada cetak PDF sementara dibiarkan apa adanya (Dibuat oleh / Diverifikasi oleh / Disahkan oleh) — **pengaturan penandatangan menunggu diskusi pengguna dengan atasan**.
 - **Status fitur cetak PDF:** dianggap **cukup untuk sementara** oleh pengguna (kop & format sudah disetujui).
 
 ## Langkah berikutnya
 
+- **Pengguna menjalankan migrasi `supabase/migrations/202610110001_allow_direct_calculation.sql`** di Supabase SQL Editor agar rumus capaian "Nilai capaian langsung" bisa disimpan ke database.
 - Pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web untuk menerbitkan fitur Rekap lintas unit.
 - Lanjut ke **manajemen pengguna lengkap**.
+- **Penyederhanaan form Tambah indikator** menunggu hasil diskusi pengguna dengan atasan (lihat bagian rencana).
 - Pengaturan **blok tanda tangan** cetak PDF menyusul setelah pengguna berdiskusi dengan atasan.
 
 ## Riwayat singkat (git)

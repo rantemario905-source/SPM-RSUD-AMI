@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Building2, CalendarDays, Check, CircleAlert, LockKeyhole, Save } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
-import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
+import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import './InputReportPage.css'
@@ -20,12 +20,16 @@ function entryFromIndicator(indicator: SpmIndicator, saved?: Record<string, unkn
   return {
     indicatorId: indicator.id, code: indicator.code, name: indicator.name,
     definition: indicator.operational_definition, standard: indicator.standard,
-    type: calculation === 'average' ? 'duration' : calculation === 'numerator' ? 'number' : 'ratio',
+    type: calculation === 'average' ? 'duration' : calculation === 'numerator' || calculation === 'direct' ? 'number' : 'ratio',
     calculation, unit: indicator.unit_label, scale: indicator.calculation_scale ?? undefined,
     resultUnit: indicator.result_unit, numerator: numeric(saved?.numerator),
     denominator: numeric(saved?.denominator), value: '',
     analysis: typeof saved?.analysis === 'string' ? saved.analysis : '',
   }
+}
+
+function entryCalculation(entry: IndicatorEntry): IndicatorCalculation {
+  return entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
 }
 
 function InputReportPage() {
@@ -106,7 +110,12 @@ function InputReportPage() {
   const canEditAnyUnit = Boolean(profile?.permissions.view_all_reports) || Boolean(profile?.permissions.manage_users)
   const ownsSelectedUnit = auth.isPreview || canEditAnyUnit || (Boolean(profile?.unit_id) && unitId === profile?.unit_id)
   const canInput = auth.isPreview || (Boolean(profile?.permissions.input_reports) && ownsSelectedUnit)
-  const completedCount = useMemo(() => entries.filter((entry) => entry.analysis.trim() && entry.numerator !== '' && entry.denominator !== '').length, [entries])
+  const completedCount = useMemo(() => entries.filter((entry) => {
+    const calculation = entryCalculation(entry)
+    const direct = calculation === 'numerator' || calculation === 'direct'
+    const filled = direct ? entry.numerator !== '' : entry.numerator !== '' && entry.denominator !== ''
+    return filled && entry.analysis.trim() !== ''
+  }).length, [entries])
 
   function updateEntry(index: number, field: 'numerator' | 'denominator' | 'analysis', value: string) {
     setSaved(false)
@@ -114,12 +123,13 @@ function InputReportPage() {
   }
 
   function getAchievement(entry: IndicatorEntry) {
+    const calculation = entryCalculation(entry)
     const numerator = Number(entry.numerator)
     const denominator = Number(entry.denominator)
-    if (entry.numerator === '' || entry.denominator === '' || denominator <= 0) return 'Belum dihitung'
-    const calculation = entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
-    const result = calculation === 'average' ? numerator / denominator : calculation === 'numerator' ? numerator : (numerator / denominator) * (calculation === 'scaled' ? entry.scale ?? 1000 : 100)
-    const unit = calculation === 'average' || calculation === 'numerator' ? entry.unit : calculation === 'scaled' ? entry.resultUnit ?? 'per 1.000' : '%'
+    if (entry.numerator === '') return 'Belum dihitung'
+    if (calculation !== 'numerator' && calculation !== 'direct' && (entry.denominator === '' || denominator <= 0)) return 'Belum dihitung'
+    const result = calculation === 'average' ? numerator / denominator : calculation === 'numerator' || calculation === 'direct' ? numerator : (numerator / denominator) * (calculation === 'scaled' ? entry.scale ?? 1000 : 100)
+    const unit = calculation === 'average' || calculation === 'numerator' || calculation === 'direct' ? entry.unit : calculation === 'scaled' ? entry.resultUnit ?? 'per 1.000' : '%'
     return `${result.toLocaleString('id-ID', { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ''}`
   }
 
@@ -160,13 +170,13 @@ function InputReportPage() {
 
   return (
     <section className="input-page">
-      <div className="input-heading"><div><span className="eyebrow">INPUT CAPAIAN UNIT</span><h1>Laporan SPM</h1><p>Isi numerator, denominator, dan analisa. Data tersimpan langsung pada periode terbuka.</p></div><div className="input-controls"><label><span>Unit / instalasi</span><div className="input-period"><Building2 size={16} /><select value={unitId} onChange={(event) => { setLoadingEntries(true); setUnitId(event.target.value); setSaved(false) }} aria-label="Pilih unit atau instalasi" disabled={units.length <= 1}>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></div></label><label><span>Periode laporan</span><div className="input-period"><CalendarDays size={16} /><select value={periodStart} onChange={(event) => { setLoadingEntries(true); setPeriodStart(event.target.value); setSaved(false) }} aria-label="Pilih periode input">{periods.map((period) => <option key={period.period_start} value={period.period_start}>{periodLabel(period.period_start)}</option>)}</select></div></label></div></div>
+      <div className="input-heading"><div><span className="eyebrow">INPUT CAPAIAN UNIT</span><h1>Laporan SPM</h1><p>Isi numerator, denominator, dan analisa. Indikator bernilai capaian langsung cukup diisi capaiannya.</p></div><div className="input-controls"><label><span>Unit / instalasi</span><div className="input-period"><Building2 size={16} /><select value={unitId} onChange={(event) => { setLoadingEntries(true); setUnitId(event.target.value); setSaved(false) }} aria-label="Pilih unit atau instalasi" disabled={units.length <= 1}>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></div></label><label><span>Periode laporan</span><div className="input-period"><CalendarDays size={16} /><select value={periodStart} onChange={(event) => { setLoadingEntries(true); setPeriodStart(event.target.value); setSaved(false) }} aria-label="Pilih periode input">{periods.map((period) => <option key={period.period_start} value={period.period_start}>{periodLabel(period.period_start)}</option>)}</select></div></label></div></div>
       {auth.isPreview && <div className="input-demo-note">Mode pratinjau. Nilai contoh belum disimpan ke database RSUD.</div>}
       {error && <div className="input-demo-note" role="alert"><CircleAlert size={15} /> {error}</div>}
       {periods.length === 0 && !loadingSetup && <div className="input-demo-note">Belum ada periode pelaporan. Jalankan migration data aplikasi di Supabase.</div>}
       {!ownsSelectedUnit && <div className="input-demo-note">Mode lihat saja. Anda hanya dapat menginput data unit {ownUnit?.name ?? 'Anda'}.</div>}
       <div className={`period-state${isLocked ? ' is-locked' : ''}`}><span className="period-state-icon">{isLocked ? <LockKeyhole size={16} /> : <Check size={16} />}</span><div><strong>{isLocked ? 'Periode terkunci' : 'Periode terbuka'}</strong><small>{isLocked ? 'Input hanya dapat diubah oleh petugas yang memiliki akses khusus.' : 'Perubahan nilai akan dicatat pada laporan periode ini.'}</small></div><span className="completion-count">{completedCount}/{entries.length} indikator terisi</span></div>
-      <div className="input-table-wrap"><table className="input-table"><thead><tr><th>INDIKATOR / DEFINISI OPERASIONAL</th><th>STANDAR</th><th>NUMERATOR</th><th>DENOMINATOR</th><th>CAPAIAN</th><th>ANALISA</th></tr></thead><tbody>{entries.map((entry, index) => <tr key={entry.indicatorId}><td className="indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span>{entry.code}</span></td><td className="standard-cell">{entry.standard}</td><td><input aria-label={`Numerator ${entry.name}`} type="number" min="0" step="any" value={entry.numerator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'numerator', event.target.value)} /></td><td><input aria-label={`Denominator ${entry.name}`} type="number" min="0" step="any" value={entry.denominator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'denominator', event.target.value)} /></td><td><strong className="achievement-value">{getAchievement(entry)}</strong></td><td><textarea aria-label={`Analisa ${entry.name}`} value={entry.analysis} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'analysis', event.target.value)} rows={2} /></td></tr>)}</tbody></table>{entries.length === 0 && <div className="input-demo-note">{loadingSetup || loadingEntries ? 'Memuat data input…' : 'Belum ada indikator aktif untuk unit dan periode ini.'}</div>}</div>
+      <div className="input-table-wrap"><table className="input-table"><thead><tr><th>INDIKATOR / DEFINISI OPERASIONAL</th><th>STANDAR</th><th>NUMERATOR</th><th>DENOMINATOR</th><th>CAPAIAN</th><th>ANALISA</th></tr></thead><tbody>{entries.map((entry, index) => { const direct = entryCalculation(entry) === 'direct'; return <tr key={entry.indicatorId}><td className="indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span>{entry.code}</span></td><td className="standard-cell">{entry.standard}</td>{direct ? <td><input aria-label={`Capaian ${entry.name}`} type="number" min="0" step="any" value={entry.numerator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'numerator', event.target.value)} /></td> : <td><input aria-label={`Numerator ${entry.name}`} type="number" min="0" step="any" value={entry.numerator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'numerator', event.target.value)} /></td>}{direct ? <td><span className="not-applicable">—</span></td> : <td><input aria-label={`Denominator ${entry.name}`} type="number" min="0" step="any" value={entry.denominator} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'denominator', event.target.value)} /></td>}<td><strong className="achievement-value">{getAchievement(entry)}</strong></td><td><textarea aria-label={`Analisa ${entry.name}`} value={entry.analysis} disabled={Boolean(isLocked) || !canInput || loadingEntries} onChange={(event) => updateEntry(index, 'analysis', event.target.value)} rows={2} /></td></tr> })}</tbody></table>{entries.length === 0 && <div className="input-demo-note">{loadingSetup || loadingEntries ? 'Memuat data input…' : 'Belum ada indikator aktif untuk unit dan periode ini.'}</div>}</div>
       <div className="input-footer"><span>{saved ? <><Check size={15} /> {auth.isPreview ? 'Tersimpan di pratinjau' : 'Tersimpan di database'}</> : !canInput ? (ownsSelectedUnit ? 'Akun ini tidak memiliki izin input laporan.' : `Mode lihat saja untuk ${selectedUnit?.name ?? 'unit lain'}.`) : 'Simpan perubahan sebelum berpindah halaman.'}</span><button className="primary-button" type="button" disabled={saveDisabled} onClick={() => void saveEntries()}><Save size={15} /> {saving ? 'Menyimpan…' : 'Simpan input'}</button></div>
     </section>
   )

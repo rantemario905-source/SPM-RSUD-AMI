@@ -1,5 +1,5 @@
 export interface AchievementIndicator {
-  calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator'
+  calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct'
   calculation_scale?: number | null
 }
 
@@ -25,9 +25,10 @@ export function parseTarget(standard: string): StandardTarget | null {
 export function achievement(entry: AchievementEntry, indicator: AchievementIndicator): number | null {
   const numerator = entry.numerator
   const denominator = entry.denominator
-  if (numerator === null || denominator === null || denominator <= 0) return null
+  if (numerator === null) return null
+  if (indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct') return numerator
+  if (denominator === null || denominator <= 0) return null
   if (indicator.calculation_method === 'average') return numerator / denominator
-  if (indicator.calculation_method === 'numerator') return numerator
   if (indicator.calculation_method === 'scaled') return (numerator / denominator) * (indicator.calculation_scale ?? 1000)
   return (numerator / denominator) * 100
 }
@@ -41,7 +42,7 @@ export function formatValue(value: number): string {
 }
 
 export function achievementUnit(indicator: AchievementIndicator & { unit_label?: string; result_unit?: string }): string {
-  if (indicator.calculation_method === 'average' || indicator.calculation_method === 'numerator') return indicator.unit_label ?? ''
+  if (indicator.calculation_method === 'average' || indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct') return indicator.unit_label ?? ''
   if (indicator.calculation_method === 'scaled') return indicator.result_unit || 'per 1.000'
   return '%'
 }

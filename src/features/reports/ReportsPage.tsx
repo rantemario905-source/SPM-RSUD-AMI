@@ -15,17 +15,18 @@ const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Se
 const printDate = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
 
 function getAchievement(entry: IndicatorEntry) {
+  const calculation = entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
   const numerator = Number(entry.numerator)
   const denominator = Number(entry.denominator)
-  if (entry.numerator === '' || entry.denominator === '' || denominator <= 0) return '—'
+  if (entry.numerator === '') return '—'
+  if (calculation !== 'numerator' && calculation !== 'direct' && (entry.denominator === '' || denominator <= 0)) return '—'
 
-  const calculation = entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
   const result = calculation === 'average'
     ? numerator / denominator
-    : calculation === 'numerator'
+    : calculation === 'numerator' || calculation === 'direct'
       ? numerator
       : (numerator / denominator) * (calculation === 'scaled' ? entry.scale ?? 1000 : 100)
-  const unit = calculation === 'average' || calculation === 'numerator'
+  const unit = calculation === 'average' || calculation === 'numerator' || calculation === 'direct'
     ? entry.unit
     : calculation === 'scaled'
       ? entry.resultUnit ?? 'per 1.000'
@@ -127,7 +128,7 @@ function ReportsPage() {
     : indicators.map((indicator): IndicatorEntry => ({
       code: indicator.code, name: indicator.name, definition: indicator.operational_definition,
       standard: indicator.standard,
-      type: indicator.calculation_method === 'average' ? 'duration' : indicator.calculation_method === 'numerator' ? 'number' : 'ratio',
+      type: indicator.calculation_method === 'average' ? 'duration' : indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct' ? 'number' : 'ratio',
       calculation: indicator.calculation_method, unit: indicator.unit_label,
       scale: indicator.calculation_scale ?? undefined, resultUnit: indicator.result_unit,
       numerator: '', denominator: '', value: '', analysis: '',

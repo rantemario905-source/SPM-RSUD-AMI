@@ -52,6 +52,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
       const currentPeriod = periods.find((period) => period.period_start === monthStart) ?? periods.find((period) => period.state === 'open') ?? periods[0]
       const scopedUnits = profile.unit_id ? allUnits.filter((unit) => unit.id === profile.unit_id) : allUnits
       const activeIndicators = allIndicators.filter((indicator) => indicator.active)
+      const indicatorById = new Map(allIndicators.map((indicator) => [indicator.id, indicator]))
       const next: NotificationItem[] = []
 
       if (currentPeriod) {
@@ -74,7 +75,11 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
           const report = reportByUnit.get(unit.id)
           const reportEntries = report ? entriesByReport.get(report.id) ?? [] : []
           const unitIndicators = activeIndicators.filter((indicator) => indicator.unit_id === null || indicator.unit_id === unit.id)
-          const completed = reportEntries.filter((entry) => entry.numerator !== null && entry.denominator !== null && entry.analysis.trim()).length
+          const completed = reportEntries.filter((entry) => {
+            const indicator = indicatorById.get(entry.indicator_id)
+            const needsDenominator = indicator ? indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct' : true
+            return entry.numerator !== null && (!needsDenominator || entry.denominator !== null) && entry.analysis.trim() !== ''
+          }).length
           if (unitIndicators.length && completed < unitIndicators.length) {
             incomplete += 1
             if (incomplete <= 4) {
