@@ -286,14 +286,17 @@ Commit terkait:
 
 ## Langkah berikutnya
 
-- **Pengguna menjalankan migrasi `supabase/migrations/202610110001_allow_direct_calculation.sql`** di Supabase SQL Editor agar rumus capaian "Nilai capaian langsung" bisa disimpan ke database.
-- Pengguna menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web untuk menerbitkan fitur Rekap lintas unit.
-- Lanjut ke **manajemen pengguna lengkap**.
-- **Penyederhanaan form Tambah indikator** menunggu hasil diskusi pengguna dengan atasan (lihat bagian rencana).
-- Pengaturan **blok tanda tangan** cetak PDF menyusul setelah pengguna berdiskusi dengan atasan.
+- **Sesi berikutnya (rencana setelah 2026-10-11):**
+  - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
+  - Migrasi yang masih perlu dijalankan pengguna di Supabase SQL Editor bila belum: `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung").
+  - Sisa rencana lanjutan dari awal: **Agregasi triwulan/tahunan** untuk Rekap lintas unit; **Cetak PDF halaman Rekap lintas unit** (ditunda); **penyederhanaan form Tambah indikator** (menunggu diskusi dengan atasan); pengaturan **blok tanda tangan** cetak PDF (menunggu diskusi).
 
 ## Riwayat singkat (git)
 
+- `78757b6` Update PROGRESS after removing password reset system
+- `81fd0db` Remove password reset and change system entirely
+- `3dc112b` Update PROGRESS after account management and edit fixes commit
+- `82ba5d7` Add account deactivation, admin password change via edge function, and edit feedback
 - `b1e9371` Add user management improvements: edit unit/profile, permissions, reset password, recovery screen
 - `1a033e1` Update PROGRESS after direct achievement method commit
 - `d56e320` Add direct achievement method and numerator-only capaian
