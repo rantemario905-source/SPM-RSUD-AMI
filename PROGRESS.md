@@ -5,9 +5,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** ada perubahan belum di-commit (PROGRESS.md, logo kutai kartanegara, perbaikan capaian numerator, rumus capaian langsung). HEAD `194f4bd`.
+- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `d56e320`).
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Rumus capaian baru "Nilai capaian langsung" (tanpa numerator/denominator)
 
@@ -23,8 +23,9 @@ Rincian:
 - Migrasi baru `supabase/migrations/202610110001_allow_direct_calculation.sql`: memperbarui check constraint `indicators_calculation_method_check` agar mengizinkan `'direct'`. **Perlu dijalankan pengguna** di Supabase SQL Editor.
 - `README.md`: daftar migrasi diperbarui.
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Commit: `d56e320` Add direct achievement method and numerator-only capaian (sudah di-push ke `main`).
 
-## Tugas sebelumnya (BELUM DI-COMMIT)
+## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Capaian formula "Nilai numerator" cukup dengan numerator
 
@@ -35,6 +36,7 @@ Rincian:
 - `src/features/reports/ReportsPage.tsx`: `getAchievement()` disamakan.
 - Perhitungan kelengkapan disamakan agar konsisten: `CrossUnitPage.tsx` (`summary`), `NotificationBell.tsx` (notifikasi kelengkapan unit), `DashboardPage.tsx` (query `report_entries` kini ikut `indicator_id` untuk memetakan metode).
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Commit: `d56e320` (digabung dengan rumus capaian langsung, sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -238,6 +240,8 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `d56e320` Add direct achievement method and numerator-only capaian
+- `194f4bd` Update PROGRESS after cross-unit recap commit
 - `a1b07b3` Add cross-unit monthly recap with indicator-by-unit matrix
 - `440892b` Update PROGRESS after PDF report commit
 - `5e628fa` Add printable PDF report with letterhead and drop CSV export
