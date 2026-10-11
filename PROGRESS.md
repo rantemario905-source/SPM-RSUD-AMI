@@ -5,20 +5,23 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** ada perubahan kode untuk fitur aktif/nonaktif pengguna + perbaikan Edit profil/ganti sandi (belum dicommit). HEAD `d3ae948`.
+- **Kondisi working tree:** bersih. HEAD `82ba5d7` (sudah di-push ke `main`).
 
-## Tugas terakhir (BELUM DI-COMMIT)
+## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
-**Judul:** Manajemen pengguna lengkap - aktif/nonaktif pengguna
+**Judul:** Manajemen pengguna lengkap - aktif/nonaktif pengguna + perbaikan Edit profil/ganti kata sandi
 
 Rincian:
-- Migrasi `supabase/migrations/202610110003_profiles_active.sql`: tambah kolom `profiles.active` (default true). Sudah dijalankan di Supabase.
+- Migrasi `supabase/migrations/202610110003_profiles_active.sql`: tambah kolom `profiles.active` (default true). Sudah dijalankan di Supabase; file migrasi tidak disertakan di repo karena sudah terapkan.
 - `AuthGate.tsx`: cek `active === false` → logout + pesan "Akun Anda telah dinonaktifkan. Hubungi administrator."
-- `UsersPage.tsx`: toggle aktif/nonaktif (tidak bisa nonaktifkan diri sendiri), kolom Status (Aktif/Nonaktif), query/load `active`. (Direstorasi ulang 2026-10-11 setelah sempat hilang.)
+- `UsersPage.tsx`: toggle aktif/nonaktif (tidak bisa nonaktifkan diri sendiri), kolom Status (Aktif/Nonaktif), query/load `active`.
 - `UsersPage.css`: gaya badge status & tombol toggle (`Power`).
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Commit: `82ba5d7` Add account deactivation, admin password change via edge function, and edit feedback (sudah di-push ke `main`).
 
-## Tugas dilaporkan pengguna (sudah diperbaiki, BELUM DI-COMMIT)
+Di dalam commit `82ba5d7` juga termasuk perbaikan laporan pengguna (Edit profil/ganti sandi): auto-scroll+sorot form saat Edit, field "Kata sandi (opsional)" via Edge Function `set-password`, dan toast umpan balik reset sandi.
+
+## Tugas dilaporkan pengguna (sudah diperbaiki, SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Edit profil & ganti kata sandi "tidak terjadi apa-apa" (2026-10-11)
 
@@ -27,7 +30,7 @@ Rincian perbaikan (semua 3 dipilih pengguna):
 - **Input kata sandi di form Edit** — field "Kata sandi (opsional)" (min. 8 karakter, kosongkan bila tidak diubah). Saat diisi, `saveProfile` memanggil Edge Function **`set-password`** (`supabase/functions/set-password/index.ts`) setelah profil tersimpan. Karena `service_role` tidak boleh di frontend, ganti sandi admin memakai Edge Function yang memverifikasi JWT sesi + cek `manage_users`/admin, lalu `admin.updateUserById`. `AuthContext`/`AuthGate` kini mengekspos `accessToken`.
 - **Umpan balik reset sandi** — `resetPassword`/`toggleActive`/hapus unit/profil kini juga menampilkan **toast** di pojok kanan bawah (auto-hide 4 dtk) selain pesan di atas, jadi sukses/gagal terlihat dari mana pun layar berada.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Perlu tindak lanjut pengguna:** deploy Edge Function `set-password` di Supabase (Dashboard → Edge Functions → Create → tempel isi `supabase/functions/set-password/index.ts`) agar input kata sandi berfungsi.
+- **Perlu tindak lanjut pengguna:** deploy Edge Function `set-password` di Supabase (Dashboard → Edge Functions → Create → tempel isi `supabase/functions/set-password/index.ts`) agar input kata sandi berfungsi. Commit `82ba5d7` (sudah di-push ke `main`).
 
 ## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
