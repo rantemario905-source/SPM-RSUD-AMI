@@ -56,7 +56,8 @@ Aplikasi pelaporan Standar Pelayanan Minimal (SPM) RSUD, dibangun dengan:
 2. Periksa `git log --oneline -10` dan `git status` untuk konteks.
 3. Kerjakan tugas, verifikasi dengan lint + build.
 4. **WAJIB: Setiap ada perubahan kode/file, perbarui `PROGRESS.md` DAN `AGENTS.md`** (tanggal, status tugas, keputusan/konvensi baru, langkah berikutnya). Jangan anggap tugas selesai sebelum kedua file ini diperbarui.
-5. Jangan commit/push kecuali diminta eksplisit oleh pengguna.
+5. **KONSISTENSI SISTEM:** Jangan mengubah sistem yang sudah disepakati/dikonfigurasi tanpa konfirmasi eksplisit dari pengguna. Jangan melakukan commit/push otomatis tanpa perintah eksplisit.
+6. Jangan commit/push kecuali diminta eksplisit oleh pengguna.
 
 ## Alur commit, push, dan deploy
 
