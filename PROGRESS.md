@@ -288,7 +288,7 @@ Commit terkait:
 
 - **Sesi berikutnya (rencana setelah 2026-10-11):**
   - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
-  - Migrasi yang masih perlu dijalankan pengguna di Supabase SQL Editor bila belum: `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung").
+  - Migrasi `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung") **sudah dijalankan pengguna** (2026-10-11).
   - Sisa rencana lanjutan dari awal: **Agregasi triwulan/tahunan** untuk Rekap lintas unit; **Cetak PDF halaman Rekap lintas unit** (ditunda); **penyederhanaan form Tambah indikator** (menunggu diskusi dengan atasan); pengaturan **blok tanda tangan** cetak PDF (menunggu diskusi).
 
 ## Riwayat singkat (git)
