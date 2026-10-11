@@ -5,9 +5,31 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** bersih, sinkron dengan `origin/main` (HEAD `b1e9371`).
+- **Kondisi working tree:** ada perubahan kode untuk fitur aktif/nonaktif pengguna + perbaikan Edit profil/ganti sandi (belum dicommit). HEAD `d3ae948`.
 
-## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
+## Tugas terakhir (BELUM DI-COMMIT)
+
+**Judul:** Manajemen pengguna lengkap - aktif/nonaktif pengguna
+
+Rincian:
+- Migrasi `supabase/migrations/202610110003_profiles_active.sql`: tambah kolom `profiles.active` (default true). Sudah dijalankan di Supabase.
+- `AuthGate.tsx`: cek `active === false` → logout + pesan "Akun Anda telah dinonaktifkan. Hubungi administrator."
+- `UsersPage.tsx`: toggle aktif/nonaktif (tidak bisa nonaktifkan diri sendiri), kolom Status (Aktif/Nonaktif), query/load `active`. (Direstorasi ulang 2026-10-11 setelah sempat hilang.)
+- `UsersPage.css`: gaya badge status & tombol toggle (`Power`).
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas dilaporkan pengguna (sudah diperbaiki, BELUM DI-COMMIT)
+
+**Judul:** Edit profil & ganti kata sandi "tidak terjadi apa-apa" (2026-10-11)
+
+Rincian perbaikan (semua 3 dipilih pengguna):
+- **Auto-scroll & sorot form saat Edit** — `startEditProfile` kini `scrollIntoView` ke form + highlight sementara (`.is-highlight` 1,4 dtk) sehingga perubahan form terlihat.
+- **Input kata sandi di form Edit** — field "Kata sandi (opsional)" (min. 8 karakter, kosongkan bila tidak diubah). Saat diisi, `saveProfile` memanggil Edge Function **`set-password`** (`supabase/functions/set-password/index.ts`) setelah profil tersimpan. Karena `service_role` tidak boleh di frontend, ganti sandi admin memakai Edge Function yang memverifikasi JWT sesi + cek `manage_users`/admin, lalu `admin.updateUserById`. `AuthContext`/`AuthGate` kini mengekspos `accessToken`.
+- **Umpan balik reset sandi** — `resetPassword`/`toggleActive`/hapus unit/profil kini juga menampilkan **toast** di pojok kanan bawah (auto-hide 4 dtk) selain pesan di atas, jadi sukses/gagal terlihat dari mana pun layar berada.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Perlu tindak lanjut pengguna:** deploy Edge Function `set-password` di Supabase (Dashboard → Edge Functions → Create → tempel isi `supabase/functions/set-password/index.ts`) agar input kata sandi berfungsi.
+
+## Tugas sebelumnya (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Manajemen pengguna & unit (edit, izin per pengguna, reset sandi, atur ulang sandi)
 

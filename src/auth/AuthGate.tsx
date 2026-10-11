@@ -53,10 +53,18 @@ function AuthGate({ children }: AuthGateProps) {
     if (!client || !session?.user.id) return
     let active = true
     const userId = session.user.id
-    void client.from('profiles').select('role, permissions').eq('id', userId).maybeSingle()
+    void client.from('profiles').select('role, permissions, active').eq('id', userId).maybeSingle()
       .then(({ data }) => {
         if (!active) return
-        const row = data as { role: string; permissions: Record<string, boolean> } | null
+        const row = data as { role: string; permissions: Record<string, boolean>; active: boolean | null } | null
+        if (row && row.active === false) {
+          if (active) {
+            setProfile(null)
+            setError('Akun Anda telah dinonaktifkan. Hubungi administrator.')
+            void client.auth.signOut()
+          }
+          return
+        }
         setProfile(row ? { id: userId, role: row.role, permissions: row.permissions } : null)
       })
     return () => { active = false }
@@ -99,7 +107,7 @@ function AuthGate({ children }: AuthGateProps) {
   }
 
   if (!client) {
-    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, role: null, permissions: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, role: null, permissions: null, accessToken: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
   }
 
   if (loading) return <div className="auth-loading" role="status">Memeriksa sesi pengguna...</div>
@@ -143,7 +151,7 @@ function AuthGate({ children }: AuthGateProps) {
     )
   }
 
-  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, role, permissions, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, role, permissions, accessToken: session.access_token ?? null, signOut }}>{children}</AuthContext.Provider>
 }
 
 export default AuthGate

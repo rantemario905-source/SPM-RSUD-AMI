@@ -6,6 +6,7 @@ export interface AuthState {
   userId: string | null
   role: string | null
   permissions: Record<string, boolean> | null
+  accessToken: string | null
   signOut: () => Promise<void>
 }
 
@@ -15,6 +16,7 @@ export const AuthContext = createContext<AuthState>({
   userId: null,
   role: null,
   permissions: null,
+  accessToken: null,
   signOut: async () => undefined,
 })
 

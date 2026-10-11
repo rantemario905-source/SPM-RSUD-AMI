@@ -7,7 +7,7 @@ Fondasi aplikasi pelaporan Standar Pelayanan Minimal berbasis React, TypeScript,
 1. Jalankan `npm install`.
 2. Salin `.env.example` menjadi `.env.local`.
 3. Isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dari pengaturan proyek Supabase.
-4. Untuk database baru, jalankan berurutan `supabase/migrations/202610060001_initial_spm_schema.sql`, `supabase/migrations/202610080001_connect_app_data.sql`, `supabase/migrations/202610090001_auto_lock_past_periods.sql`, `supabase/migrations/202610090002_ensure_reporting_periods.sql`, `supabase/migrations/202610090003_cross_unit_read.sql`, lalu `supabase/migrations/202610090004_cross_unit_write.sql`, dan `supabase/migrations/202610110001_allow_direct_calculation.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
+4. Untuk database baru, jalankan secara berurutan `supabase/migrations/202610060001_initial_spm_schema.sql`, `202610080001_connect_app_data.sql`, `202610090001_auto_lock_past_periods.sql`, `202610090002_ensure_reporting_periods.sql`, `202610090003_cross_unit_read.sql`, `202610090004_cross_unit_write.sql`, `202610110001_allow_direct_calculation.sql`, `202610110002_profiles_email.sql`, dan `202610110003_profiles_active.sql` melalui Supabase SQL Editor. Jangan jalankan migration 002 yang lama karena skemanya tidak cocok. Jika migration 002 pernah gagal setelah migration 001, jalankan dahulu fase pada `supabase/setup/01_repair_direct_entry_audit.sql`.
 5. Buat akun pertama di Supabase Auth dan profil administrator melalui SQL tepercaya. Setelah login sebagai admin, gunakan halaman **Unit & pengguna** untuk menambah unit atau menautkan UID akun Auth lain ke profil.
 6. Jalankan `npm run dev`.
 
@@ -54,5 +54,13 @@ Menu difilter di `src/components/layout/AppShell.tsx` berdasarkan peta peran di 
 - **Baca lintas unit:** semua pengguna terautentikasi dapat melihat laporan/entri semua unit (capaian agregat, tanpa identitas pasien) agar dapat membandingkan data unit lain.
 - **Tulis terbatas unit:** pengguna hanya dapat membuat/mengubah laporan untuk unit yang ditautkan pada profilnya. Pengguna dengan izin `manage_users` dapat menginput untuk unit mana pun.
 - Di halaman **Input laporan**, dropdown unit menampilkan semua unit; unit selain unit pengguna tampil **hanya-baca** (tidak bisa diisi/disimpan).
+
+## Ganti kata sandi & reset kata sandi
+
+- **Reset kata sandi (tombol kunci di halaman Unit & pengguna):** mengirim email berisi tautan atur ulang sandi via `resetPasswordForEmail`. Pastikan Redirect URL aplikasi terdaftar di pengaturan Authentication Supabase.
+- **Set kata sandi langsung dari form Edit profil:** admin mengisi field "Kata sandi (opsional)" (min. 8 karakter). Frontend memanggil Edge Function **`set-password`** karena `service_role` tidak boleh ada di frontend. Deploy fungsi ini sekali di Supabase:
+  1. Dashboard Supabase → **Edge Functions** → **Create a new function** (nama `set-password`).
+  2. Tempel isi `supabase/functions/set-password/index.ts` Lalu **Deploy**.
+- Function `set-password` memverifikasi JWT sesi, menolak non-admin/non-`manage_users`, lalu memperbarui kata sandi via `admin.updateUserById` dengan `service_role` runtime (env `SUPABASE_SERVICE_ROLE_KEY` disediakan Supabase, tidak pernah masuk kode/Git).
 
 Skema dan aturan RLS adalah fondasi awal; uji pada proyek Supabase non-produksi sebelum menghubungkan data RSUD.
