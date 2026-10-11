@@ -5,9 +5,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** ada perubahan kode penghapusan sistem reset/ganti kata sandi (belum dicommit). HEAD `3dc112b`.
+- **Kondisi working tree:** bersih. HEAD `81fd0db` (sudah di-push ke `main`).
 
-## Tugas terakhir (BELUM DI-COMMIT — penghapusan sistem reset/ganti kata sandi)
+## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Hapus seluruh sistem reset kata sandi & ganti kata sandi (2026-10-11)
 
@@ -20,6 +20,7 @@ Keputusan pengguna: sistem reset kata sandi dihapus total (karena rate limit ema
 - Kolom `profiles.email` **tetap** (dipakai untuk tampilan/edit profil), migrasi `202610110002` tetap.
 - `README.md`, `AGENTS.md`, `PROGRESS.md`: bagian reset/ganti kata sandi dihapus/diperbarui.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- Commit: `81fd0db` Remove password reset and change system entirely (sudah di-push ke `main`).
 
 ## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
