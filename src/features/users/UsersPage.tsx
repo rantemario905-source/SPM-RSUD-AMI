@@ -3,6 +3,7 @@ import { Building2, Check, Pencil, Plus, Power, Trash2, UserRoundPlus, X } from 
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadUnits, type SpmUnit } from '../../lib/spm-data'
+import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './UsersPage.css'
 
 type UserRole = 'officer' | 'unit_head' | 'quality' | 'leadership' | 'admin'
@@ -66,6 +67,7 @@ function UsersPage() {
   const [notice, setNotice] = useState('')
   const [toast, setToast] = useState('')
   const [highlightForm, setHighlightForm] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<{ kind: 'unit'; unit: SpmUnit } | { kind: 'profile'; profile: UserProfile } | null>(null)
   const formRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -209,7 +211,6 @@ function UsersPage() {
 
   async function removeUnit(unit: SpmUnit) {
     if (!client) return
-    if (!window.confirm(`Hapus unit "${unit.name}"? Tindakan ini tidak dapat dibatalkan.`)) return
     setSaving(true)
     setError('')
     setNotice('')
@@ -246,7 +247,6 @@ function UsersPage() {
 
   async function removeProfile(profile: UserProfile) {
     if (!client) return
-    if (!window.confirm(`Hapus profil "${profile.full_name}"? Akun Auth tetap ada, hanya profil ini yang dilepas.`)) return
     setSaving(true)
     setError('')
     setNotice('')
@@ -292,14 +292,29 @@ function UsersPage() {
         <h2>Unit terdaftar ({units.length})</h2>
         <div className="users-table-wrap"><table><thead><tr><th>KODE</th><th>NAMA UNIT</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{units.map((unit) => editingUnitId === unit.id
           ? <tr key={unit.id}><td><input className="inline-input" value={unitEditCode} onChange={(event) => setUnitEditCode(event.target.value)} aria-label="Kode unit" /></td><td><input className="inline-input" value={unitEditName} onChange={(event) => setUnitEditName(event.target.value)} aria-label="Nama unit" /></td><td className="row-actions"><button className="row-save" type="button" onClick={() => void saveUnit(unit)} disabled={saving} title="Simpan" aria-label={`Simpan unit ${unit.name}`}><Check size={14} /></button><button className="row-cancel" type="button" onClick={cancelEditUnit} disabled={saving} title="Batal" aria-label="Batal edit unit"><X size={14} /></button></td></tr>
-          : <tr key={unit.id}><td>{unit.code}</td><td>{unit.name}</td>{canManage && <td className="row-actions"><button className="row-edit" type="button" onClick={() => startEditUnit(unit)} disabled={saving} title="Edit unit" aria-label={`Edit unit ${unit.name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => void removeUnit(unit)} disabled={saving} aria-label={`Hapus unit ${unit.name}`} title="Hapus unit"><Trash2 size={14} /></button></td>}</tr>
+          : <tr key={unit.id}><td>{unit.code}</td><td>{unit.name}</td>{canManage && <td className="row-actions"><button className="row-edit" type="button" onClick={() => startEditUnit(unit)} disabled={saving} title="Edit unit" aria-label={`Edit unit ${unit.name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => setPendingDelete({ kind: 'unit', unit })} disabled={saving} aria-label={`Hapus unit ${unit.name}`} title="Hapus unit"><Trash2 size={14} /></button></td>}</tr>
         )}</tbody></table>{!units.length && <p>{loading ? 'Memuat unit…' : 'Belum ada unit.'}</p>}</div>
       </section>
       <section className="users-section users-list-section">
         <h2>Profil pengguna ({profiles.length})</h2>
-        <div className="users-table-wrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>UNIT</th><th>EMAIL</th><th>STATUS</th><th>UID</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{profiles.map((profile) => <tr key={profile.id}><td>{profile.full_name}</td><td>{roleNames[profile.role] ?? profile.role}</td><td>{units.find((unit) => unit.id === profile.unit_id)?.name ?? 'Semua unit'}</td><td>{profile.email ?? '—'}</td><td>{profile.active === false ? <span className="status-badge is-inactive">Nonaktif</span> : <span className="status-badge is-active">Aktif</span>}</td><td><code>{profile.id}</code></td>{canManage && <td className="row-actions"><button className={`row-toggle ${profile.active === false ? 'is-off' : ''}`} type="button" onClick={() => void toggleActive(profile)} disabled={saving || profile.id === auth.userId} title={profile.active === false ? 'Aktifkan pengguna' : 'Nonaktifkan pengguna'} aria-label={`${profile.active === false ? 'Aktifkan' : 'Nonaktifkan'} ${profile.full_name}`}><Power size={14} /></button><button className="row-edit" type="button" onClick={() => startEditProfile(profile)} disabled={saving} title="Edit profil" aria-label={`Edit profil ${profile.full_name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => void removeProfile(profile)} disabled={saving} aria-label={`Hapus profil ${profile.full_name}`} title="Hapus profil"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table>{!profiles.length && <p>{loading ? 'Memuat profil…' : 'Belum ada profil.'}</p>}</div>
+        <div className="users-table-wrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>UNIT</th><th>EMAIL</th><th>STATUS</th><th>UID</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{profiles.map((profile) => <tr key={profile.id}><td>{profile.full_name}</td><td>{roleNames[profile.role] ?? profile.role}</td><td>{units.find((unit) => unit.id === profile.unit_id)?.name ?? 'Semua unit'}</td><td>{profile.email ?? '—'}</td><td>{profile.active === false ? <span className="status-badge is-inactive">Nonaktif</span> : <span className="status-badge is-active">Aktif</span>}</td><td><code>{profile.id}</code></td>{canManage && <td className="row-actions"><button className={`row-toggle ${profile.active === false ? 'is-off' : ''}`} type="button" onClick={() => void toggleActive(profile)} disabled={saving || profile.id === auth.userId} title={profile.active === false ? 'Aktifkan pengguna' : 'Nonaktifkan pengguna'} aria-label={`${profile.active === false ? 'Aktifkan' : 'Nonaktifkan'} ${profile.full_name}`}><Power size={14} /></button><button className="row-edit" type="button" onClick={() => startEditProfile(profile)} disabled={saving} title="Edit profil" aria-label={`Edit profil ${profile.full_name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => setPendingDelete({ kind: 'profile', profile })} disabled={saving} aria-label={`Hapus profil ${profile.full_name}`} title="Hapus profil"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table>{!profiles.length && <p>{loading ? 'Memuat profil…' : 'Belum ada profil.'}</p>}</div>
       </section>
       {toast && <div className="users-toast" role="status">{toast}</div>}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={pendingDelete?.kind === 'profile' ? 'Hapus profil' : 'Hapus unit'}
+        message={pendingDelete?.kind === 'profile'
+          ? `Hapus profil "${pendingDelete.profile.full_name}"? Akun Auth tetap ada, hanya profil ini yang dilepas.`
+          : pendingDelete ? `Hapus unit "${pendingDelete.unit.name}"? Tindakan ini tidak dapat dibatalkan.` : ''}
+        confirmIcon={<Trash2 size={15} />}
+        onConfirm={() => {
+          const target = pendingDelete
+          setPendingDelete(null)
+          if (target?.kind === 'profile') void removeProfile(target.profile)
+          else if (target?.kind === 'unit') void removeUnit(target.unit)
+        }}
+        onClose={() => setPendingDelete(null)}
+      />
     </section>
   )
 }

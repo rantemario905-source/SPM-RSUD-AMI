@@ -5,8 +5,27 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** bersih. HEAD `7d0d4b1` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan **belum di-commit** (modal konfirmasi keluar/hapus + tombol keluar mobile). HEAD `27ca3bc` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Modal konfirmasi bersama (keluar, hapus indikator/unit/profil) + tombol keluar mobile (2026-10-12)
+
+Keputusan pengguna: (1) pakai **modal kustom** (bukan `window.confirm`) untuk keluar; (2) **tambahkan** tombol keluar di mobile; (3) pakai **model pop-up yang sama** untuk **hapus indikator**, **hapus profil**, dan **hapus unit**.
+
+Komponen baru (dipakai bersama):
+- `src/components/feedback/ConfirmDialog.tsx` (+ `ConfirmDialog.css`): satu modal konfirmasi untuk semua aksi. Props: `open`, `title`, `message`, `confirmLabel` (default "Hapus"), `cancelLabel` (default "Batal"), `confirmIcon?`, `onConfirm`, `onClose`. Gaya `.confirm-backdrop`/`.confirm-dialog` (ikon `CircleAlert`, tombol Batal fokus-awal + tombol aksi merah `.confirm-dialog-confirm`), tutup via Batal / klik backdrop / `Esc`.
+
+Rincian perubahan:
+- `src/components/layout/AppShell.tsx`: tombol keluar sidebar (`.profile-button`) & tombol **Keluar** mobile (`.nav-link.nav-logout`) membuka `ConfirmDialog` (judul "Keluar dari akun", pesan "Anda yakin ingin keluar dari akun ini?"); tidak lagi langsung `signOut`. Effect `Esc` lama dihapus (dipindah ke `ConfirmDialog`).
+- `src/features/indicators/IndicatorsPage.tsx`: tombol hapus baris → set state `pendingDelete` → `ConfirmDialog` (judul "Hapus indikator", pesan `Hapus indikator "<kode> — <nama>"? …`); `removeIndicator` tidak lagi memanggil `window.confirm`.
+- `src/features/users/UsersPage.tsx`: tombol hapus unit & profil → state `pendingDelete` bertipe `{ kind: 'unit' | 'profile', … }` → satu `ConfirmDialog` dengan judul/pesan dinamis; `removeUnit`/`removeProfile` tidak lagi memanggil `window.confirm`.
+- `src/components/layout/AppShell.css`: gaya modal keluar (`.logout-*`) **dihapus** (pindah ke `ConfirmDialog.css`); `.nav-logout` mobile tetap.
+- Tidak ada lagi pemakaian `window.confirm` di repo.
+- Tanpa perubahan DB/migrasi.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Status:** menunggu perintah commit & push dari pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -337,6 +356,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
+  - **Menunggu perintah pengguna** untuk commit & push tugas **modal konfirmasi bersama (keluar + hapus indikator/unit/profil) + tombol keluar mobile** (2026-10-12).
   - Tugas **format teks notifikasi lonceng (Opsi A)** (2026-10-12) **sudah selesai & diterbitkan** (`7d0d4b1`).
   - Tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12) **sudah selesai & diterbitkan** (`fa4aeb3`).
   - Tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12) **sudah selesai & diterbitkan** (`79461df`).

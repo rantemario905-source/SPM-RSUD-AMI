@@ -4,6 +4,7 @@ import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
+import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './IndicatorsPage.css'
 
 interface CatalogIndicator extends IndicatorEntry {
@@ -102,6 +103,7 @@ function IndicatorsPage() {
   const [notice, setNotice] = useState('')
   const [formError, setFormError] = useState('')
   const [toast, setToast] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<CatalogIndicator | null>(null)
 
   useEffect(() => {
     if (!toast) return
@@ -244,7 +246,6 @@ function IndicatorsPage() {
   }
 
   async function removeIndicator(indicator: CatalogIndicator) {
-    if (!window.confirm(`Hapus indikator "${indicator.code} — ${indicator.name}"? Tindakan ini tidak dapat dibatalkan.`)) return
     setSaving(true)
     setError('')
     setNotice('')
@@ -319,7 +320,7 @@ function IndicatorsPage() {
               <td><span className="input-type-tag">{calculationLabel[getCalculation(indicator)]}</span></td>
               <td>{indicator.effectiveYear}</td>
               <td><button className={`active-toggle${indicator.enabled ? ' is-enabled' : ''}`} type="button" role="switch" aria-checked={indicator.enabled} onClick={() => void toggleIndicator(indicator)}><span />{indicator.enabled ? 'Aktif' : 'Nonaktif'}</button></td>
-              <td className="indicator-actions"><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} title="Edit indikator" onClick={() => openEdit(indicator)} disabled={saving}><Pencil size={14} /></button><button className="delete-indicator-button" type="button" aria-label={`Hapus ${indicator.code}`} title="Hapus indikator" onClick={() => void removeIndicator(indicator)} disabled={saving}><Trash2 size={14} /></button></td>
+              <td className="indicator-actions"><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} title="Edit indikator" onClick={() => openEdit(indicator)} disabled={saving}><Pencil size={14} /></button><button className="delete-indicator-button" type="button" aria-label={`Hapus ${indicator.code}`} title="Hapus indikator" onClick={() => setPendingDelete(indicator)} disabled={saving}><Trash2 size={14} /></button></td>
             </tr>
           })}</tbody>
         </table>
@@ -345,6 +346,14 @@ function IndicatorsPage() {
         </section>
       </div>}
       {toast && <div className="indicators-toast" role="status">{toast}</div>}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Hapus indikator"
+        message={pendingDelete ? `Hapus indikator "${pendingDelete.code} — ${pendingDelete.name}"? Tindakan ini tidak dapat dibatalkan.` : ''}
+        confirmIcon={<Trash2 size={15} />}
+        onConfirm={() => { const target = pendingDelete; setPendingDelete(null); if (target) void removeIndicator(target) }}
+        onClose={() => setPendingDelete(null)}
+      />
     </section>
   )
 }
