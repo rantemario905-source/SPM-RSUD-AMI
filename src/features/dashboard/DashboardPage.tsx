@@ -92,7 +92,7 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
         const completed = reportEntries.filter((entry) => {
           const indicator = indicatorById.get(entry.indicator_id)
           const needsDenominator = indicator ? indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct' : true
-          return entry.numerator !== null && (!needsDenominator || entry.denominator !== null) && entry.analysis.trim() !== ''
+          return entry.numerator !== null && (!needsDenominator || entry.denominator !== null)
         }).length
         const completion = unitIndicators.length ? Math.min(100, Math.round(completed / unitIndicators.length * 100)) : 0
         const latest = reportEntries.reduce((date, entry) => entry.updated_at > date ? entry.updated_at : date, report?.updated_at ?? '')

@@ -78,7 +78,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
           const completed = reportEntries.filter((entry) => {
             const indicator = indicatorById.get(entry.indicator_id)
             const needsDenominator = indicator ? indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct' : true
-            return entry.numerator !== null && (!needsDenominator || entry.denominator !== null) && entry.analysis.trim() !== ''
+            return entry.numerator !== null && (!needsDenominator || entry.denominator !== null)
           }).length
           if (unitIndicators.length && completed < unitIndicators.length) {
             incomplete += 1

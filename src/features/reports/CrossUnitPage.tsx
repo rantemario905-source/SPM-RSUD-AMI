@@ -130,7 +130,7 @@ function CrossUnitPage() {
       const entry = entryMap.get(`${unit.id}|${indicator.id}`)
       if (!entry) continue
       const needsDenominator = indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct'
-      if (entry.numerator !== null && (!needsDenominator || entry.denominator !== null) && entry.analysis.trim() !== '') completed += 1
+      if (entry.numerator !== null && (!needsDenominator || entry.denominator !== null)) completed += 1
       const value = achievement(entry, indicator)
       const target = parseTarget(indicator.standard)
       if (value !== null && target && meetsStandard(value, target)) met += 1

@@ -5,8 +5,23 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** bersih. HEAD `79461df` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan **belum di-commit** (aturan "terisi/kelengkapan" tidak lagi mewajibkan Analisa). HEAD `68381a8` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** "Terisi/kelengkapan" tidak lagi mewajibkan kolom Analisa (2026-10-12)
+
+Keputusan pengguna: kolom Analisa tidak boleh lagi menjadi syarat hitungan "terisi/kelengkapan". Cukup nilai capaian valid (numerator; plus denominator bila rumus butuh).
+
+Rincian (hapus syarat `analysis.trim() !== ''` di semua perhitungan "terisi"):
+- `src/features/reports/InputReportPage.tsx` (`completedCount`): "terisi" = numerator (dan denominator untuk rumus `average`/`scaled`/`percentage`) tanpa analisa.
+- `src/features/reports/CrossUnitPage.tsx` (`summary.completed`): sama, tanpa analisa.
+- `src/features/dashboard/DashboardPage.tsx` (kolom kelengkapan per unit): sama, tanpa analisa.
+- `src/components/layout/NotificationBell.tsx` (notifikasi "belum lengkap"): sama, tanpa analisa.
+- Kolom **Analisa** tetap ada di form Input, Rekap, dan cetak PDF — hanya tidak lagi memengaruhi "terisi" maupun status.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Status:** menunggu perintah commit & push dari pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -305,6 +320,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
+  - **Menunggu perintah pengguna** untuk commit & push tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12, 4 file).
   - Tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12) **sudah selesai & diterbitkan** (`79461df`).
   - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
   - Migrasi `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung") **sudah dijalankan pengguna** (2026-10-11).

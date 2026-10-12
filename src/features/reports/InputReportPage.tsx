@@ -113,8 +113,7 @@ function InputReportPage() {
   const completedCount = useMemo(() => entries.filter((entry) => {
     const calculation = entryCalculation(entry)
     const direct = calculation === 'numerator' || calculation === 'direct'
-    const filled = direct ? entry.numerator !== '' : entry.numerator !== '' && entry.denominator !== ''
-    return filled && entry.analysis.trim() !== ''
+    return direct ? entry.numerator !== '' : entry.numerator !== '' && entry.denominator !== ''
   }).length, [entries])
 
   function updateEntry(index: number, field: 'numerator' | 'denominator' | 'analysis', value: string) {
