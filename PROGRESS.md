@@ -5,8 +5,25 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** bersih. HEAD `f9ea3f2` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan **belum di-commit** (hapus tampilan "Rumus capaian" di halaman Indikator SPM). HEAD `ed10931` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Hapus tampilan "Rumus capaian" di halaman Indikator SPM (2026-10-12)
+
+Permintaan pengguna: informasi rumus capaian di halaman **Indikator SPM** tidak perlu, hapus saja. Konfirmasi pengguna: **tampilan saja, form tetap**.
+
+Perubahan (`src/features/indicators/IndicatorsPage.tsx`):
+- Hapus kolom tabel **RUMUS CAPAIAN** (header + sel `.input-type-tag`).
+- Hapus kartu ringkasan **Rumus capaian** (ringkasan kini: Total indikator, Unit terdaftar).
+- Hapus filter **"Semua rumus capaian"** beserta state `calculationFilter` dan penggunaannya di `filteredIndicators`.
+- **Form Tambah/Edit tetap** memiliki pilihan **Rumus capaian** (`calculationLabel` & `getCalculation` masih dipakai).
+- `src/features/indicators/IndicatorsPage.css`: hapus aturan `.input-type-tag` yang tak terpakai.
+- Rapikan kotak ringkasan: `.indicator-summary` kini **ringkas** di desktop (`display: flex; width: fit-content; max-width: 100%`, sel `min-width: 172px`) sehingga **Total indikator** & **Unit terdaftar** sama lebar tanpa menyisakan area putih kosong. Di layar ≤ 680px kotak dibuat **penuh lebar** (`.indicator-summary { width: 100% }`, sel `flex: 1 1 0`).
+- Tanpa perubahan DB/migrasi.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Status:** menunggu perintah commit & push dari pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 

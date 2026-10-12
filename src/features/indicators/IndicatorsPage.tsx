@@ -95,7 +95,6 @@ function IndicatorsPage() {
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [unitFilter, setUnitFilter] = useState('all')
-  const [calculationFilter, setCalculationFilter] = useState('all')
   const [dialog, setDialog] = useState<'create' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingCode, setEditingCode] = useState('')
@@ -132,9 +131,8 @@ function IndicatorsPage() {
   const filteredIndicators = useMemo(() => indicators.filter((indicator) => {
     const matchesText = `${indicator.code} ${indicator.name} ${indicator.definition}`.toLowerCase().includes(query.toLowerCase())
     const matchesUnit = unitFilter === 'all' || indicator.unitId === unitFilter
-    const matchesCalculation = calculationFilter === 'all' || indicator.calculation === calculationFilter
-    return matchesText && matchesUnit && matchesCalculation
-  }), [indicators, query, unitFilter, calculationFilter])
+    return matchesText && matchesUnit
+  }), [indicators, query, unitFilter])
 
   function openCreate() {
     setEditingId(null)
@@ -295,13 +293,11 @@ function IndicatorsPage() {
       <div className="indicator-summary">
         <div><span>Total indikator</span><strong>{loading ? '…' : indicators.length}</strong></div>
         <div><span>Unit terdaftar</span><strong>{units.length}</strong></div>
-        <div><span>Rumus capaian</span><strong>5</strong></div>
       </div>
 
       <div className="indicator-toolbar">
         <label className="indicator-search"><Search size={15} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari kode, nama, atau definisi" /></label>
         <label className="indicator-filter"><span className="sr-only">Filter unit</span><select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}><option value="all">Semua unit</option>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
-        <label className="indicator-filter"><span className="sr-only">Filter rumus capaian</span><select value={calculationFilter} onChange={(event) => setCalculationFilter(event.target.value)}><option value="all">Semua rumus capaian</option>{Object.entries(calculationLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <span className="indicator-result-count">{filteredIndicators.length} indikator</span>
       </div>
 
@@ -309,7 +305,7 @@ function IndicatorsPage() {
 
       <div className="indicator-table-wrap">
         <table className="indicator-table">
-          <thead><tr><th>KODE</th><th>UNIT / JENIS PELAYANAN</th><th>INDIKATOR &amp; DEFINISI</th><th>STANDAR</th><th>RUMUS CAPAIAN</th><th>BERLAKU</th><th>STATUS</th><th><span className="sr-only">Aksi</span></th></tr></thead>
+          <thead><tr><th>KODE</th><th>UNIT / JENIS PELAYANAN</th><th>INDIKATOR &amp; DEFINISI</th><th>STANDAR</th><th>BERLAKU</th><th>STATUS</th><th><span className="sr-only">Aksi</span></th></tr></thead>
           <tbody>{filteredIndicators.map((indicator) => {
             const owner = units.find((unit) => unit.id === indicator.unitId)
             return <tr key={indicator.code}>
@@ -317,7 +313,6 @@ function IndicatorsPage() {
               <td>{owner?.name ?? 'Unit belum dipilih'}</td>
               <td className="catalog-name"><strong>{indicator.name}</strong><small>{indicator.definition}</small></td>
               <td className="catalog-standard">{indicator.standard}</td>
-              <td><span className="input-type-tag">{calculationLabel[getCalculation(indicator)]}</span></td>
               <td>{indicator.effectiveYear}</td>
               <td><button className={`active-toggle${indicator.enabled ? ' is-enabled' : ''}`} type="button" role="switch" aria-checked={indicator.enabled} onClick={() => void toggleIndicator(indicator)}><span />{indicator.enabled ? 'Aktif' : 'Nonaktif'}</button></td>
               <td className="indicator-actions"><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} title="Edit indikator" onClick={() => openEdit(indicator)} disabled={saving}><Pencil size={14} /></button><button className="delete-indicator-button" type="button" aria-label={`Hapus ${indicator.code}`} title="Hapus indikator" onClick={() => setPendingDelete(indicator)} disabled={saving}><Trash2 size={14} /></button></td>
