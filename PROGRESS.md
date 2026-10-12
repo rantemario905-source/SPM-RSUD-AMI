@@ -5,10 +5,10 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** ada perubahan **belum di-commit** (hapus tampilan "Rumus capaian" di halaman Indikator SPM). HEAD `ed10931` (sudah di-push ke `main`).
+- **Kondisi working tree:** bersih. HEAD `4cc49d5` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Hapus tampilan "Rumus capaian" di halaman Indikator SPM (2026-10-12)
 
@@ -23,7 +23,7 @@ Perubahan (`src/features/indicators/IndicatorsPage.tsx`):
 - Rapikan kotak ringkasan: `.indicator-summary` kini **ringkas** di desktop (`display: flex; width: fit-content; max-width: 100%`, sel `min-width: 172px`) sehingga **Total indikator** & **Unit terdaftar** sama lebar tanpa menyisakan area putih kosong. Di layar ≤ 680px kotak dibuat **penuh lebar** (`.indicator-summary { width: 100% }`, sel `flex: 1 1 0`).
 - Tanpa perubahan DB/migrasi.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Status:** menunggu perintah commit & push dari pengguna.
+- Commit: `4cc49d5` Remove calculation method display on Indicators page and tidy summary (sudah di-push ke `main`).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -393,6 +393,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
+  - Tugas **hapus tampilan "Rumus capaian" di halaman Indikator SPM + rapikan kotak ringkasan (compact)** (2026-10-12) **sudah selesai & diterbitkan** (`4cc49d5`).
   - Tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12) **sudah selesai & diterbitkan** (`f9ea3f2`).
   - Tugas **modal konfirmasi bersama (keluar + hapus indikator/unit/profil) + tombol keluar mobile** (2026-10-12) **sudah selesai & diterbitkan** (`385e64d`).
   - Tugas **format teks notifikasi lonceng (Opsi A)** (2026-10-12) **sudah selesai & diterbitkan** (`7d0d4b1`).
@@ -404,6 +405,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `4cc49d5` Remove calculation method display on Indicators page and tidy summary
 - `f9ea3f2` Compact mobile bottom nav and fix fixed bar position on scroll
 - `385e64d` Add shared confirm dialog for logout and delete actions
 - `7d0d4b1` Clarify notification wording with minimal/maximal instead of vs
