@@ -5,10 +5,10 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** ada perubahan **belum di-commit** (ringkas navigasi mobile + perbaikan posisi bar bawah). HEAD `921e0e6` (sudah di-push ke `main`).
+- **Kondisi working tree:** bersih. HEAD `f9ea3f2` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Ringkas menu bawah mobile + perbaiki bar bawah yang naik ke tengah saat scroll (2026-10-12)
 
@@ -26,7 +26,7 @@ Perbaikan:
 - `src/styles/global.css`: `body { min-height: 100vh; min-height: 100dvh }` (fallback) untuk menghindari lompatan `fixed` akibat tinggi viewport dinamis di mobile.
 - Tanpa perubahan DB/migrasi.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Status:** menunggu perintah commit & push dari pengguna.
+- Commit: `f9ea3f2` Compact mobile bottom nav and fix fixed bar position on scroll (sudah di-push ke `main`).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -376,7 +376,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
-  - **Menunggu perintah pengguna** untuk commit & push tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12).
+  - Tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12) **sudah selesai & diterbitkan** (`f9ea3f2`).
   - Tugas **modal konfirmasi bersama (keluar + hapus indikator/unit/profil) + tombol keluar mobile** (2026-10-12) **sudah selesai & diterbitkan** (`385e64d`).
   - Tugas **format teks notifikasi lonceng (Opsi A)** (2026-10-12) **sudah selesai & diterbitkan** (`7d0d4b1`).
   - Tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12) **sudah selesai & diterbitkan** (`fa4aeb3`).
@@ -387,6 +387,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `f9ea3f2` Compact mobile bottom nav and fix fixed bar position on scroll
 - `385e64d` Add shared confirm dialog for logout and delete actions
 - `7d0d4b1` Clarify notification wording with minimal/maximal instead of vs
 - `fa4aeb3` Count filled indicators without requiring analysis
