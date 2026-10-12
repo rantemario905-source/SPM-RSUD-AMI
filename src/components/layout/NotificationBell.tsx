@@ -3,7 +3,7 @@ import { Bell, CircleAlert, Info } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel } from '../../lib/spm-data'
-import { achievement, formatValue, meetsStandard, parseTarget } from '../../lib/spm-achievement'
+import { achievement, achievementUnit, formatValue, meetsStandard, parseTarget } from '../../lib/spm-achievement'
 import type { AppPage } from '../../types/spm'
 import './NotificationBell.css'
 
@@ -12,12 +12,16 @@ interface NotificationItem { id: string; tone: 'danger' | 'warning' | 'info'; ti
 
 const previewNotifications: NotificationItem[] = [
   { id: 'p1', tone: 'danger', title: 'Radiologi belum mengisi', detail: 'Oktober 2026 · belum ada input', target: 'entry' },
-  { id: 'p2', tone: 'warning', title: 'Farmasi belum lengkap', detail: '10 dari 13 indikator · Oktober 2026', target: 'entry' },
-  { id: 'p3', tone: 'warning', title: 'Gawat Darurat: waktu tanggap di bawah standar', detail: 'Capaian 6 vs standar ≤ 5 menit', target: 'reports' },
+  { id: 'p2', tone: 'warning', title: 'Farmasi belum lengkap', detail: '3 dari 13 indikator belum diisi · Oktober 2026', target: 'entry' },
+  { id: 'p3', tone: 'warning', title: 'Gawat Darurat: waktu tanggap belum memenuhi standar', detail: 'Capaian 6 menit · maksimal 5 menit', target: 'reports' },
   { id: 'p4', tone: 'info', title: 'Periode Oktober 2026 akan dikunci', detail: 'dalam 22 hari', target: 'periods' },
 ]
 
 const toneIcon = { danger: CircleAlert, warning: CircleAlert, info: Info }
+
+function formatMetric(value: number, unit: string) {
+  return unit === '%' ? `${formatValue(value)}%` : `${formatValue(value)}${unit ? ` ${unit}` : ''}`
+}
 
 function NotificationBell({ onNavigate }: NotificationBellProps) {
   const auth = useAuth()
@@ -88,7 +92,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
                 id: `unit-${unit.id}`,
                 tone: completed === 0 ? 'danger' : 'warning',
                 title: completed === 0 ? `${unit.name} belum mengisi` : `${unit.name} belum lengkap`,
-                detail: completed === 0 ? `${inPeriod} · belum ada input` : `${missing} dari ${unitIndicators.length} indikator · ${inPeriod}`,
+                detail: completed === 0 ? `${inPeriod} · belum ada input` : `${missing} dari ${unitIndicators.length} indikator belum diisi · ${inPeriod}`,
                 target: 'entry',
               })
             }
@@ -104,11 +108,13 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
             if (!failing) continue
             belowStandard += 1
             if (belowStandard <= 4) {
+              const unitLabel = achievementUnit(indicator)
+              const direction = target.comparator === '<=' ? 'maksimal' : 'minimal'
               next.push({
                 id: `std-${unit.id}-${indicator.id}`,
                 tone: 'warning',
-                title: `${unit.name}: ${indicator.name} di bawah standar`,
-                detail: `Capaian ${formatValue(value)} vs standar ${indicator.standard}`,
+                title: `${unit.name}: ${indicator.name} belum memenuhi standar`,
+                detail: `Capaian ${formatMetric(value, unitLabel)} · ${direction} ${formatMetric(target.target, unitLabel)}`,
                 target: 'reports',
               })
             }

@@ -5,8 +5,25 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** bersih. HEAD `fa4aeb3` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan **belum di-commit** (format teks notifikasi lonceng, Opsi A). HEAD `e7bc32e` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Perjelas kalimat notifikasi lonceng — hilangkan "vs" & arah minimal/maksimal (Opsi A, 2026-10-12)
+
+Keputusan pengguna: pilih Opsi A.
+
+Rincian (`src/components/layout/NotificationBell.tsx`):
+- Notifikasi capaian di bawah standar:
+  - Judul: `<unit>: <indikator> belum memenuhi standar` (sebelumnya `… di bawah standar` — keliru arah untuk batas maksimum).
+  - Detail: `Capaian <nilai><satuan> · minimal/maksimal <target><satuan>` (arah `≤` → `maksimal`, selain itu `minimal`). Angka target dari `parseTarget().target`, satuan dari `achievementUnit()`. **Kata "vs" dihapus.**
+- Notifikasi unit belum lengkap: detail jadi `X dari Y indikator belum diisi · <periode>`.
+- Helper lokal `formatMetric(value, unit)` — satuan `%` menempel (`80%`), satuan lain berspasi (`6 menit`).
+- `previewNotifications` (mode simulasi) disesuaikan ke format baru.
+- Tanpa perubahan DB/migrasi.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Status:** menunggu perintah commit & push dari pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -320,6 +337,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
+  - **Menunggu perintah pengguna** untuk commit & push tugas **format teks notifikasi lonceng (Opsi A)** (2026-10-12).
   - Tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12) **sudah selesai & diterbitkan** (`fa4aeb3`).
   - Tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12) **sudah selesai & diterbitkan** (`79461df`).
   - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
