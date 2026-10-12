@@ -5,10 +5,10 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** ada perubahan **belum di-commit** (aturan "terisi/kelengkapan" tidak lagi mewajibkan Analisa). HEAD `68381a8` (sudah di-push ke `main`).
+- **Kondisi working tree:** bersih. HEAD `fa4aeb3` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** "Terisi/kelengkapan" tidak lagi mewajibkan kolom Analisa (2026-10-12)
 
@@ -21,7 +21,7 @@ Rincian (hapus syarat `analysis.trim() !== ''` di semua perhitungan "terisi"):
 - `src/components/layout/NotificationBell.tsx` (notifikasi "belum lengkap"): sama, tanpa analisa.
 - Kolom **Analisa** tetap ada di form Input, Rekap, dan cetak PDF — hanya tidak lagi memengaruhi "terisi" maupun status.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Status:** menunggu perintah commit & push dari pengguna.
+- Commit: `fa4aeb3` Count filled indicators without requiring analysis (sudah di-push ke `main`).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -320,7 +320,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
-  - **Menunggu perintah pengguna** untuk commit & push tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12, 4 file).
+  - Tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12) **sudah selesai & diterbitkan** (`fa4aeb3`).
   - Tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12) **sudah selesai & diterbitkan** (`79461df`).
   - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
   - Migrasi `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung") **sudah dijalankan pengguna** (2026-10-11).
@@ -328,6 +328,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `fa4aeb3` Count filled indicators without requiring analysis
 - `79461df` Add indicator delete button and duplicate code notification
 - `8b817cc` Update PROGRESS: confirm direct achievement migration applied
 - `78757b6` Update PROGRESS after removing password reset system
