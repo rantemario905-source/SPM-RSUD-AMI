@@ -5,10 +5,10 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** ada perubahan **belum di-commit** (fitur hapus indikator + notifikasi kode indikator duplikat). HEAD `8b817cc` (sudah di-push ke `main`).
+- **Kondisi working tree:** bersih. HEAD `79461df` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Tombol hapus indikator + notifikasi kode indikator sudah digunakan (2026-10-12)
 
@@ -23,7 +23,7 @@ Rincian:
 - `src/features/indicators/IndicatorsPage.css`: gaya `.indicator-actions`, `.delete-indicator-button` (merah), `.indicator-form-error`, `.indicators-toast`.
 - **Tanpa migrasi baru**: `indicators.code` sudah `unique` sejak skema awal; `report_entries.indicator_id` tanpa `on delete cascade` sehingga FK menahan penghapusan indikator yang masih terpakai.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Status:** menunggu perintah commit & push dari pengguna.
+- Commit: `79461df` Add indicator delete button and duplicate code notification (sudah di-push ke `main`).
 
 ## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -305,13 +305,15 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
-  - **Menunggu perintah pengguna** untuk commit & push tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12).
+  - Tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12) **sudah selesai & diterbitkan** (`79461df`).
   - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
   - Migrasi `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung") **sudah dijalankan pengguna** (2026-10-11).
   - Sisa rencana lanjutan dari awal: **Agregasi triwulan/tahunan** untuk Rekap lintas unit; **Cetak PDF halaman Rekap lintas unit** (ditunda); **penyederhanaan form Tambah indikator** (menunggu diskusi dengan atasan); pengaturan **blok tanda tangan** cetak PDF (menunggu diskusi).
 
 ## Riwayat singkat (git)
 
+- `79461df` Add indicator delete button and duplicate code notification
+- `8b817cc` Update PROGRESS: confirm direct achievement migration applied
 - `78757b6` Update PROGRESS after removing password reset system
 - `81fd0db` Remove password reset and change system entirely
 - `3dc112b` Update PROGRESS after account management and edit fixes commit
