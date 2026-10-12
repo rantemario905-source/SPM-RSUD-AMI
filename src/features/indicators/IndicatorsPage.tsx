@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Check, CircleAlert, Pencil, Plus, Search, X } from 'lucide-react'
+import { Check, CircleAlert, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
@@ -97,8 +97,17 @@ function IndicatorsPage() {
   const [calculationFilter, setCalculationFilter] = useState('all')
   const [dialog, setDialog] = useState<'create' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingCode, setEditingCode] = useState('')
   const [form, setForm] = useState<IndicatorForm>(emptyForm)
   const [notice, setNotice] = useState('')
+  const [formError, setFormError] = useState('')
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(''), 4000)
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   useEffect(() => {
     if (!client) return
@@ -127,13 +136,16 @@ function IndicatorsPage() {
 
   function openCreate() {
     setEditingId(null)
+    setEditingCode('')
     setForm({ ...emptyForm, unitId: units[0]?.id ?? '' })
     setNotice('')
+    setFormError('')
     setDialog('create')
   }
 
   function openEdit(indicator: CatalogIndicator) {
     setEditingId(indicator.id ?? null)
+    setEditingCode(indicator.code)
     setForm({
       unitId: indicator.unitId,
       code: indicator.code,
@@ -147,6 +159,7 @@ function IndicatorsPage() {
       effectiveYear: String(indicator.effectiveYear),
     })
     setNotice('')
+    setFormError('')
     setDialog('edit')
   }
 
@@ -175,8 +188,20 @@ function IndicatorsPage() {
       enabled: dialog === 'edit' ? indicators.find((item) => item.id === editingId)?.enabled ?? true : true,
     }
 
+    const duplicate = indicators.find((item) => {
+      const isEditingTarget = dialog === 'edit' && (item.id === editingId || item.code === editingCode)
+      return !isEditingTarget && item.code.trim().toUpperCase() === changed.code.toUpperCase()
+    })
+    if (duplicate) {
+      const message = `Kode indikator "${changed.code}" sudah digunakan oleh ${duplicate.name}. Gunakan kode yang berbeda.`
+      setFormError(message)
+      setToast(message)
+      return
+    }
+
     setSaving(true)
     setError('')
+    setFormError('')
     try {
       if (client) {
         const record = {
@@ -196,7 +221,10 @@ function IndicatorsPage() {
         const result = dialog === 'edit' && editingId
           ? await client.from('indicators').update(record).eq('id', editingId)
           : await client.from('indicators').insert(record)
-        if (result.error) throw result.error
+        if (result.error) {
+          if (result.error.code === '23505') throw new Error(`Kode indikator "${changed.code}" sudah digunakan. Gunakan kode yang berbeda.`)
+          throw result.error
+        }
       }
       if (dialog === 'edit' && editingId) {
         setIndicators((current) => current.map((item) => item.id === editingId ? changed : item))
@@ -206,7 +234,35 @@ function IndicatorsPage() {
       setNotice(`${changed.code} ${dialog === 'edit' ? 'diperbarui' : 'ditambahkan'}${client ? ' di database.' : ' di pratinjau.'}`)
       setDialog(null)
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Indikator gagal disimpan.')
+      const message = saveError instanceof Error ? saveError.message : 'Indikator gagal disimpan.'
+      setError(message)
+      setFormError(message)
+      setToast(message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function removeIndicator(indicator: CatalogIndicator) {
+    if (!window.confirm(`Hapus indikator "${indicator.code} — ${indicator.name}"? Tindakan ini tidak dapat dibatalkan.`)) return
+    setSaving(true)
+    setError('')
+    setNotice('')
+    try {
+      if (client && indicator.id) {
+        const { error: deleteError } = await client.from('indicators').delete().eq('id', indicator.id)
+        if (deleteError) {
+          if (deleteError.code === '23503') throw new Error('Indikator tidak dapat dihapus karena sudah memiliki data entri laporan. Nonaktifkan saja indikator ini.')
+          throw deleteError
+        }
+      }
+      setIndicators((current) => current.filter((item) => !(item.id === indicator.id && item.code === indicator.code)))
+      setNotice(`Indikator ${indicator.code} dihapus${client ? ' dari database.' : ' dari pratinjau.'}`)
+      setToast(`Indikator ${indicator.code} dihapus.`)
+    } catch (deleteError) {
+      const message = deleteError instanceof Error ? deleteError.message : 'Indikator gagal dihapus.'
+      setError(message)
+      setToast(message)
     } finally {
       setSaving(false)
     }
@@ -263,7 +319,7 @@ function IndicatorsPage() {
               <td><span className="input-type-tag">{calculationLabel[getCalculation(indicator)]}</span></td>
               <td>{indicator.effectiveYear}</td>
               <td><button className={`active-toggle${indicator.enabled ? ' is-enabled' : ''}`} type="button" role="switch" aria-checked={indicator.enabled} onClick={() => void toggleIndicator(indicator)}><span />{indicator.enabled ? 'Aktif' : 'Nonaktif'}</button></td>
-              <td><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} onClick={() => openEdit(indicator)}><Pencil size={14} /></button></td>
+              <td className="indicator-actions"><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} title="Edit indikator" onClick={() => openEdit(indicator)} disabled={saving}><Pencil size={14} /></button><button className="delete-indicator-button" type="button" aria-label={`Hapus ${indicator.code}`} title="Hapus indikator" onClick={() => void removeIndicator(indicator)} disabled={saving}><Trash2 size={14} /></button></td>
             </tr>
           })}</tbody>
         </table>
@@ -277,7 +333,8 @@ function IndicatorsPage() {
           <div className="indicator-modal-heading"><div><span className="eyebrow">MASTER INDIKATOR</span><h2 id="indicator-modal-title">{dialog === 'create' ? 'Tambah indikator' : 'Edit indikator'}</h2></div><button className="close-modal-button" type="button" onClick={() => setDialog(null)} aria-label="Tutup"><X size={18} /></button></div>
           <form className="indicator-form" onSubmit={saveIndicator}>
             <label>Unit / jenis pelayanan<select required value={form.unitId} onChange={(event) => setForm((current) => ({ ...current, unitId: event.target.value }))}>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
-            <div className="indicator-form-grid"><label>Kode indikator<input required value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value.toUpperCase() }))} placeholder="Contoh: IGD-09" /></label><label>Tahun mulai berlaku<input required type="number" min="2000" max="2100" value={form.effectiveYear} onChange={(event) => setForm((current) => ({ ...current, effectiveYear: event.target.value }))} /></label></div>
+            <div className="indicator-form-grid"><label>Kode indikator<input required value={form.code} onChange={(event) => { setForm((current) => ({ ...current, code: event.target.value.toUpperCase() })); setFormError('') }} placeholder="Contoh: IGD-09" /></label><label>Tahun mulai berlaku<input required type="number" min="2000" max="2100" value={form.effectiveYear} onChange={(event) => setForm((current) => ({ ...current, effectiveYear: event.target.value }))} /></label></div>
+            {formError && <div className="indicator-form-error" role="alert"><CircleAlert size={15} /><span>{formError}</span></div>}
             <label>Nama indikator<input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
             <label>Definisi operasional<textarea required rows={3} value={form.definition} onChange={(event) => setForm((current) => ({ ...current, definition: event.target.value }))} /></label>
             <div className="indicator-form-grid"><label>Standar<input required value={form.standard} onChange={(event) => setForm((current) => ({ ...current, standard: event.target.value }))} placeholder="Contoh: ≥ 80%" /></label><label>Rumus capaian<select value={form.calculation} onChange={(event) => setForm((current) => ({ ...current, calculation: event.target.value as IndicatorCalculation }))}>{Object.entries(calculationLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
@@ -287,6 +344,7 @@ function IndicatorsPage() {
           </form>
         </section>
       </div>}
+      {toast && <div className="indicators-toast" role="status">{toast}</div>}
     </section>
   )
 }

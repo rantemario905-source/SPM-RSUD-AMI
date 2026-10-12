@@ -4,8 +4,26 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 ## Status saat ini
 
-- **Tanggal update terakhir:** 2026-10-11
-- **Kondisi working tree:** bersih. HEAD `81fd0db` (sudah di-push ke `main`).
+- **Tanggal update terakhir:** 2026-10-12
+- **Kondisi working tree:** ada perubahan **belum di-commit** (fitur hapus indikator + notifikasi kode indikator duplikat). HEAD `8b817cc` (sudah di-push ke `main`).
+- **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Tombol hapus indikator + notifikasi kode indikator sudah digunakan (2026-10-12)
+
+Keputusan pengguna: hapus indikator belum ada sebelumnya; tambahkan tombolnya di samping tombol Edit, dan beri notifikasi bila kode indikator sudah dipakai.
+
+Rincian:
+- `src/features/indicators/IndicatorsPage.tsx`:
+  - Impor `Trash2`; kolom aksi tiap baris kini berisi tombol **Edit** (`Pencil`) + **Hapus** (`Trash2`), dibungkus `.indicator-actions`.
+  - Fungsi `removeIndicator()`: `window.confirm` → `delete` ke tabel `indicators` → perbarui daftar + `notice` + `toast`. Bila indikator masih punya entri laporan (FK `23503`), penghapusan ditolak dengan pesan "…Nonaktifkan saja indikator ini.".
+  - Kode duplikat: state `editingCode` (untuk mengecualikan baris yang sedang diedit, penting karena indikator pratinjau tidak punya `id`); cek klien saat `saveIndicator` → pesan "Kode indikator "X" sudah digunakan oleh <nama>. Gunakan kode yang berbeda.". Error DB `23505` (unique `indicators.code`) juga ditangkap dengan pesan serupa.
+  - Notifikasi duplikat ditampilkan **di dalam modal** (`.indicator-form-error`) + **toast**; state baru `formError` & `toast` (auto-hide 4 dtk). `formError` dibersihkan saat membuka form dan saat kode berubah.
+- `src/features/indicators/IndicatorsPage.css`: gaya `.indicator-actions`, `.delete-indicator-button` (merah), `.indicator-form-error`, `.indicators-toast`.
+- **Tanpa migrasi baru**: `indicators.code` sudah `unique` sejak skema awal; `report_entries.indicator_id` tanpa `on delete cascade` sehingga FK menahan penghapusan indikator yang masih terpakai.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Status:** menunggu perintah commit & push dari pengguna.
 
 ## Tugas terakhir (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -286,7 +304,8 @@ Commit terkait:
 
 ## Langkah berikutnya
 
-- **Sesi berikutnya (rencana setelah 2026-10-11):**
+- **Sesi berikutnya (rencana setelah 2026-10-12):**
+  - **Menunggu perintah pengguna** untuk commit & push tugas **tombol hapus indikator + notifikasi kode duplikat** (2026-10-12).
   - `manajemen pengguna` **sudah selesai & diterbitkan** (edit profil, aktif/nonaktif, hapus unit/profil). Sistem **reset/ganti kata sandi dihapus total** — jangan dibangun ulang tanpa custom SMTP.
   - Migrasi `202610110001_allow_direct_calculation.sql` (rumus "Nilai capaian langsung") **sudah dijalankan pengguna** (2026-10-11).
   - Sisa rencana lanjutan dari awal: **Agregasi triwulan/tahunan** untuk Rekap lintas unit; **Cetak PDF halaman Rekap lintas unit** (ditunda); **penyederhanaan form Tambah indikator** (menunggu diskusi dengan atasan); pengaturan **blok tanda tangan** cetak PDF (menunggu diskusi).
