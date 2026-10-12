@@ -14,18 +14,18 @@ const roleNames: Record<string, string> = {
 
 interface AppShellProps { activePage: AppPage; onNavigate: (page: AppPage) => void; children: ReactNode }
 
-const navigation: { section: string; items: { id: AppPage; label: string; icon: typeof Activity }[] }[] = [
+const navigation: { section: string; items: { id: AppPage; label: string; short: string; icon: typeof Activity }[] }[] = [
   { section: 'RUANG KERJA', items: [
-    { id: 'dashboard', label: 'Ringkasan', icon: LayoutDashboard },
-    { id: 'entry', label: 'Input laporan', icon: ClipboardList },
-    { id: 'reports', label: 'Rekap & unduh', icon: FileSpreadsheet },
-    { id: 'crossunit', label: 'Rekap lintas unit', icon: Table2 },
+    { id: 'dashboard', label: 'Ringkasan', short: 'Ringkas', icon: LayoutDashboard },
+    { id: 'entry', label: 'Input laporan', short: 'Input', icon: ClipboardList },
+    { id: 'reports', label: 'Rekap & unduh', short: 'Rekap', icon: FileSpreadsheet },
+    { id: 'crossunit', label: 'Rekap lintas unit', short: 'Lintas', icon: Table2 },
   ] },
   { section: 'PENGELOLAAN', items: [
-    { id: 'indicators', label: 'Indikator SPM', icon: BarChart3 },
-    { id: 'periods', label: 'Periode', icon: CalendarClock },
-    { id: 'audit', label: 'Perubahan', icon: History },
-    { id: 'users', label: 'Unit & pengguna', icon: Users },
+    { id: 'indicators', label: 'Indikator SPM', short: 'Indikator', icon: BarChart3 },
+    { id: 'periods', label: 'Periode', short: 'Periode', icon: CalendarClock },
+    { id: 'audit', label: 'Perubahan', short: 'Audit', icon: History },
+    { id: 'users', label: 'Unit & pengguna', short: 'Pengguna', icon: Users },
   ] },
 ]
 
@@ -47,9 +47,9 @@ function AppShell({ activePage, onNavigate, children }: AppShellProps) {
         <nav className="side-navigation" aria-label="Navigasi utama">
           {visibleGroups.map((group) => <div className="nav-group" key={group.section}>
             <p className="nav-section-label">{group.section}</p>
-            {group.items.map(({ id, label, icon: Icon }) => <button className={`nav-link${activePage === id ? ' is-active' : ''}`} key={id} type="button" onClick={() => onNavigate(id)} aria-current={activePage === id ? 'page' : undefined}><Icon size={17} strokeWidth={1.8} /><span>{label}</span></button>)}
+            {group.items.map(({ id, label, short, icon: Icon }) => <button className={`nav-link${activePage === id ? ' is-active' : ''}`} key={id} type="button" onClick={() => onNavigate(id)} aria-current={activePage === id ? 'page' : undefined} title={label}><Icon size={17} strokeWidth={1.8} /><span className="nav-text nav-text-full">{label}</span><span className="nav-text nav-text-short">{short}</span></button>)}
           </div>)}
-          <button className="nav-link nav-logout" type="button" onClick={() => setConfirmingLogout(true)} aria-label="Keluar dari akun"><LogOut size={17} strokeWidth={1.8} /><span>Keluar</span></button>
+          <button className="nav-link nav-logout" type="button" onClick={() => setConfirmingLogout(true)} aria-label="Keluar dari akun"><LogOut size={17} strokeWidth={1.8} /><span className="nav-text">Keluar</span></button>
         </nav>
         <div className="sidebar-bottom"><div className="security-note"><ShieldCheck size={17} /><span>{auth.isPreview ? 'Mode simulasi' : 'Sesi terlindungi'}<br /><strong>{auth.isPreview ? 'Data contoh saja' : 'Pengguna terautentikasi'}</strong></span></div><button className="profile-button" type="button" onClick={() => setConfirmingLogout(true)} aria-label="Keluar dari akun"><span className="profile-avatar">{displayName.slice(0, 2).toUpperCase()}</span><span className="profile-copy"><strong>{displayName}</strong><small>{roleLabel}</small></span>{!auth.isPreview && <LogOut size={16} />}</button></div>
       </aside>

@@ -5,8 +5,28 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** bersih. HEAD `385e64d` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan **belum di-commit** (ringkas navigasi mobile + perbaikan posisi bar bawah). HEAD `921e0e6` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Ringkas menu bawah mobile + perbaiki bar bawah yang naik ke tengah saat scroll (2026-10-12)
+
+Masalah dilaporkan pengguna: (1) menu bawah mobile terlalu berhimpitan karena label panjang; (2) saat halaman di-scroll, bar menu bawah naik ke tengah.
+
+Akar masalah: label panjang membuat item menu (hingga 9 saat admin: 8 menu + Keluar) **meluber melebihi lebar layar**; luapan horizontal ini mengacaukan posisi elemen `position: fixed` saat di-scroll.
+
+Perbaikan:
+- `src/components/layout/AppShell.tsx`:
+  - `navigation[].short` baru — label ringkas untuk mobile: Ringkasan→**Ringkas**, Input laporan→**Input**, Rekap & unduh→**Rekap**, Rekap lintas unit→**Lintas**, Indikator SPM→**Indikator**, Periode→**Periode**, Perubahan→**Audit**, Unit & pengguna→**Pengguna**.
+  - Setiap tombol nav merender dua label: `.nav-text-full` (desktop) & `.nav-text-short` (mobile) + `title` untuk tooltip. Tombol Keluar memakai `<span className="nav-text">`.
+- `src/components/layout/AppShell.css`:
+  - Basis: `.nav-text` (ellipsis, `max-width: 100%`) + `.nav-text-short { display: none }`.
+  - Bar bawah (≤ 680px): `.sidebar` → `position: fixed; top: auto; right: 0; bottom: 0; left: 0; min-height/max-height: 58px; overflow: hidden`. `.side-navigation` `gap: 1px`, `.nav-link` `flex: 1 1 0; min-width: 0; overflow: hidden; font-size: 8px`. Tampilkan `.nav-text-short`, sembunyikan `.nav-text-full`. `.app-frame` diberi `min-height: 100dvh` + `padding-bottom: calc(62px + env(safe-area-inset-bottom))`.
+- `src/styles/global.css`: `body { min-height: 100vh; min-height: 100dvh }` (fallback) untuk menghindari lompatan `fixed` akibat tinggi viewport dinamis di mobile.
+- Tanpa perubahan DB/migrasi.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Status:** menunggu perintah commit & push dari pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -356,6 +376,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-12):**
+  - **Menunggu perintah pengguna** untuk commit & push tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12).
   - Tugas **modal konfirmasi bersama (keluar + hapus indikator/unit/profil) + tombol keluar mobile** (2026-10-12) **sudah selesai & diterbitkan** (`385e64d`).
   - Tugas **format teks notifikasi lonceng (Opsi A)** (2026-10-12) **sudah selesai & diterbitkan** (`7d0d4b1`).
   - Tugas **"terisi/kelengkapan" tanpa Analisa** (2026-10-12) **sudah selesai & diterbitkan** (`fa4aeb3`).
