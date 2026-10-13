@@ -5,10 +5,10 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-13
-- **Kondisi working tree:** ada perubahan belum di-commit (`ReportsPage.tsx`, `ReportsPage.css`, `PROGRESS.md`, `AGENTS.md`). HEAD `143e1d2`.
+- **Kondisi working tree:** bersih. HEAD `5509f2d` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (SELESAI LOKAL, BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Form penandatangan & blok tanda tangan 2 kolom pada Cetak PDF (2026-10-13)
 
@@ -25,7 +25,7 @@ Rincian (`src/features/reports/ReportsPage.tsx`):
 - **Tempat/tanggal & garis nama cetak (2026-10-13):** baris tanggal dipindah ke atas kolom **Pengumpul Data** (`ReportsPage.tsx`: wrapper `.report-print-head` + `.report-print-place`) dan menampilkan `Muara Badak, <tanggal cetak>`, rata tengah di atas "Pengumpul Data". Garis **di atas** nama penanda tangan dihapus; kini garis berada **di bawah** nama (`ReportsPage.css`: `.report-print-signature strong` pakai `border-bottom`) dengan **panjang mengikuti panjang nama** (atribut `width` dihapus sehingga `strong` shrink-to-fit), **mepet ke nama** (`line-height: 1.15`, tanpa `padding-bottom`) dan NIP **dekat nama** dengan `margin-top: 4px` (`.report-print-signature small`).
 - Tanpa perubahan DB/migrasi. Halaman Rekap lintas unit tetap tanpa cetak.
 - Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Belum di-commit** (menunggu perintah pengguna).
+- Commit: `5509f2d` Add print signatory form and refine signature block (sudah di-push ke `main`).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -412,7 +412,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-13):**
-  - Tugas **form penandatangan + blok tanda tangan 2 kolom**, **tempat/tanggal di atas kolom Pengumpul Data (`Muara Badak, <tanggal>`), dan garis bawah pada nama penanda tangan** (2026-10-13) **selesai lokal, belum di-commit** — menunggu perintah commit/push pengguna.
+  - Tugas **form penandatangan + blok tanda tangan 2 kolom**, **tempat/tanggal di atas kolom Pengumpul Data (`Muara Badak, <tanggal>`), dan garis bawah pada nama penanda tangan** (2026-10-13) **sudah selesai & diterbitkan** (`5509f2d`).
   - Tugas **hapus tampilan "Rumus capaian" di halaman Indikator SPM + rapikan kotak ringkasan (compact)** (2026-10-12) **sudah selesai & diterbitkan** (`4cc49d5`).
   - Tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12) **sudah selesai & diterbitkan** (`f9ea3f2`).
   - Tugas **modal konfirmasi bersama (keluar + hapus indikator/unit/profil) + tombol keluar mobile** (2026-10-12) **sudah selesai & diterbitkan** (`385e64d`).
@@ -425,6 +425,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `5509f2d` Add print signatory form and refine signature block
 - `4cc49d5` Remove calculation method display on Indicators page and tidy summary
 - `f9ea3f2` Compact mobile bottom nav and fix fixed bar position on scroll
 - `385e64d` Add shared confirm dialog for logout and delete actions
