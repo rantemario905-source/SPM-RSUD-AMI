@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, CircleAlert, Printer, Search } from 'lucide-react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { CalendarDays, CircleAlert, Printer, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
@@ -13,6 +13,28 @@ type ReportPeriod = 'monthly' | 'quarterly' | 'yearly'
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 const printDate = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
+
+type SignatureFields = { collectorName: string; collectorNip: string; headName: string; headNip: string }
+const signatureStorageKey = 'spm-report-signatures'
+const emptySignature: SignatureFields = { collectorName: '', collectorNip: '', headName: '', headNip: '' }
+
+function loadSignature(): SignatureFields {
+  try {
+    const raw = window.localStorage.getItem(signatureStorageKey)
+    if (!raw) return emptySignature
+    return { ...emptySignature, ...(JSON.parse(raw) as Partial<SignatureFields>) }
+  } catch {
+    return emptySignature
+  }
+}
+
+function saveSignature(value: SignatureFields) {
+  try {
+    window.localStorage.setItem(signatureStorageKey, JSON.stringify(value))
+  } catch {
+    return
+  }
+}
 
 function getAchievement(entry: IndicatorEntry) {
   const calculation = entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
@@ -57,6 +79,10 @@ function ReportsPage() {
   const [entriesByMonth, setEntriesByMonth] = useState<Record<string, { numerator: number | null; denominator: number | null; analysis: string }>>({})
   const [loading, setLoading] = useState(!auth.isPreview)
   const [error, setError] = useState('')
+  const [signature, setSignature] = useState<SignatureFields>(loadSignature)
+  const [signatureDraft, setSignatureDraft] = useState<SignatureFields>(signature)
+  const [signatureModal, setSignatureModal] = useState(false)
+  const [printRequested, setPrintRequested] = useState(false)
   const unit = units.find((item) => item.id === unitId) ?? units[0]
 
   useEffect(() => {
@@ -122,6 +148,24 @@ function ReportsPage() {
     return () => { active = false }
   }, [client, auth.isPreview, unitId, year])
 
+  useEffect(() => {
+    if (!signatureModal) return
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setSignatureModal(false)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [signatureModal])
+
+  useEffect(() => {
+    if (!printRequested) return
+    const frame = window.requestAnimationFrame(() => {
+      window.print()
+      setPrintRequested(false)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [printRequested])
+
   const periodMonths = getPeriodMonths(period, month, quarter)
   const indicatorEntries = useMemo(() => auth.isPreview
     ? sampleUnits.find((item) => item.id === unitId)?.indicators ?? []
@@ -151,12 +195,32 @@ function ReportsPage() {
     return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
   }
 
+  function openSignatureModal() {
+    setSignatureDraft(signature)
+    setSignatureModal(true)
+  }
+
+  function submitSignature(event: FormEvent) {
+    event.preventDefault()
+    const next: SignatureFields = {
+      collectorName: signatureDraft.collectorName.trim(),
+      collectorNip: signatureDraft.collectorNip.trim(),
+      headName: signatureDraft.headName.trim(),
+      headNip: signatureDraft.headNip.trim(),
+    }
+    if (!next.collectorName || !next.headName) return
+    setSignature(next)
+    saveSignature(next)
+    setSignatureModal(false)
+    setPrintRequested(true)
+  }
+
   return (
     <section className="reports-page">
       <div className="reports-heading">
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
         <div className="reports-heading-actions">
-          <button className="secondary-button" type="button" disabled={loading || indicatorEntries.length === 0} onClick={() => window.print()}><Printer size={15} /> Cetak PDF</button>
+          <button className="secondary-button" type="button" disabled={loading || indicatorEntries.length === 0} onClick={openSignatureModal}><Printer size={15} /> Cetak PDF</button>
         </div>
       </div>
       {auth.isPreview && <div className="reports-demo-note">Data simulasi untuk pratinjau; bukan data laporan resmi.</div>}
@@ -229,13 +293,49 @@ function ReportsPage() {
             </tr>
           })}</tbody>
         </table>
-        <p className="report-print-place">{printDate}</p>
+        <div className="report-print-head"><p className="report-print-place">Muara Badak, {printDate}</p></div>
         <div className="report-print-signatures">
-          <div className="report-print-signature"><span>Dibuat oleh,</span><em>Petugas {unit?.name ?? 'Unit'}</em><i /><strong>(..........................................)</strong></div>
-          <div className="report-print-signature"><span>Diverifikasi oleh,</span><em>Panitia Mutu</em><i /><strong>(..........................................)</strong></div>
-          <div className="report-print-signature"><span>Disahkan oleh,</span><em>Direktur RSUD AMI</em><i /><strong>(..........................................)</strong></div>
+          <div className="report-print-signature">
+            <span>Mengetahui,</span>
+            <em>Kepala Instalasi</em>
+            <i />
+            <strong>{signature.headName}</strong>
+            {signature.headNip && <small>NIP. {signature.headNip}</small>}
+          </div>
+          <div className="report-print-signature">
+            <span>Pengumpul Data</span>
+            <em>Kepala Ruangan</em>
+            <i />
+            <strong>{signature.collectorName}</strong>
+            {signature.collectorNip && <small>NIP. {signature.collectorNip}</small>}
+          </div>
         </div>
       </div>
+
+      {signatureModal && <div className="report-sign-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSignatureModal(false) }}>
+        <section className="report-sign-modal" role="dialog" aria-modal="true" aria-labelledby="report-sign-title">
+          <div className="report-sign-heading">
+            <div><span className="eyebrow">TANDA TANGAN LAPORAN</span><h2 id="report-sign-title">Isi penandatangan</h2></div>
+            <button className="report-sign-close" type="button" onClick={() => setSignatureModal(false)} aria-label="Tutup"><X size={18} /></button>
+          </div>
+          <form className="report-sign-form" onSubmit={submitSignature}>
+            <fieldset className="report-sign-fieldset">
+              <legend>Pengumpul Data · Kepala Ruangan</legend>
+              <label>Nama pengumpul data<input required value={signatureDraft.collectorName} onChange={(event) => setSignatureDraft((current) => ({ ...current, collectorName: event.target.value }))} /></label>
+              <label>NIP (opsional)<input value={signatureDraft.collectorNip} onChange={(event) => setSignatureDraft((current) => ({ ...current, collectorNip: event.target.value }))} placeholder="Kosongkan bila tidak ada" /></label>
+            </fieldset>
+            <fieldset className="report-sign-fieldset">
+              <legend>Mengetahui · Kepala Instalasi</legend>
+              <label>Nama kepala instalasi<input required value={signatureDraft.headName} onChange={(event) => setSignatureDraft((current) => ({ ...current, headName: event.target.value }))} /></label>
+              <label>NIP (opsional)<input value={signatureDraft.headNip} onChange={(event) => setSignatureDraft((current) => ({ ...current, headNip: event.target.value }))} placeholder="Kosongkan bila tidak ada" /></label>
+            </fieldset>
+            <div className="report-sign-actions">
+              <button className="secondary-button" type="button" onClick={() => setSignatureModal(false)}>Batal</button>
+              <button className="primary-button" type="submit" disabled={!signatureDraft.collectorName.trim() || !signatureDraft.headName.trim()}><Printer size={15} /> Cetak</button>
+            </div>
+          </form>
+        </section>
+      </div>}
     </section>
   )
 }

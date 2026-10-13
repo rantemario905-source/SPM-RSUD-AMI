@@ -4,9 +4,28 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 ## Status saat ini
 
-- **Tanggal update terakhir:** 2026-10-12
-- **Kondisi working tree:** bersih. HEAD `4cc49d5` (sudah di-push ke `main`).
+- **Tanggal update terakhir:** 2026-10-13
+- **Kondisi working tree:** ada perubahan belum di-commit (`ReportsPage.tsx`, `ReportsPage.css`, `PROGRESS.md`, `AGENTS.md`). HEAD `143e1d2`.
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (SELESAI LOKAL, BELUM DI-COMMIT)
+
+**Judul:** Form penandatangan & blok tanda tangan 2 kolom pada Cetak PDF (2026-10-13)
+
+Permintaan pengguna (hasil diskusi dengan atasan): blok tanda tangan cetak PDF berisi **2 orang** — kiri `Mengetahui,` / `Kepala Instalasi`, kanan `Pengumpul Data` / `Kepala Ruangan` (keduanya dicantumkan), masing-masing diikuti **nama** lalu **NIP**. Saat tombol **Cetak PDF** diklik muncul **form** pengisian **nama pengumpul data**, **nama kepala instalasi**, dan kedua **NIP**. Keputusan pengguna: **NIP opsional** (sebagian staf belum punya NIP), bila kosong **baris NIP tidak dicetak**; **kedua nama wajib**; **nama/NIP diingat di browser**.
+
+Rincian (`src/features/reports/ReportsPage.tsx`):
+- Blok cetak 3 kolom (Dibuat/Diverifikasi/Disahkan) diganti **2 kolom** (Kepala Instalasi & Pengumpul Data/Kepala Ruangan) memakai nilai state `signature`.
+- Tombol **Cetak PDF** tidak lagi langsung `window.print()`; memanggil `openSignatureModal()`.
+- **Modal form** baru (`.report-sign-*`): fieldset *Pengumpul Data · Kepala Ruangan* (nama + NIP) & *Mengetahui · Kepala Instalasi* (nama + NIP). Input NIP diberi label "(opsional)". Tombol **Batal** dan **Cetak** (nonaktif bila salah satu nama kosong). Tutup via Batal, klik backdrop, atau `Esc` (effect `keydown`).
+- `submitSignature()` menyimpan nilai ter-trim ke state `signature` + localStorage (`spm-report-signatures`) lalu menutup modal dan menyalakan `printRequested`.
+- Effect `printRequested` menjalankan `window.print()` di dalam `requestAnimationFrame` agar DOM sudah ter-flush dengan nama/NIP baru.
+- Helper modul `loadSignature()` / `saveSignature()` (try/catch agar aman bila localStorage tidak tersedia).
+- `src/features/reports/ReportsPage.css`: tambah gaya `.report-sign-backdrop`/`.report-sign-modal`/`.report-sign-heading`/`.report-sign-close`/`.report-sign-form`/`.report-sign-fieldset`/`.report-sign-actions` (+ varian mobile ≤ 680px); `.report-print-signature` lebar 30% → **40%** dan tambah `.report-print-signature small` untuk baris NIP.
+- **Tempat/tanggal & garis nama cetak (2026-10-13):** baris tanggal dipindah ke atas kolom **Pengumpul Data** (`ReportsPage.tsx`: wrapper `.report-print-head` + `.report-print-place`) dan menampilkan `Muara Badak, <tanggal cetak>`, rata tengah di atas "Pengumpul Data". Garis **di atas** nama penanda tangan dihapus; kini garis berada **di bawah** nama (`ReportsPage.css`: `.report-print-signature strong` pakai `border-bottom`) dengan **panjang mengikuti panjang nama** (atribut `width` dihapus sehingga `strong` shrink-to-fit), **mepet ke nama** (`line-height: 1.15`, tanpa `padding-bottom`) dan NIP **dekat nama** dengan `margin-top: 4px` (`.report-print-signature small`).
+- Tanpa perubahan DB/migrasi. Halaman Rekap lintas unit tetap tanpa cetak.
+- Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Belum di-commit** (menunggu perintah pengguna).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -387,12 +406,13 @@ Commit terkait:
 - **Cetak PDF halaman Rekap lintas unit** (ditunda atas keputusan pengguna).
 - **Penyederhanaan tampilan form Tambah/Edit indikator** — usulan Tahap 1 + pratinjau sudah disiapkan (label rumus jadi "nama jenis hasil", pengelompokan 3 seksi, kartu pilihan rumus, panel pratinjau capaian & arah standar, bantuan arah `≥`/`≤`, satuan otomatis, tahun berlaku dinamis; tanpa ubah DB). **DITUNDA/DIABAIKAN dulu** (2026-10-10) — pengguna akan berdiskusi dengan atasan mengenai tampilan yang diinginkan sebelum dilanjutkan. Belum ada perubahan kode.
 
-- **Blok tanda tangan** pada cetak PDF sementara dibiarkan apa adanya (Dibuat oleh / Diverifikasi oleh / Disahkan oleh) — **pengaturan penandatangan menunggu diskusi pengguna dengan atasan**.
+- **Blok tanda tangan** pada cetak PDF **sudah diputuskan (2026-10-13)** dan diimplementasikan: 2 kolom (Kiri Mengetahui/Kepala Instalasi; Kanan Pengumpul Data/Kepala Ruangan) + form isian nama & NIP (NIP opsional, diingat di browser). Lihat tugas terbaru.
 - **Status fitur cetak PDF:** dianggap **cukup untuk sementara** oleh pengguna (kop & format sudah disetujui).
 
 ## Langkah berikutnya
 
-- **Sesi berikutnya (rencana setelah 2026-10-12):**
+- **Sesi berikutnya (rencana setelah 2026-10-13):**
+  - Tugas **form penandatangan + blok tanda tangan 2 kolom**, **tempat/tanggal di atas kolom Pengumpul Data (`Muara Badak, <tanggal>`), dan garis bawah pada nama penanda tangan** (2026-10-13) **selesai lokal, belum di-commit** — menunggu perintah commit/push pengguna.
   - Tugas **hapus tampilan "Rumus capaian" di halaman Indikator SPM + rapikan kotak ringkasan (compact)** (2026-10-12) **sudah selesai & diterbitkan** (`4cc49d5`).
   - Tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12) **sudah selesai & diterbitkan** (`f9ea3f2`).
   - Tugas **modal konfirmasi bersama (keluar + hapus indikator/unit/profil) + tombol keluar mobile** (2026-10-12) **sudah selesai & diterbitkan** (`385e64d`).
