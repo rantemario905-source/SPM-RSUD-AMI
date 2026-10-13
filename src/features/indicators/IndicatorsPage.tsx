@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Check, CircleAlert, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { useAuth } from '../../auth/AuthContext'
@@ -47,6 +47,8 @@ const calculationLabel: Record<IndicatorCalculation, string> = {
   numerator: 'Nilai numerator',
   direct: 'Nilai capaian langsung',
 }
+
+const tablePreviewRows = 10
 
 function getCalculation(indicator: IndicatorEntry): IndicatorCalculation {
   return indicator.calculation ?? (indicator.type === 'duration' ? 'average' : indicator.type === 'category' ? 'numerator' : indicator.scale ? 'scaled' : 'percentage')
@@ -103,6 +105,8 @@ function IndicatorsPage() {
   const [formError, setFormError] = useState('')
   const [toast, setToast] = useState('')
   const [pendingDelete, setPendingDelete] = useState<CatalogIndicator | null>(null)
+  const tableWrapRef = useRef<HTMLDivElement | null>(null)
+  const [tableMaxHeight, setTableMaxHeight] = useState<number | null>(null)
 
   useEffect(() => {
     if (!toast) return
@@ -133,6 +137,30 @@ function IndicatorsPage() {
     const matchesUnit = unitFilter === 'all' || indicator.unitId === unitFilter
     return matchesText && matchesUnit
   }), [indicators, query, unitFilter])
+
+  useEffect(() => {
+    function measureTable() {
+      const wrap = tableWrapRef.current
+      if (!wrap) return
+      wrap.scrollTop = 0
+      const rows = wrap.querySelectorAll('tbody tr')
+      if (rows.length <= tablePreviewRows) {
+        setTableMaxHeight(null)
+        return
+      }
+      const firstHidden = rows[tablePreviewRows] as HTMLElement | undefined
+      if (!firstHidden) {
+        setTableMaxHeight(null)
+        return
+      }
+      const offset = firstHidden.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop
+      const chrome = wrap.offsetHeight - wrap.clientHeight
+      setTableMaxHeight(Math.max(0, Math.round(offset) + chrome))
+    }
+    measureTable()
+    window.addEventListener('resize', measureTable)
+    return () => window.removeEventListener('resize', measureTable)
+  }, [filteredIndicators])
 
   function openCreate() {
     setEditingId(null)
@@ -303,7 +331,7 @@ function IndicatorsPage() {
 
       {notice && <div className="indicator-success" role="status"><Check size={15} />{notice}</div>}
 
-      <div className="indicator-table-wrap">
+      <div className="indicator-table-wrap" ref={tableWrapRef} style={tableMaxHeight ? { maxHeight: `${tableMaxHeight}px` } : undefined}>
         <table className="indicator-table">
           <thead><tr><th>KODE</th><th>UNIT / JENIS PELAYANAN</th><th>INDIKATOR &amp; DEFINISI</th><th>STANDAR</th><th>BERLAKU</th><th>STATUS</th><th><span className="sr-only">Aksi</span></th></tr></thead>
           <tbody>{filteredIndicators.map((indicator) => {
@@ -321,6 +349,7 @@ function IndicatorsPage() {
         </table>
         {filteredIndicators.length === 0 && <div className="indicator-empty">{loading ? 'Memuat data indikator…' : 'Belum ada indikator. Tambahkan indikator pertama atau periksa data unit.'}</div>}
       </div>
+      {tableMaxHeight && <div className="indicator-scroll-hint">Menampilkan {tablePreviewRows} indikator pertama — gulir di dalam tabel untuk melihat sisanya.</div>}
 
       <div className="indicator-footnote"><strong>Catatan master:</strong> perubahan standar sebaiknya memakai tahun/periode berlaku baru. Nilai periode sebelumnya tetap merujuk versi yang berlaku saat itu.</div>
 

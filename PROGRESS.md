@@ -5,8 +5,29 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-13
-- **Kondisi working tree:** bersih. HEAD `5509f2d` (sudah di-push ke `main`).
+- **Kondisi working tree:** ada perubahan belum di-commit (`IndicatorsPage.tsx`, `IndicatorsPage.css`). HEAD `b769173` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
+
+## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal (2026-10-13)
+
+Permintaan pengguna: pada halaman **Indikator SPM**, saat filter **Semua unit** jangan langsung menampilkan semua indikator — tampilkan maksimal **10 indikator**, sisanya dapat di-scroll ke bawah oleh pengguna. Pilihan pengguna (dikonfirmasi): **area tabel bisa di-scroll** (bukan paginasi/load-more/dropdown jumlah baris).
+
+Rincian (`src/features/indicators/IndicatorsPage.tsx`):
+- Konstanta `tablePreviewRows = 10`.
+- Ref `tableWrapRef` + state `tableMaxHeight`. Effect mengukur tinggi sampai **baris ke-11** (relatif ke wadah) lalu menetapkan `maxHeight` inline; `scrollTop` direset ke 0 tiap filter/daftar berubah; menghitung ulang saat `resize`; `null` bila baris ≤ 10 (tanpa scroll).
+- Tinggi memperhitungkan border & scrollbar horizontal (`wrap.offsetHeight - wrap.clientHeight`) agar **tepat 10 baris** terlihat.
+- Hint kecil di bawah tabel saat scroll aktif: "Menampilkan 10 indikator pertama — gulir di dalam tabel untuk melihat sisanya."
+- Berlaku untuk semua keadaan filter (bukan hanya "Semua unit"); unit dengan ≤ 10 indikator tidak menampilkan scroll.
+
+Rincian (`src/features/indicators/IndicatorsPage.css`):
+- `.indicator-table-wrap` → `overflow: auto` (sebelumnya `overflow-x: auto`).
+- `.indicator-table thead th` → `position: sticky; top: 0; z-index: 2; box-shadow: inset 0 -1px 0 var(--line)` agar header tetap terlihat saat scroll.
+- Gaya `.indicator-scroll-hint`.
+
+- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓, `npm run build` ✓.
+- **Belum di-commit** — menunggu perintah pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -412,6 +433,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-13):**
+  - Tugas **batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal + header sticky** (2026-10-13) **selesai di lokal, BELUM di-commit** — menunggu perintah pengguna.
   - Tugas **form penandatangan + blok tanda tangan 2 kolom**, **tempat/tanggal di atas kolom Pengumpul Data (`Muara Badak, <tanggal>`), dan garis bawah pada nama penanda tangan** (2026-10-13) **sudah selesai & diterbitkan** (`5509f2d`).
   - Tugas **hapus tampilan "Rumus capaian" di halaman Indikator SPM + rapikan kotak ringkasan (compact)** (2026-10-12) **sudah selesai & diterbitkan** (`4cc49d5`).
   - Tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12) **sudah selesai & diterbitkan** (`f9ea3f2`).
