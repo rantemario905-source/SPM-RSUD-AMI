@@ -5,10 +5,10 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-13
-- **Kondisi working tree:** ada perubahan belum di-commit (`IndicatorsPage.tsx`, `IndicatorsPage.css`). HEAD `b769173` (sudah di-push ke `main`).
+- **Kondisi working tree:** bersih. HEAD `09e491d` (sudah di-push ke `main`).
 - **Verifikasi sesi ini:** `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
 **Judul:** Batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal (2026-10-13)
 
@@ -27,7 +27,7 @@ Rincian (`src/features/indicators/IndicatorsPage.css`):
 - Gaya `.indicator-scroll-hint`.
 
 - Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓, `npm run build` ✓.
-- **Belum di-commit** — menunggu perintah pengguna.
+- Commit: `09e491d` Limit indicators table to 10 visible rows with internal scroll (sudah di-push ke `main`).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH)
 
@@ -433,7 +433,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-13):**
-  - Tugas **batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal + header sticky** (2026-10-13) **selesai di lokal, BELUM di-commit** — menunggu perintah pengguna.
+  - Tugas **batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal + header sticky** (2026-10-13) **sudah selesai & diterbitkan** (`09e491d`).
   - Tugas **form penandatangan + blok tanda tangan 2 kolom**, **tempat/tanggal di atas kolom Pengumpul Data (`Muara Badak, <tanggal>`), dan garis bawah pada nama penanda tangan** (2026-10-13) **sudah selesai & diterbitkan** (`5509f2d`).
   - Tugas **hapus tampilan "Rumus capaian" di halaman Indikator SPM + rapikan kotak ringkasan (compact)** (2026-10-12) **sudah selesai & diterbitkan** (`4cc49d5`).
   - Tugas **ringkas navigasi mobile + perbaikan posisi bar bawah** (2026-10-12) **sudah selesai & diterbitkan** (`f9ea3f2`).
@@ -447,6 +447,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `09e491d` Limit indicators table to 10 visible rows with internal scroll
 - `5509f2d` Add print signatory form and refine signature block
 - `4cc49d5` Remove calculation method display on Indicators page and tidy summary
 - `f9ea3f2` Compact mobile bottom nav and fix fixed bar position on scroll
