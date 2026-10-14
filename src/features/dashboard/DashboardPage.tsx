@@ -3,7 +3,7 @@ import { ArrowRight, CalendarDays, Check, CircleAlert, FileDown, History, LockKe
 import { useAuth } from '../../auth/AuthContext'
 import { demoReports, serviceProgress } from '../../data/demo'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, scopedUnitIds, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
 import type { AppPage, ReportStatus } from '../../types/spm'
 import './DashboardPage.css'
 
@@ -51,7 +51,8 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
     Promise.all([loadUnits(client), loadPeriods(client), loadProfile(client, auth.userId)])
       .then(([allUnits, nextPeriods, profile]) => {
         if (!active) return
-        const scopedUnits = profile.unit_id ? allUnits.filter((unit) => unit.id === profile.unit_id) : allUnits
+        const scope = scopedUnitIds(profile)
+        const scopedUnits = scope ? allUnits.filter((unit) => scope.includes(unit.id)) : allUnits
         setUnits(scopedUnits)
         setPeriods(nextPeriods)
         setPeriodStart((current) => nextPeriods.some((item) => item.period_start === current) ? current : nextPeriods[0]?.period_start ?? '')

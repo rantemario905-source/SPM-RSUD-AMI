@@ -33,6 +33,7 @@ export interface SpmProfile {
   id: string
   role: string
   unit_id: string | null
+  unit_ids: string[] | null
   permissions: Record<string, boolean>
 }
 
@@ -49,11 +50,29 @@ export interface SpmReportEntry {
 export async function loadProfile(client: SupabaseClient, userId: string) {
   const { data, error } = await client
     .from('profiles')
-    .select('id, role, unit_id, permissions')
+    .select('id, role, unit_id, unit_ids, permissions')
     .eq('id', userId)
     .single()
   if (error) throw error
   return data as SpmProfile
+}
+
+export function profileUnitIds(profile: Pick<SpmProfile, 'unit_id' | 'unit_ids'> | null | undefined): string[] {
+  if (!profile) return []
+  const ids = (profile.unit_ids ?? []).filter(Boolean)
+  if (profile.unit_id && !ids.includes(profile.unit_id)) ids.unshift(profile.unit_id)
+  return ids
+}
+
+export function scopedUnitIds(profile: Pick<SpmProfile, 'unit_id' | 'unit_ids'> | null | undefined): string[] | null {
+  const ids = profileUnitIds(profile)
+  return ids.length ? ids : null
+}
+
+export function profileUnitNames(profile: { unit_id: string | null; unit_ids?: string[] | null }, units: SpmUnit[]): string[] {
+  return profileUnitIds({ unit_id: profile.unit_id, unit_ids: profile.unit_ids ?? null })
+    .map((id) => units.find((unit) => unit.id === id)?.name)
+    .filter((name): name is string => Boolean(name))
 }
 
 export async function loadUnits(client: SupabaseClient) {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, CircleAlert, Info } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, scopedUnitIds } from '../../lib/spm-data'
 import { achievement, achievementUnit, formatValue, meetsStandard, parseTarget } from '../../lib/spm-achievement'
 import type { AppPage } from '../../types/spm'
 import './NotificationBell.css'
@@ -54,7 +54,8 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
       const now = new Date()
       const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
       const currentPeriod = periods.find((period) => period.period_start === monthStart) ?? periods.find((period) => period.state === 'open') ?? periods[0]
-      const scopedUnits = profile.unit_id ? allUnits.filter((unit) => unit.id === profile.unit_id) : allUnits
+      const scope = scopedUnitIds(profile)
+      const scopedUnits = scope ? allUnits.filter((unit) => scope.includes(unit.id)) : allUnits
       const activeIndicators = allIndicators.filter((indicator) => indicator.active)
       const indicatorById = new Map(allIndicators.map((indicator) => [indicator.id, indicator]))
       const next: NotificationItem[] = []

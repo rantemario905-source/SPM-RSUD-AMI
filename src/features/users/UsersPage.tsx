@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Building2, Check, Pencil, Plus, Power, Trash2, UserRoundPlus, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadUnits, type SpmUnit } from '../../lib/spm-data'
+import { loadUnits, profileUnitNames, type SpmUnit } from '../../lib/spm-data'
 import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './UsersPage.css'
 
 type UserRole = 'officer' | 'unit_head' | 'quality' | 'leadership' | 'admin'
-interface UserProfile { id: string; full_name: string; role: string; unit_id: string | null; email: string | null; permissions: Record<string, boolean>; active?: boolean }
+interface UserProfile { id: string; full_name: string; role: string; unit_id: string | null; unit_ids?: string[] | null; email: string | null; permissions: Record<string, boolean>; active?: boolean }
 
 const roleNames: Record<string, string> = {
   admin: 'Administrator', officer: 'Petugas unit', unit_head: 'Kepala unit', quality: 'Mutu', leadership: 'Pimpinan',
@@ -42,11 +42,12 @@ interface ProfileForm {
   fullName: string
   role: UserRole
   unitId: string
+  unitIds: string[]
   permissions: Record<string, boolean>
 }
 
 function profileForm(units: SpmUnit[]): ProfileForm {
-  return { id: null, userId: '', email: '', fullName: '', role: 'officer', unitId: units[0]?.id ?? '', permissions: { ...rolePermissions.officer } }
+  return { id: null, userId: '', email: '', fullName: '', role: 'officer', unitId: units[0]?.id ?? '', unitIds: units[0] ? [units[0].id] : [], permissions: { ...rolePermissions.officer } }
 }
 
 function UsersPage() {
@@ -81,14 +82,18 @@ function UsersPage() {
     let active = true
     Promise.all([
       loadUnits(client),
-      client.from('profiles').select('id, full_name, role, unit_id, email, permissions, active').order('full_name'),
+      client.from('profiles').select('id, full_name, role, unit_id, unit_ids, email, permissions, active').order('full_name'),
       client.from('profiles').select('role, permissions').eq('id', auth.userId).maybeSingle(),
     ]).then(([nextUnits, profileResult, selfResult]) => {
       if (profileResult.error) throw profileResult.error
       if (!active) return
       setUnits(nextUnits)
       setProfiles((profileResult.data ?? []) as UserProfile[])
-      setForm((current) => ({ ...current, unitId: current.unitId || nextUnits[0]?.id || '' }))
+      setForm((current) => ({
+        ...current,
+        unitId: current.unitId || nextUnits[0]?.id || '',
+        unitIds: current.unitIds.length ? current.unitIds : nextUnits[0] ? [nextUnits[0].id] : [],
+      }))
       const self = selfResult.data as { role: string; permissions: Record<string, boolean> } | null
       setCanManage(self?.role === 'admin' || Boolean(self?.permissions?.manage_users))
     }).catch((loadError: unknown) => {
@@ -101,12 +106,16 @@ function UsersPage() {
   const needsUnit = form.role === 'officer' || form.role === 'unit_head'
 
   function selectRole(next: UserRole) {
-    setForm((current) => ({
-      ...current,
-      role: next,
-      unitId: next === 'officer' || next === 'unit_head' ? current.unitId || units[0]?.id || '' : current.unitId,
-      permissions: { ...rolePermissions[next] },
-    }))
+    setForm((current) => {
+      const needsUnit = next === 'officer' || next === 'unit_head'
+      const unitIds = needsUnit
+        ? (current.unitIds.length ? current.unitIds : (units[0] ? [units[0].id] : []))
+        : []
+      const unitId = needsUnit
+        ? (unitIds.includes(current.unitId) ? current.unitId : unitIds[0] ?? '')
+        : current.unitId
+      return { ...current, role: next, unitId, unitIds, permissions: { ...rolePermissions[next] } }
+    })
   }
 
   function togglePermission(key: string) {
@@ -125,7 +134,11 @@ function UsersPage() {
     if (insertError) setError(insertError.message)
     else if (data) {
       setUnits((current) => [...current, data].sort((left, right) => left.name.localeCompare(right.name)))
-      setForm((current) => ({ ...current, unitId: current.unitId || data.id }))
+      setForm((current) => ({
+        ...current,
+        unitId: current.unitId || data.id,
+        unitIds: current.unitIds.length ? current.unitIds : [data.id],
+      }))
       setUnitCode('')
       setUnitName('')
       setNotice('Unit berhasil ditambahkan.')
@@ -168,15 +181,17 @@ function UsersPage() {
     event.preventDefault()
     if (!client) return
     const role = form.role
-    const unitId = role === 'officer' || role === 'unit_head' ? form.unitId : null
-    if ((role === 'officer' || role === 'unit_head') && !unitId) { setError('Pilih unit untuk peran ini.'); return }
+    const needsUnitForRole = role === 'officer' || role === 'unit_head'
+    const unitIds = needsUnitForRole ? form.unitIds.filter((id) => units.some((unit) => unit.id === id)) : []
+    if (needsUnitForRole && unitIds.length === 0) { setError('Pilih minimal satu unit untuk peran ini.'); return }
+    const unitId = needsUnitForRole ? (unitIds.includes(form.unitId) ? form.unitId : unitIds[0]) : null
     setSaving(true)
     setError('')
     setNotice('')
-    const payload = { full_name: form.fullName.trim(), email: form.email.trim() || null, role, unit_id: unitId, permissions: form.permissions }
+    const payload = { full_name: form.fullName.trim(), email: form.email.trim() || null, role, unit_id: unitId, unit_ids: unitIds, permissions: form.permissions }
     const result = form.id
-      ? await client.from('profiles').update(payload).eq('id', form.id).select('id, full_name, role, unit_id, email, permissions, active').single()
-      : await client.from('profiles').insert({ id: form.userId.trim(), ...payload }).select('id, full_name, role, unit_id, email, permissions, active').single()
+      ? await client.from('profiles').update(payload).eq('id', form.id).select('id, full_name, role, unit_id, unit_ids, email, permissions, active').single()
+      : await client.from('profiles').insert({ id: form.userId.trim(), ...payload }).select('id, full_name, role, unit_id, unit_ids, email, permissions, active').single()
     if (result.error) setError(result.error.message)
     else if (result.data) {
       const saved = result.data as UserProfile
@@ -193,13 +208,15 @@ function UsersPage() {
 
   function startEditProfile(profile: UserProfile) {
     const role = (profileNames.includes(profile.role) ? profile.role : 'officer') as UserRole
+    const unitIds = profile.unit_ids?.length ? profile.unit_ids : profile.unit_id ? [profile.unit_id] : []
     setForm({
       id: profile.id,
       userId: profile.id,
       email: profile.email ?? '',
       fullName: profile.full_name,
       role,
-      unitId: profile.unit_id ?? units[0]?.id ?? '',
+      unitId: profile.unit_id ?? unitIds[0] ?? '',
+      unitIds,
       permissions: { ...(rolePermissions[profile.role as UserRole] ?? rolePermissions.officer), ...(profile.permissions ?? {}) },
     })
     setError('')
@@ -218,7 +235,12 @@ function UsersPage() {
     if (deleteError) setError(deleteError.message)
     else {
       setUnits((current) => current.filter((item) => item.id !== unit.id))
-      setForm((current) => (current.unitId === unit.id ? { ...current, unitId: '' } : current))
+      setForm((current) => {
+        if (!current.unitIds.includes(unit.id)) return current
+        const unitIds = current.unitIds.filter((id) => id !== unit.id)
+        const unitId = unitIds.includes(current.unitId) ? current.unitId : unitIds[0] ?? ''
+        return { ...current, unitIds, unitId }
+      })
       setNotice('Unit berhasil dihapus.')
       setToast('Unit berhasil dihapus.')
     }
@@ -243,6 +265,19 @@ function UsersPage() {
       setToast(`Profil ${profile.full_name} ${next ? 'diaktifkan' : 'dinonaktifkan'}.`)
     }
     setSaving(false)
+  }
+
+  function toggleUnit(id: string) {
+    setForm((current) => {
+      const has = current.unitIds.includes(id)
+      const unitIds = has ? current.unitIds.filter((item) => item !== id) : [...current.unitIds, id]
+      const unitId = unitIds.includes(current.unitId) ? current.unitId : unitIds[0] ?? ''
+      return { ...current, unitIds, unitId }
+    })
+  }
+
+  function selectPrimaryUnit(id: string) {
+    setForm((current) => ({ ...current, unitId: id }))
   }
 
   async function removeProfile(profile: UserProfile) {
@@ -279,7 +314,28 @@ function UsersPage() {
             <label>Email<input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="nama@rsud-ami.go.id" /></label>
             <label>Nama lengkap<input required value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} /></label>
             <label>Peran<select value={form.role} onChange={(event) => selectRole(event.target.value as UserRole)}>{roleChoices.map((value) => <option key={value} value={value}>{roleNames[value]}</option>)}</select></label>
-            {needsUnit && <label>Unit<select required value={form.unitId} onChange={(event) => setForm((current) => ({ ...current, unitId: event.target.value }))}>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>}
+            {needsUnit && (
+              <fieldset className="permission-fieldset unit-fieldset">
+                <legend>Unit yang dipegang</legend>
+                <div className="permission-grid">
+                  {units.map((unit) => (
+                    <label className="permission-item" key={unit.id}>
+                      <input type="checkbox" checked={form.unitIds.includes(unit.id)} onChange={() => toggleUnit(unit.id)} />
+                      <span>{unit.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <label className="unit-primary-label">Unit utama
+                  <select required value={form.unitId} onChange={(event) => selectPrimaryUnit(event.target.value)}>
+                    {form.unitIds.map((id) => {
+                      const unit = units.find((item) => item.id === id)
+                      return unit ? <option key={unit.id} value={unit.id}>{unit.name}</option> : null
+                    })}
+                  </select>
+                </label>
+                <p className="unit-hint">Pilih minimal satu unit. Unit utama dipakai sebagai pilihan awal saat menginput laporan.</p>
+              </fieldset>
+            )}
             <fieldset className="permission-fieldset"><legend>Izin akses</legend><div className="permission-grid">{permissionLabels.map(({ key, label }) => <label className="permission-item" key={key}><input type="checkbox" checked={Boolean(form.permissions[key])} onChange={() => togglePermission(key)} /><span>{label}</span></label>)}</div></fieldset>
             <div className="users-form-actions">
               <button className="primary-button" type="submit" disabled={saving || loading || (needsUnit && !units.length)}><UserRoundPlus size={15} /> {form.id ? 'Simpan perubahan' : 'Tautkan profil'}</button>
@@ -297,7 +353,7 @@ function UsersPage() {
       </section>
       <section className="users-section users-list-section">
         <h2>Profil pengguna ({profiles.length})</h2>
-        <div className="users-table-wrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>UNIT</th><th>EMAIL</th><th>STATUS</th><th>UID</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{profiles.map((profile) => <tr key={profile.id}><td>{profile.full_name}</td><td>{roleNames[profile.role] ?? profile.role}</td><td>{units.find((unit) => unit.id === profile.unit_id)?.name ?? 'Semua unit'}</td><td>{profile.email ?? '—'}</td><td>{profile.active === false ? <span className="status-badge is-inactive">Nonaktif</span> : <span className="status-badge is-active">Aktif</span>}</td><td><code>{profile.id}</code></td>{canManage && <td className="row-actions"><button className={`row-toggle ${profile.active === false ? 'is-off' : ''}`} type="button" onClick={() => void toggleActive(profile)} disabled={saving || profile.id === auth.userId} title={profile.active === false ? 'Aktifkan pengguna' : 'Nonaktifkan pengguna'} aria-label={`${profile.active === false ? 'Aktifkan' : 'Nonaktifkan'} ${profile.full_name}`}><Power size={14} /></button><button className="row-edit" type="button" onClick={() => startEditProfile(profile)} disabled={saving} title="Edit profil" aria-label={`Edit profil ${profile.full_name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => setPendingDelete({ kind: 'profile', profile })} disabled={saving} aria-label={`Hapus profil ${profile.full_name}`} title="Hapus profil"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table>{!profiles.length && <p>{loading ? 'Memuat profil…' : 'Belum ada profil.'}</p>}</div>
+        <div className="users-table-wrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>UNIT</th><th>EMAIL</th><th>STATUS</th><th>UID</th>{canManage && <th>AKSI</th>}</tr></thead><tbody>{profiles.map((profile) => <tr key={profile.id}><td>{profile.full_name}</td><td>{roleNames[profile.role] ?? profile.role}</td><td>{profileUnitNames(profile, units).join(', ') || 'Semua unit'}</td><td>{profile.email ?? '—'}</td><td>{profile.active === false ? <span className="status-badge is-inactive">Nonaktif</span> : <span className="status-badge is-active">Aktif</span>}</td><td><code>{profile.id}</code></td>{canManage && <td className="row-actions"><button className={`row-toggle ${profile.active === false ? 'is-off' : ''}`} type="button" onClick={() => void toggleActive(profile)} disabled={saving || profile.id === auth.userId} title={profile.active === false ? 'Aktifkan pengguna' : 'Nonaktifkan pengguna'} aria-label={`${profile.active === false ? 'Aktifkan' : 'Nonaktifkan'} ${profile.full_name}`}><Power size={14} /></button><button className="row-edit" type="button" onClick={() => startEditProfile(profile)} disabled={saving} title="Edit profil" aria-label={`Edit profil ${profile.full_name}`}><Pencil size={14} /></button><button className="row-delete" type="button" onClick={() => setPendingDelete({ kind: 'profile', profile })} disabled={saving} aria-label={`Hapus profil ${profile.full_name}`} title="Hapus profil"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table>{!profiles.length && <p>{loading ? 'Memuat profil…' : 'Belum ada profil.'}</p>}</div>
       </section>
       {toast && <div className="users-toast" role="status">{toast}</div>}
       <ConfirmDialog

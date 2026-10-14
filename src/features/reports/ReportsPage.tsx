@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { canAccessPage } from '../../lib/access'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadPeriods, loadProfile, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
 import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import logoKutaiKartanegara from '../../assets/logo kutai kartanegara.png'
 import './ReportsPage.css'
@@ -117,8 +117,14 @@ function ReportsPage() {
     Promise.all([loadUnits(client), loadProfile(client, auth.userId), loadPeriods(client)])
       .then(([nextUnits, profile, nextPeriods]) => {
         if (!active) return
-        setUnits(profile.unit_id ? nextUnits.filter((item) => item.id === profile.unit_id) : nextUnits)
-        setUnitId(profile.unit_id ?? nextUnits[0]?.id ?? '')
+        const scope = scopedUnitIds(profile)
+        const scopedUnits = scope ? nextUnits.filter((item) => scope.includes(item.id)) : nextUnits
+        setUnits(scopedUnits)
+        setUnitId((current) => {
+          if (current && (!scope || scope.includes(current))) return current
+          if (profile.unit_id && scopedUnits.some((item) => item.id === profile.unit_id)) return profile.unit_id
+          return scopedUnits[0]?.id ?? ''
+        })
         const availableYears = Array.from(new Set(nextPeriods.map((item) => item.period_start.slice(0, 4)))).sort((left, right) => right.localeCompare(left))
         setYears(availableYears)
         setYear((current) => {
