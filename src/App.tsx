@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useAuth } from './auth/AuthContext'
 import { allowedPages } from './lib/access'
+import { useRouter } from './lib/routerContext'
 import { getSupabaseClient } from './lib/supabase'
 import AppShell from './components/layout/AppShell'
 import { useProgress } from './components/feedback/progressContext'
@@ -12,16 +13,16 @@ import ReportsPage from './features/reports/ReportsPage'
 import CrossUnitPage from './features/reports/CrossUnitPage'
 import PeriodsPage from './features/settings/PeriodsPage'
 import UsersPage from './features/users/UsersPage'
-import type { AppPage } from './types/spm'
 import './styles/app.css'
 
 function App() {
-  const [activePage, setActivePage] = useState<AppPage>('dashboard')
+  const { route, navigate } = useRouter()
   const auth = useAuth()
   const client = getSupabaseClient()
   const progress = useProgress()
   const firstRender = useRef(true)
   const allowed = useMemo(() => allowedPages(auth.role, auth.permissions, auth.isPreview), [auth.role, auth.permissions, auth.isPreview])
+  const page = route !== 'login' && allowed.includes(route) ? route : 'dashboard'
 
   useEffect(() => {
     if (!client || auth.isPreview) return
@@ -31,6 +32,11 @@ function App() {
   }, [client, auth.isPreview])
 
   useEffect(() => {
+    if (route === 'login' || route === page) return
+    navigate('dashboard', { replace: true })
+  }, [route, page, navigate])
+
+  useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false
       return
@@ -38,13 +44,13 @@ function App() {
     progress.start()
     const timer = window.setTimeout(() => progress.done(), 520)
     return () => window.clearTimeout(timer)
-  }, [activePage, progress])
+  }, [page, progress])
 
-  const page = allowed.includes(activePage) ? activePage : 'dashboard'
+  const goTo = (next: typeof page) => navigate(next)
 
   return (
-    <AppShell activePage={page} onNavigate={setActivePage}>
-      {page === 'dashboard' && <DashboardPage onNavigate={setActivePage} />}
+    <AppShell activePage={page} onNavigate={goTo}>
+      {page === 'dashboard' && <DashboardPage onNavigate={goTo} />}
       {page === 'reports' && <ReportsPage />}
       {page === 'crossunit' && <CrossUnitPage />}
       {page === 'entry' && <InputReportPage />}

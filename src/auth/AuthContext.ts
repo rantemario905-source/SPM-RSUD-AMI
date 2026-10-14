@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react'
 export interface AuthState {
   isPreview: boolean
   email: string | null
+  fullName: string | null
   userId: string | null
   role: string | null
   permissions: Record<string, boolean> | null
@@ -12,6 +13,7 @@ export interface AuthState {
 export const AuthContext = createContext<AuthState>({
   isPreview: true,
   email: null,
+  fullName: null,
   userId: null,
   role: null,
   permissions: null,

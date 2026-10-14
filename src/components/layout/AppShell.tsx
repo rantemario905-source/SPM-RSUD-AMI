@@ -1,16 +1,13 @@
 import { useState, type ReactNode } from 'react'
-import { Activity, BarChart3, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, ShieldCheck, Table2, Users } from 'lucide-react'
+import { Activity, BarChart3, CalendarClock, ClipboardList, FileSpreadsheet, History, LayoutDashboard, LogOut, Settings2, Table2, Users } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { allowedPages } from '../../lib/access'
 import NotificationBell from './NotificationBell'
+import UserMenu from './UserMenu'
 import ConfirmDialog from '../feedback/ConfirmDialog'
 import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import type { AppPage } from '../../types/spm'
 import './AppShell.css'
-
-const roleNames: Record<string, string> = {
-  admin: 'Administrator', officer: 'Kepala Ruangan', unit_head: 'Kepala Instalasi', leadership: 'Pimpinan',
-}
 
 interface AppShellProps { activePage: AppPage; onNavigate: (page: AppPage) => void; children: ReactNode }
 
@@ -32,12 +29,10 @@ const navigation: { section: string; items: { id: AppPage; label: string; short:
 function AppShell({ activePage, onNavigate, children }: AppShellProps) {
   const activeLabel = navigation.flatMap((group) => group.items).find((item) => item.id === activePage)?.label ?? 'Ringkasan'
   const auth = useAuth()
-  const displayName = auth.email?.split('@')[0] ?? 'Pratinjau'
   const visiblePages = allowedPages(auth.role, auth.permissions, auth.isPreview)
   const visibleGroups = navigation
     .map((group) => ({ ...group, items: group.items.filter((item) => visiblePages.includes(item.id)) }))
     .filter((group) => group.items.length > 0)
-  const roleLabel = auth.isPreview ? 'Pratinjau' : roleNames[auth.role ?? ''] ?? 'Pengguna'
   const [confirmingLogout, setConfirmingLogout] = useState(false)
 
   return (
@@ -51,10 +46,9 @@ function AppShell({ activePage, onNavigate, children }: AppShellProps) {
           </div>)}
           <button className="nav-link nav-logout" type="button" onClick={() => setConfirmingLogout(true)} aria-label="Keluar dari akun"><LogOut size={17} strokeWidth={1.8} /><span className="nav-text">Keluar</span></button>
         </nav>
-        <div className="sidebar-bottom"><div className="security-note"><ShieldCheck size={17} /><span>{auth.isPreview ? 'Mode simulasi' : 'Sesi terlindungi'}<br /><strong>{auth.isPreview ? 'Data contoh saja' : 'Pengguna terautentikasi'}</strong></span></div><button className="profile-button" type="button" onClick={() => setConfirmingLogout(true)} aria-label="Keluar dari akun"><span className="profile-avatar">{displayName.slice(0, 2).toUpperCase()}</span><span className="profile-copy"><strong>{displayName}</strong><small>{roleLabel}</small></span>{!auth.isPreview && <LogOut size={16} />}</button></div>
       </aside>
       <div className="main-column">
-        <header className="topbar"><div className="breadcrumb"><span>SPM RSUD</span><span className="breadcrumb-divider">/</span><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`preview-pill${auth.isPreview ? '' : ' session-pill'}`}><span />{auth.isPreview ? 'MODE PRATINJAU' : 'SESI AKTIF'}</span><NotificationBell onNavigate={onNavigate} /></div></header>
+        <header className="topbar"><div className="breadcrumb"><span>SPM RSUD</span><span className="breadcrumb-divider">/</span><strong>{activeLabel}</strong></div><div className="topbar-actions">{auth.isPreview && <span className="preview-pill"><span />MODE PRATINJAU</span>}<UserMenu onRequestLogout={() => setConfirmingLogout(true)} /><NotificationBell onNavigate={onNavigate} /></div></header>
         <main className="page-content">{children}</main>
         <footer className="app-footer"><span>RSUD AMI · Pelaporan Standar Pelayanan Minimal</span><span><Settings2 size={13} /> Sistem internal</span></footer>
       </div>

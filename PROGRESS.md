@@ -12,6 +12,30 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 - **Menunggu dari pengguna (uji fungsional manual):** login sebagai **Kepala Instalasi** (`unit_head`) → halaman Indikator SPM hanya menampilkan unitnya (+ indikator global); **Unit & pengguna** tidak lagi memuat akun Mutu; **Ringkasan** tetap menampilkan semua indikator.
 - **Pekerjaan belum ter-deploy:** penggantian **label peran** tampilan — `unit_head` → **Kepala Instalasi**, `officer` → **Kepala Ruangan** — sudah di-commit & di-push (`553ba4a`); sisa **Actions → Deploy to GitHub Pages → Run workflow**. Kode peran di DB tidak berubah.
 - **Perbaikan bug sudah ter-commit & ter-push (`ab06e73`), belum ter-deploy:** izin akses kini **menggerakkan menu** (`allowedPages(role, permissions, isPreview)` di `src/lib/access.ts`) + `edit_locked_periods` di `InputReportPage` + tes `tests/access.test.ts`. Verifikasi lokal: lint ✓, `npm test` ✓ (**48 lolos**, 1 todo), `npm run build` ✓ (`index-CHfnm_Hw.js`). Sisa: Actions → Deploy to GitHub Pages.
+- **Pekerjaan baru BELUM di-commit (working tree, 2026-10-14):** (1) **routing hash** agar tombol Back/Forward menelusuri menu lalu kembali ke layar login — `src/lib/routes.ts`, `src/lib/router.tsx`, `src/lib/routerContext.ts`, `main.tsx`, `AuthGate.tsx`, `App.tsx`; (2) **sidebar menetap** di desktop + hanya konten kanan bergulir (`AppShell.css`); (3) **menu pengguna** dipindah ke topbar dengan badge nama peran (hijau muda), avatar, dan nama dari `profiles.full_name`, dropdown **Log Out** (`src/components/layout/UserMenu.tsx`/`.css`, `AuthContext.fullName`). Penyesuaian lanjutan (permintaan lanjutan pengguna): **notifikasi paling kanan**, label `SESI AKTIF` dihapus (pill kini hanya `MODE PRATINJAU` saat pratinjau), badge teks `Role` dihapus (tinggal nama peran), blok `Sesi terlindungi / Pengguna terautentikasi` di kiri bawah dihapus, serta **chip avatar+nama diberi garis 3D** (border + inner highlight + drop shadow) dengan **jarak antar elemen topbar yang presisi** (14px antar aksi, 10px peran→chip, 9px dalam chip) dan tombol notifikasi 36×36 dibuat **bulatan 3D** agar seragam dengan chip; dropdown menu pengguna **dianimasikan** (panel meluncur turun dari avatar + item Log Out menyusul, hanya transform/opacity, dimatikan saat `prefers-reduced-motion`). Verifikasi lokal: lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-BhUmXZlI.js` + `index-D4nsHPcO.css`).
+
+## Tugas terbaru (BELUM DI-COMMIT — routing Back, sidebar menetap, menu pengguna di topbar)
+
+**Judul:** Tombol Back browser + sidebar menetap + panel pengguna pindah ke kanan atas (2026-10-14)
+
+Permintaan pengguna:
+1. Tombol **Back** browser langsung keluar dari situs; diinginkan Back menelusuri menu lalu kembali ke layar login (bandingkan dengan situs lain).
+2. Menu kiri harus **permanen** (tidak bergeser saat scroll); hanya konten kanan yang bergulir.
+3. Panel nama pengguna (dulu kiri bawah) dipindah ke **kanan atas** → nama saja (mis. `AGUS HIDAYAT`) dengan avatar di kiri, plus **badge nama peran** (latar hijau muda); klik nama → menu kecil berisi **Log Out**.
+   **Revisi lanjutan pengguna (2026-10-14):** ikon **notifikasi** harus di **paling kanan** topbar; hapus label `SESI AKTIF`; hapus badge teks `Role` (sisakan nama perannya); hapus blok **"Sesi terlindungi / Pengguna terautentikasi"** di kiri bawah.
+
+Akar masalah #1: aplikasi SPA tanpa routing — navigasi hanya state React (`AppPage`), tak ada entri riwayat, sehingga Back keluar situs. Keputusan pengguna: **Opsi 1** (menu → layar login).
+
+Rincian implementasi:
+- **Routing hash:** `src/lib/routes.ts` (`routeHashes`, `routeFromHash`, `hashForRoute`, `isAppPage`; rute `#/dashboard`…`#/users` + `#/login`); `src/lib/router.tsx` (`RouterProvider`, `pushState`/`replaceState` + listener `popstate`/`hashchange`); `src/lib/routerContext.ts` (`useRouter`); `main.tsx` memasang `RouterProvider` di atas `AuthGate`.
+- **AuthGate:** muat `full_name`; tanpa sesi → `#/login`; sesi aktif + rute `login` → tampilkan layar login **tanpa logout** (tujuan Back); login sukses → `pushState` `#/dashboard`; saat sesi bertahan (refresh) menyisipkan entri `#/login` di belakang halaman aktif (guard `loading` agar tidak salah tampil login).
+- **App.tsx:** halaman dari `route` (`useRouter`), guard izin tak diizinkan → Ringkasan; `onNavigate` = `navigate`.
+- **AppShell.css:** blok `@media (min-width: 681px)` mengunci `.app-frame`/`.sidebar`/`.main-column` `100vh`; hanya `.page-content` `overflow-y: auto`.
+- **UserMenu:** `src/components/layout/UserMenu.tsx` (+`.css`) menggantikan `profile-button` di `.sidebar-bottom`; badge **nama peran** (hijau muda) + **chip `.user-chip` bergaris 3D** berisi avatar inisial + nama (`AuthContext.fullName`, fallback email) + chevron; dropdown **Log Out** → `ConfirmDialog` yang ada. `AuthContext`/`AuthGate` menyediakan `fullName`. Urutan `.topbar-actions`: pill `MODE PRATINJAU` (hanya pratinjau) → UserMenu → **NotificationBell (paling kanan)**. Catatan "Sesi terlindungi" di kiri bawah + badge teks `Role` dihapus. Jarak presisi: `gap` **8px** antar aksi (dirapatkan dari 14px agar avatar/nama lebih dekat ke notifikasi), 10px peran→chip, 9px dalam chip (avatar→nama→caret); tombol notifikasi 36×36 dibuat **bulatan 3D** seragam dengan chip (gradien putih + border + inner highlight + drop shadow, `border-radius: 50%`). Animasi buka dropdown: panel meluncur turun dari avatar (`user-menu-slide`, `transform-origin: top right`, 170ms) + item Log Out menyusul (`user-menu-item-in`, delay 70ms), hanya transform/opacity, dimatikan saat `prefers-reduced-motion`.
+- **Tes:** `tests/routes.test.ts` (4) + `tests/router.test.tsx` (4).
+- Verifikasi: lint ✓, test ✓ (**56 lolos**, 1 todo), build ✓ (`index-BhUmXZlI.js` + `index-D4nsHPcO.css`). Tanpa perubahan DB/migrasi.
+
+**Langkah berikutnya:** uji manual di `npm run dev` (klik beberapa menu → Back/Forward → Back sampai layar login; cek sidebar menetap & menu pengguna), lalu commit/push bila disetujui, dan deploy.
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `ab06e73`; MENUNGGU DEPLOY — perbaikan bug: izin akses kini menggerakkan menu)
 

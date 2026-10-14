@@ -1,24 +1,28 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { LockKeyhole, ShieldCheck } from 'lucide-react'
 import logoRsudAmi from '../assets/logo-rsud-ami.png'
 import { useProgress } from '../components/feedback/progressContext'
 import { AuthContext } from './AuthContext'
 import { getSupabaseClient } from '../lib/supabase'
+import { useRouter } from '../lib/routerContext'
+import { hashForRoute } from '../lib/routes'
 import './AuthGate.css'
 
 interface AuthGateProps { children: ReactNode }
 
 function AuthGate({ children }: AuthGateProps) {
   const client = getSupabaseClient()
+  const router = useRouter()
   const [session, setSession] = useState<Session | null>(null)
-  const [profile, setProfile] = useState<{ id: string; role: string; permissions: Record<string, boolean> } | null>(null)
+  const [profile, setProfile] = useState<{ id: string; fullName: string | null; role: string; permissions: Record<string, boolean> } | null>(null)
   const [loading, setLoading] = useState(Boolean(client))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const progress = useProgress()
+  const seeded = useRef(false)
 
   useEffect(() => {
     if (loading || submitting) progress.start()
@@ -47,10 +51,10 @@ function AuthGate({ children }: AuthGateProps) {
     if (!client || !session?.user.id) return
     let active = true
     const userId = session.user.id
-    void client.from('profiles').select('role, permissions, active').eq('id', userId).maybeSingle()
+    void client.from('profiles').select('role, permissions, active, full_name').eq('id', userId).maybeSingle()
       .then(({ data }) => {
         if (!active) return
-        const row = data as { role: string; permissions: Record<string, boolean>; active: boolean | null } | null
+        const row = data as { full_name: string | null; role: string; permissions: Record<string, boolean>; active: boolean | null } | null
         if (row && row.active === false) {
           if (active) {
             setProfile(null)
@@ -59,14 +63,27 @@ function AuthGate({ children }: AuthGateProps) {
           }
           return
         }
-        setProfile(row ? { id: userId, role: row.role, permissions: row.permissions } : null)
+        setProfile(row ? { id: userId, fullName: row.full_name ?? null, role: row.role, permissions: row.permissions } : null)
       })
     return () => { active = false }
   }, [client, session])
 
+  useEffect(() => {
+    if (!client || loading || session || router.route === 'login') return
+    router.navigate('login', { replace: true })
+  }, [client, loading, session, router])
+
+  useEffect(() => {
+    if (!client || !session || router.route === 'login' || seeded.current) return
+    seeded.current = true
+    window.history.replaceState(null, '', hashForRoute('login'))
+    window.history.pushState(null, '', hashForRoute(router.route))
+  }, [client, session, router])
+
   const activeProfile = profile && session?.user.id === profile.id ? profile : null
   const role = activeProfile?.role ?? null
   const permissions = activeProfile?.permissions ?? null
+  const fullName = activeProfile?.fullName ?? null
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -75,7 +92,12 @@ function AuthGate({ children }: AuthGateProps) {
     setSubmitting(true)
     const { error: loginError } = await client.auth.signInWithPassword({ email: email.trim(), password })
     setSubmitting(false)
-    if (loginError) setError('Email atau kata sandi tidak sesuai. Periksa kembali atau hubungi administrator.')
+    if (loginError) {
+      setError('Email atau kata sandi tidak sesuai. Periksa kembali atau hubungi administrator.')
+      return
+    }
+    seeded.current = true
+    router.navigate('dashboard')
   }
 
   async function signOut() {
@@ -83,12 +105,12 @@ function AuthGate({ children }: AuthGateProps) {
   }
 
   if (!client) {
-    return <AuthContext.Provider value={{ isPreview: true, email: null, userId: null, role: null, permissions: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ isPreview: true, email: null, fullName: null, userId: null, role: null, permissions: null, signOut: async () => undefined }}>{children}</AuthContext.Provider>
   }
 
   if (loading) return <div className="auth-loading" role="status">Memeriksa sesi pengguna...</div>
 
-  if (!session) {
+  if (!session || router.route === 'login') {
     return (
       <main className="auth-page">
         <section className="login-panel">
@@ -107,7 +129,7 @@ function AuthGate({ children }: AuthGateProps) {
     )
   }
 
-  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, userId: session.user.id, role, permissions, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ isPreview: false, email: session.user.email ?? null, fullName, userId: session.user.id, role, permissions, signOut }}>{children}</AuthContext.Provider>
 }
 
 export default AuthGate

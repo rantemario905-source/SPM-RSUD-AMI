@@ -48,6 +48,8 @@ Deploy tidak berjalan otomatis saat upload/push file. Setelah file terbaru diung
 
 Menu difilter di `src/components/layout/AppShell.tsx` berdasarkan peta peran di `src/lib/access.ts`; `App.tsx` juga menjaga agar halaman terlarang tidak dirender (dialihkan ke Ringkasan).
 
+**Navigasi, sidebar, & identitas (2026-10-14):** halaman memakai rute hash (`#/dashboard`, `#/indicators`, …, `#/login`, lihat `src/lib/routes.ts` + `src/lib/router.tsx`), sehingga tombol **Back/Forward** browser menelusuri menu yang pernah dibuka lalu kembali ke **layar login** (tanpa langsung keluar situs). Sidebar kiri **menetap** di desktop (hanya konten kanan yang bergulir); topbar & footer tetap. Identitas pengguna tampil di **kanan atas** — badge nama peran (hijau muda) dan chip bergaris **3D** berisi avatar + nama (dari `profiles.full_name`); diklik membuka menu kecil berisi **Log Out**. Ikon **notifikasi** berada di **paling kanan** topbar. Label `SESI AKTIF` dan catatan "Sesi terlindungi" di kiri bawah dihapus.
+
 **Izin akses menambah menu (2026-10-14):** selain peran, `allowedPages(role, permissions, isPreview)` membuka menu tambahan sesuai izin profil. Menu = halaman dasar peran **digabung** halaman dari izin berikut:
 
 | Izin | Menu yang terbuka |
