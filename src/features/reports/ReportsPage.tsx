@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { CalendarDays, CircleAlert, Printer, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
+import { canAccessPage } from '../../lib/access'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
@@ -33,6 +34,27 @@ function saveSignature(value: SignatureFields) {
     window.localStorage.setItem(signatureStorageKey, JSON.stringify(value))
   } catch {
     return
+  }
+}
+
+type PrintMode = 'single' | 'all'
+
+interface AllUnitsEntry { numerator: number | null; denominator: number | null; analysis: string }
+interface AllUnitsData { indicators: SpmIndicator[]; entries: Map<string, AllUnitsEntry> }
+
+const allUnitsSignatories = {
+  left: { role: 'Direktur', name: '.................................', nip: '.................................' },
+  right: { role: 'Kasubbag Tata Usaha', name: '.................................', nip: '.................................' },
+}
+
+function toIndicatorEntry(indicator: SpmIndicator): IndicatorEntry {
+  return {
+    code: indicator.code, name: indicator.name, definition: indicator.operational_definition,
+    standard: indicator.standard,
+    type: indicator.calculation_method === 'average' ? 'duration' : indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct' ? 'number' : 'ratio',
+    calculation: indicator.calculation_method, unit: indicator.unit_label,
+    scale: indicator.calculation_scale ?? undefined, resultUnit: indicator.result_unit,
+    numerator: '', denominator: '', value: '', analysis: '',
   }
 }
 
@@ -70,8 +92,8 @@ function ReportsPage() {
   const [units, setUnits] = useState<SpmUnit[]>(auth.isPreview ? previewUnits : [])
   const [unitId, setUnitId] = useState(auth.isPreview ? previewUnits[0].id : '')
   const [period, setPeriod] = useState<ReportPeriod>('quarterly')
-  const [month, setMonth] = useState(10)
-  const [quarter, setQuarter] = useState(4)
+  const [month, setMonth] = useState(() => new Date().getMonth() + 1)
+  const [quarter, setQuarter] = useState(() => Math.floor(new Date().getMonth() / 3) + 1)
   const [currentYear] = useState(() => new Date().getFullYear())
   const [years, setYears] = useState<string[]>(auth.isPreview ? [String(currentYear)] : [])
   const [year, setYear] = useState(String(currentYear))
@@ -83,7 +105,11 @@ function ReportsPage() {
   const [signatureDraft, setSignatureDraft] = useState<SignatureFields>(signature)
   const [signatureModal, setSignatureModal] = useState(false)
   const [printRequested, setPrintRequested] = useState(false)
+  const [printMode, setPrintMode] = useState<PrintMode>('single')
+  const [allUnitsData, setAllUnitsData] = useState<AllUnitsData | null>(null)
+  const [allLoading, setAllLoading] = useState(false)
   const unit = units.find((item) => item.id === unitId) ?? units[0]
+  const canPrintAllUnits = canAccessPage(auth.role, auth.isPreview, 'crossunit')
 
   useEffect(() => {
     if (!client || !auth.userId) return
@@ -169,16 +195,15 @@ function ReportsPage() {
   const periodMonths = getPeriodMonths(period, month, quarter)
   const indicatorEntries = useMemo(() => auth.isPreview
     ? sampleUnits.find((item) => item.id === unitId)?.indicators ?? []
-    : indicators.map((indicator): IndicatorEntry => ({
-      code: indicator.code, name: indicator.name, definition: indicator.operational_definition,
-      standard: indicator.standard,
-      type: indicator.calculation_method === 'average' ? 'duration' : indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct' ? 'number' : 'ratio',
-      calculation: indicator.calculation_method, unit: indicator.unit_label,
-      scale: indicator.calculation_scale ?? undefined, resultUnit: indicator.result_unit,
-      numerator: '', denominator: '', value: '', analysis: '',
-    })), [auth.isPreview, indicators, unitId])
+    : indicators.map(toIndicatorEntry), [auth.isPreview, indicators, unitId])
   const visibleIndicators = useMemo(() => indicatorEntries.filter((item) => `${item.name} ${item.code}`.toLowerCase().includes(query.toLowerCase())), [indicatorEntries, query])
   const periodName = period === 'monthly' ? months[month - 1] : period === 'quarterly' ? `Triwulan ${quarter}` : 'Tahunan'
+  const allUnitsView = useMemo(() => units.map((item) => {
+    const entries = auth.isPreview
+      ? sampleUnits.find((sample) => sample.id === item.id)?.indicators ?? []
+      : (allUnitsData?.indicators ?? []).filter((indicator) => indicator.unit_id === null || indicator.unit_id === item.id).map(toIndicatorEntry)
+    return { unit: item, entries }
+  }), [units, auth.isPreview, allUnitsData])
 
   function getMonthlyValue(entry: IndicatorEntry, monthNumber: number) {
     if (auth.isPreview) return year === '2026' && monthNumber === 10 ? getAchievement(entry) : '—'
@@ -195,7 +220,68 @@ function ReportsPage() {
     return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
   }
 
+  function getUnitStoredEntry(target: SpmUnit, entry: IndicatorEntry, monthNumber: number) {
+    if (auth.isPreview) return entry
+    const id = allUnitsData?.indicators.find((item) => item.code === entry.code)?.id
+    const periodStart = `${year}-${String(monthNumber).padStart(2, '0')}-01`
+    const savedEntry = id ? allUnitsData?.entries.get(`${target.id}|${periodStart}|${id}`) : undefined
+    return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
+  }
+
+  function getUnitMonthlyValue(target: SpmUnit, entry: IndicatorEntry, monthNumber: number) {
+    if (auth.isPreview) return year === '2026' && monthNumber === 10 ? getAchievement(entry) : '—'
+    const id = allUnitsData?.indicators.find((item) => item.code === entry.code)?.id
+    const periodStart = `${year}-${String(monthNumber).padStart(2, '0')}-01`
+    const row = id ? allUnitsData?.entries.get(`${target.id}|${periodStart}|${id}`) : undefined
+    return row ? getAchievement({ ...entry, numerator: row.numerator === null ? '' : String(row.numerator), denominator: row.denominator === null ? '' : String(row.denominator) }) : '—'
+  }
+
+  async function fetchAllUnitsData(): Promise<AllUnitsData> {
+    if (!client) throw new Error('Klien data tidak tersedia.')
+    const yearStart = `${year}-01-01`
+    const yearEnd = `${year}-12-31`
+    const [nextIndicators, reportResult] = await Promise.all([
+      loadIndicators(client),
+      client.from('reports').select('id, unit_id, period_start').gte('period_start', yearStart).lte('period_start', yearEnd),
+    ])
+    if (reportResult.error) throw reportResult.error
+    const reports = reportResult.data ?? []
+    const entries = new Map<string, AllUnitsEntry>()
+    if (reports.length) {
+      const { data, error } = await client.from('report_entries')
+        .select('report_id, indicator_id, numerator, denominator, analysis')
+        .in('report_id', reports.map((item) => item.id))
+      if (error) throw error
+      const unitByReport = new Map(reports.map((item) => [item.id, item]))
+      for (const row of data ?? []) {
+        const report = unitByReport.get(row.report_id)
+        if (!report?.unit_id) continue
+        entries.set(`${report.unit_id}|${report.period_start}|${row.indicator_id}`, { numerator: row.numerator, denominator: row.denominator, analysis: row.analysis })
+      }
+    }
+    return { indicators: nextIndicators, entries }
+  }
+
+  async function printAllUnits() {
+    if (allLoading) return
+    setAllLoading(true)
+    setError('')
+    try {
+      if (!auth.isPreview) {
+        const data = await fetchAllUnitsData()
+        setAllUnitsData(data)
+      }
+      setPrintMode('all')
+      setPrintRequested(true)
+    } catch (loadError: unknown) {
+      setError(loadError instanceof Error ? loadError.message : 'Rekap semua unit gagal dimuat.')
+    } finally {
+      setAllLoading(false)
+    }
+  }
+
   function openSignatureModal() {
+    setPrintMode('single')
     setSignatureDraft(signature)
     setSignatureModal(true)
   }
@@ -220,7 +306,8 @@ function ReportsPage() {
       <div className="reports-heading">
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
         <div className="reports-heading-actions">
-          <button className="secondary-button" type="button" disabled={loading || indicatorEntries.length === 0} onClick={openSignatureModal}><Printer size={15} /> Cetak PDF</button>
+          {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={printAllUnits}><Printer size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak semua unit'}</strong><small>Seluruh unit dalam satu PDF</small></span></button>}
+          <button className="print-action" type="button" disabled={loading || indicatorEntries.length === 0} onClick={openSignatureModal}><Printer size={17} /><span className="print-action-text"><strong>Cetak PDF</strong><small>Unit terpilih saja</small></span></button>
         </div>
       </div>
       {auth.isPreview && <div className="reports-demo-note">Data simulasi untuk pratinjau; bukan data laporan resmi.</div>}
@@ -263,6 +350,62 @@ function ReportsPage() {
           </div>
           <img className="report-print-logo" src={logoRsudAmi} alt="Logo RSUD AMI" />
         </header>
+        {printMode === 'all' ? (
+          <>
+            <h1 className="report-print-title">Laporan Capaian Standar Pelayanan Minimal</h1>
+            <dl className="report-print-meta">
+              <div><dt>Periode</dt><dd>{periodName} {year}</dd></div>
+              <div><dt>Jumlah unit</dt><dd>{allUnitsView.length}</dd></div>
+            </dl>
+            {allUnitsView.map(({ unit: rowUnit, entries: rowEntries }) => (
+              <section className="report-print-unit" key={rowUnit.id}>
+                <h2 className="report-print-unit-name">{rowUnit.name}</h2>
+                <table className="report-print-table">
+                  <colgroup>
+                    <col style={{ width: '4%' }} />
+                    <col style={{ width: period === 'monthly' ? '19%' : period === 'yearly' ? '20%' : '21%' }} />
+                    <col style={{ width: period === 'monthly' ? '22%' : period === 'yearly' ? '21%' : '24%' }} />
+                    <col style={{ width: period === 'monthly' ? '9%' : period === 'yearly' ? '7%' : '10%' }} />
+                    {period === 'monthly'
+                      ? <><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '19%' }} /></>
+                      : periodMonths.map((monthNumber) => <col key={monthNumber} style={{ width: `${(period === 'yearly' ? 48 : 41) / periodMonths.length}%` }} />)}
+                  </colgroup>
+                  <thead><tr><th>No</th><th>Indikator</th><th>Definisi Operasional</th><th className="rp-center">Standar</th>{period === 'monthly' ? <><th className="rp-center">Numerator</th><th className="rp-center">Denominator</th><th className="rp-center">Capaian</th><th>Analisa</th></> : periodMonths.map((monthNumber) => <th key={monthNumber} className="rp-center">{period === 'yearly' ? shortMonths[monthNumber - 1] : months[monthNumber - 1]}</th>)}</tr></thead>
+                  <tbody>{rowEntries.map((entry, index) => {
+                    const stored = getUnitStoredEntry(rowUnit, entry, month)
+                    return <tr key={entry.code}>
+                      <td className="rp-center">{index + 1}</td>
+                      <td className="report-print-indicator">{entry.name}</td>
+                      <td className="report-print-definition">{entry.definition}</td>
+                      <td className="rp-center">{entry.standard}</td>
+                      {period === 'monthly'
+                        ? <><td className="rp-center">{stored?.numerator || '—'}</td><td className="rp-center">{stored?.denominator || '—'}</td><td className="rp-center">{getUnitMonthlyValue(rowUnit, entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
+                        : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getUnitMonthlyValue(rowUnit, entry, monthNumber)}</td>)}
+                    </tr>
+                  })}</tbody>
+                </table>
+              </section>
+            ))}
+            <div className="report-print-head"><p className="report-print-place">Muara Badak, {printDate}</p></div>
+            <div className="report-print-signatures">
+              <div className="report-print-signature">
+                <span>Mengetahui,</span>
+                <em>{allUnitsSignatories.left.role}</em>
+                <i />
+                <strong>{allUnitsSignatories.left.name}</strong>
+                {allUnitsSignatories.left.nip && <small>NIP. {allUnitsSignatories.left.nip}</small>}
+              </div>
+              <div className="report-print-signature">
+                <span>{allUnitsSignatories.right.role}</span>
+                <em>&nbsp;</em>
+                <i />
+                <strong>{allUnitsSignatories.right.name}</strong>
+                {allUnitsSignatories.right.nip && <small>NIP. {allUnitsSignatories.right.nip}</small>}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
         <h1 className="report-print-title">Laporan Capaian Standar Pelayanan Minimal</h1>
         <dl className="report-print-meta">
           <div><dt>Unit / Instalasi</dt><dd>{unit?.name ?? '—'}</dd></div>
@@ -310,6 +453,8 @@ function ReportsPage() {
             {signature.collectorNip && <small>NIP. {signature.collectorNip}</small>}
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {signatureModal && <div className="report-sign-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSignatureModal(false) }}>
