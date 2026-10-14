@@ -59,7 +59,7 @@ export async function loadProfile(client: SupabaseClient, userId: string) {
 
 export function profileUnitIds(profile: Pick<SpmProfile, 'unit_id' | 'unit_ids'> | null | undefined): string[] {
   if (!profile) return []
-  const ids = (profile.unit_ids ?? []).filter(Boolean)
+  const ids = [...new Set((profile.unit_ids ?? []).filter(Boolean))]
   if (profile.unit_id && !ids.includes(profile.unit_id)) ids.unshift(profile.unit_id)
   return ids
 }
@@ -105,6 +105,7 @@ export function periodLabel(periodStart: string) {
 
 export function getMonthRange(periodStart: string) {
   const [year, month] = periodStart.split('-').map(Number)
-  const periodEnd = new Date(year, month, 0).toISOString().slice(0, 10)
+  const lastDay = new Date(year, month, 0).getDate()
+  const periodEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
   return { period_start: periodStart, period_end: periodEnd }
 }

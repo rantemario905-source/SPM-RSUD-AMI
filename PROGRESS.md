@@ -5,11 +5,61 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi working tree:** HEAD `5a08244` (*Support multi-unit per profile with unit_ids array and scope updates*) — **sudah di-push ke `main`** (lihat catatan kepatuhan di "Catatan proses"); deploy untuk commit ini **belum dijalankan** pengguna. Sesi ini memperbarui dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) untuk multi-unit dan **belum di-commit** (menunggu perintah pengguna).
-- **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
-- **Menunggu dari pengguna:** jalankan **Actions → Deploy to GitHub Pages → Run workflow** untuk menerbitkan versi multi-unit (`5a08244`).
+- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD `5bef35a` (*Document multi-unit profile unit_ids support*) — sudah di-push dan **sudah ter-deploy**. Yang **belum di-commit** (menunggu perintah eksplisit pengguna): `AGENTS.md`, `PROGRESS.md`, `src/features/users/UsersPage.tsx`, `src/features/users/UsersPage.css` (halaman Unit & pengguna), **ditambah** `src/lib/spm-data.ts` (perbaikan bug `getMonthRange` lintas zona + dedupe `profileUnitIds`), `package.json`/`package-lock.json` (devDependency `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/dom`), `vitest.config.ts`, dan `tests/` (harness uji baru: 38 lolos, 1 todo).
+- **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #28** (head `5bef35a`, conclusion `success`). Kode multi-unit `5a08244` terbit lebih dulu lewat run #25; run #26–#28 memakai head `5bef35a`.
+- **Situs live:** menyajikan `assets/index-BpQ3anPf.js` dengan key **publishable** (`sb_publishable_…`; tidak ada lagi key `eyJ…`) dan fitur multi-unit utuh. Perubahan sesi ini **belum ter-deploy** (menunggu commit & push lalu run workflow).
+- **Verifikasi sesi ini:** `npm run lint` ✓ (exit 0), `npm test` ✓ (**38 lolos**, 1 `todo`), `npm run build` ✓ (`✓ built`, `dist/assets/index-B30IVTH_.js`).
+- **Menunggu dari pengguna:** perintah commit & push, lalu **Actions → Deploy to GitHub Pages → Run workflow**.
 
-## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH — BELUM DI-DEPLOY)
+## Tugas terbaru (BELUM DI-COMMIT — perbaikan bug + harness uji)
+
+**Judul:** Perbaikan `getMonthRange` & `profileUnitIds` + harness uji (vitest + jsdom) (2026-10-14)
+
+**Cara menemukan:** loop uji Node (type-stripping, tanpa dependensi baru) menggerakkan modul asli + `src/data/sample-indicators.ts`; 37 pemeriksaan, diferensial TZ membuktikan bug (G10 gagal di UTC+8/Asia/Jakarta, lolos di UTC). Pemeriksaan red-capable dilakukan dengan memaksa bug kembali → 4 assertion terkait gagal, lalu diperbaiki dan kembali lolos.
+
+**Rincian:**
+- `src/lib/spm-data.ts`: 
+  - `profileUnitIds` — membuang duplikat di `unit_ids` via `[...new Set(...)]` (B2).
+  - `getMonthRange` — mengganti `new Date(y,m,0).toISOString().slice(0,10)` dengan perhitungan hari lokal (`new Date(y,m,0).getDate()`) agar aman lintas zona waktu (B1, **dead code** tapi landmine).
+- Harness uji (vitest + jsdom): `vitest.config.ts` (environment `jsdom`, include `tests/**/*.test.{ts,tsx}`); `tests/support/fake-supabase.ts` (klien Supabase palsu in-memory untuk mock); `tests/spm-data.test.ts` (12 test — regresi B1/B2 + helper); `tests/spm-achievement.test.ts` (16 + 1 `it.todo` mengenai parsing standar rentang waktu); `tests/UsersPage.test.tsx` (10 test — tab/modal/Esc/backdrop/focus, validasi inline, pemotongan UID, "+N unit lain", batas 10 baris + hint scroll). Total **38 lolos, 1 todo**.
+- `package.json` (+ lock): tambah script `"test": "vitest run"` dan devDeps `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/dom`.
+- Bukti red-capable: probe asli merah (FAIL=3 di Asia/Jakarta, FAIL=2 di UTC); dengan bug dikembalikan sementara, test regresi memerah pada 4 assertion persis (dedupe ×2, akhir bulan, Februari kabisat `2028-02-29`→`2028-02-28`), lalu hijau setelah fix. Semua lolos di akhir.
+- Verifikasi: `npm run lint` ✓, `npm test` ✓, `npm run build` ✓ (`dist/assets/index-B30IVTH_.js`).
+
+**Peringatan (tidak diubah):** standar waktu + persentase, fragilitas pemisah ribuan, spasi satuan `formatAchievement` ("95 %") — dicatat sebagai `it.todo` di `spm-achievement.test.ts` (perlu penilaian data).
+
+## Tugas terbaru (BELUM DI-COMMIT — menunggu perintah pengguna)
+
+**Judul:** Sederhanakan tampilan halaman Unit & pengguna (tab + modal, tabel 10 baris) (2026-10-14)
+
+Tujuan: halaman tidak lagi memanjang ke bawah saat unit/pengguna bertambah. **Tanpa perubahan skema/migrasi** dan tanpa mengubah logika izin.
+
+Rincian:
+- `src/features/users/UsersPage.tsx`: halaman dibagi dua **tab** — `Pengguna` (default) & `Unit` — dengan `role="tablist"`/`role="tab"`/`aria-selected` dan panel `role="tabpanel"`. Panel form permanen dihapus; tambah/edit kini lewat **modal** (`role="dialog"`, `aria-modal`, `aria-labelledby`) yang memakai backdrop bersama `.confirm-backdrop` (dari `ConfirmDialog.css`) + panel baru `.users-modal`.
+- Toolbar tiap tab: kotak **cari** (unit: kode/nama; pengguna: nama/email/peran/nama unit) + tombol `Tambah pengguna`/`Tambah unit`; ada penghitung hasil.
+- Tabel Unit & Pengguna dibatasi **10 baris** (konstanta `tablePreviewRows`) dengan scroll internal + `thead` sticky, diukur lewat `measureTableHeight()` (pola sama dengan `IndicatorsPage`), plus hint "Menampilkan 10 … pertama".
+- Kolom **UID** dipendekkan `id.slice(0, 8) + '…'` dengan `title` berisi UID penuh (UID lengkap tetap ada di modal edit, read-only); kolom **UNIT** `line-clamp` 2 baris + penanda `+N unit lain`; kolom KODE/UID `font-variant-numeric: tabular-nums`; sel `overflow-wrap: anywhere`; semua `th` memakai `scope="col"`.
+- Edit unit tidak lagi inline di baris tabel (mode `row-save`/`row-cancel` + `.inline-input` dihapus); edit unit lewat modal yang sama.
+- Validasi "Pilih minimal satu unit untuk peran ini." kini **inline di modal** (`.users-field-error`), bukan hanya banner halaman. Error simpan unit/profil juga tampil di modal (`formError`).
+- Guideline aksesibilitas: input diberi `name`/`autoComplete`/`spellCheck={false}` (placeholder "Masukan UID" diperbaiki jadi "Masukkan UID akun Auth"), modal tutup via **Batal**/klik backdrop/`Esc`, fokus dikembalikan ke tombol pemicu (`addProfileButtonRef`/`addUnitButtonRef`), ikon tab `aria-hidden`, `.sr-only` didefinisikan lokal di `UsersPage.css`.
+- `src/features/users/UsersPage.css`: gaya baru `.users-tabs`/`.users-tab`/`.users-tab-count`, `.users-toolbar`/`.users-search`/`.users-result-count`, `.users-modal*`, `.users-unit-options` (checkbox unit scroll internal, `max-height: 186px`), `.users-empty`, `.users-scroll-hint`, `.users-unit-list`/`.users-unit-more`, `.users-code`/`.users-uid`/`.users-name`/`.users-email`. Animasi highlight baris kini hanya `opacity` (`@keyframes users-highlight`) + dimatikan pada `prefers-reduced-motion: reduce`; ditambah `.status-badge.is-active`/`.is-inactive` (sebelumnya tidak terdefinisi sehingga badge status tanpa warna).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓ (`✓ built`); kelas baru terkonfirmasi ada di bundle CSS `dist/assets/index--9nMWnEE.css`.
+
+## Tugas terbaru (SELESAI — dokumentasi & verifikasi deploy)
+
+**Judul:** Rapikan dokumentasi multi-unit + verifikasi deploy & migrasi key publishable (2026-10-14)
+
+Rincian:
+- `AGENTS.md`: butir *Akses data* memakai unit yang dipegang `profiles.unit_ids`; butir baru **Multi-unit per profil** (kolom/constraint/trigger, RLS `spm_has_unit`, helper `spm-data.ts`, UI `UsersPage`, halaman ber-scope); butir notifikasi mengikuti `profiles.unit_ids`; tambahan konvensi key Supabase format baru.
+- `README.md`: daftar migrasi menyertakan `202610140001_profile_multi_units.sql`; bagian *Akses baca dan tulis* menyebut `profiles.unit_ids`.
+- `PROGRESS.md`: entri multi-unit + penegasan aturan commit/push pada *Catatan proses (WAJIB)*.
+- Commit dokumentasi: `5bef35a` *Document multi-unit profile unit_ids support* (sudah di-push ke `main`).
+- **Verifikasi deploy:** run #25 (kode multi-unit `5a08244`) dan run #26–#28 (`5bef35a`) semuanya `success`; run #28 menyajikan `assets/index-BpQ3anPf.js`.
+- **Migrasi key Supabase:** GitHub secret `VITE_SUPABASE_ANON_KEY` diperbarui pengguna dari key lama (JWT `eyJ…`) menjadi key **publishable** (`sb_publishable_…`, identik dengan `.env.local`); bundle live sekarang memuat key publishable dan **0** kemunculan `eyJ…`. `@supabase/supabase-js` 2.117.2 mendukung format key baru.
+- Catatan: sebelum run #28, deploy masih memakai key lama meski run #26/#27 `success` (nilai secret belum ikut berubah saat itu).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Multi-unit per profil (`unit_ids`) + pembaruan scope unit (2026-10-14)
 
@@ -22,7 +72,7 @@ Rincian:
 - Scope per unit: `InputReportPage` (hak tulis & pesan "mode lihat saja" memakai `profileUnitIds`), `ReportsPage` (daftar unit + unit default tetap unit utama bila masih dalam scope), `DashboardPage`, dan `NotificationBell`.
 - Tanpa perubahan skema tabel lain. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
 - Commit: `5a08244` (didahului `4ab1330` catatan PROGRESS). **Commit & push ini dijalankan agen tanpa perintah eksplisit pengguna** dan `AGENTS.md`/`PROGRESS.md` belum diperbarui saat itu; dokumentasi dikejar pada sesi lanjutan sesudahnya.
-- **Belum di-deploy** ke GitHub Pages untuk commit ini.
+- **Sudah di-deploy**: run #25 (head `5a08244`) — conclusion `success`.
 
 ## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
@@ -535,6 +585,7 @@ Commit terkait:
 - Setiap ada perubahan kode/file, `PROGRESS.md` DAN `AGENTS.md` harus diperbarui pada perubahan yang sama (lihat alur kerja di `AGENTS.md`).
 - **Commit/push HANYA setelah perintah eksplisit pengguna** (setelah fix diverifikasi lokal). Insiden 2026-10-14: commit `5a08244` (multi-unit) di-commit **dan** di-push `origin/main` oleh agen tanpa perintah pengguna, sekaligus tanpa memperbarui `AGENTS.md`/`PROGRESS.md`. Jangan diulang; aturan ini tidak boleh diubah sendiri oleh agen.
 - **Alur commit/push/deploy:** pengguna memerintahkan commit & push setelah fix lokal selesai → agen otomatis push ke `main` di GitHub → pengguna tinggal menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web. Jangan commit/push tanpa perintah eksplisit.
+- **Key Supabase & deploy:** frontend memakai key **publishable** (`sb_publishable_…`) — `.env.local` lokal dan secret GitHub `VITE_SUPABASE_ANON_KEY` harus **berisi nilai yang sama**; secret hanya terpakai saat workflow build berjalan, jadi **setiap mengubah secret wajib menjalankan ulang workflow**. Bukti cepat: nama file bundle JS di situs live berubah dan isinya memuat `sb_publishable_` (bukan `eyJ…`).
 
 ## Rencana fitur yang disetujui (belum dikerjakan)
 
@@ -549,7 +600,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
-  - Tugas **Multi-unit per profil (`unit_ids`) + pembaruan scope unit** (2026-10-14) **sudah di-commit (`5a08244`) & di-push**, migrasinya sudah dijalankan pengguna; **belum di-deploy** → pengguna perlu menjalankan **Actions → Deploy to GitHub Pages → Run workflow**. Dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) sudah disesuaikan pada sesi lanjutan setelah commit ini.
+  - Tugas **Multi-unit per profil (`unit_ids`) + pembaruan scope unit** (2026-10-14) **sudah selesai**: commit `5a08244`, migrasi dijalankan pengguna, **sudah ter-deploy** (run #25; run #26–#28 untuk head `5bef35a`), dan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) sudah disesuaikan (commit `5bef35a` + pembaruan sesi ini).
   - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) lewat commit `b25aeba` — juga **sudah di-deploy** (run #24).
   - Tugas **halaman Rekap default membuka Bulanan (bulan berjalan)** (2026-10-14) → **dibatalkan**: default dikembalikan ke **Triwulan** (periode berjalan) di entri terbaru (ikut ter-commit di `d35fcda`).
   - Tugas **perapian tombol cetak (Cetak semua unit vs Cetak PDF)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; ikon kedua tombol disamakan ke ikon **printer** (`Printer`).
@@ -567,6 +618,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `5bef35a` Document multi-unit profile unit_ids support
 - `5a08244` Support multi-unit per profile with unit_ids array and scope updates
 - `4ab1330` Update PROGRESS after signatory deploy
 - `b25aeba` Fill all-units print signatories with director and head of administration
