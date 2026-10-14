@@ -5,13 +5,13 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD `e67ac21` (sudah di-deploy, run #29). **Ada perubahan belum di-commit** pada worktree: scoping halaman Indikator SPM ke unit pengguna, penghapusan peran `quality`, migrasi baru `202610150001_scope_indicators_and_drop_quality.sql`, dan pembaruan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`).
+- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`784e4e5`** (*Scope SPM indicators to user units and remove quality role*) — **sudah di-push**, **belum di-deploy**. Commit ini memuat scoping halaman Indikator SPM ke unit pengguna, penghapusan peran `quality`, migrasi `202610150001_scope_indicators_and_drop_quality.sql`, dan pembaruan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`); working tree bersih.
 - **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #29** (head `e67ac21`, conclusion `success`). Sebelumnya: run #25 (`5a08244`), run #26–#28 (`5bef35a`).
-- **Situs live:** menyajikan `assets/index-BVfsBiiE.js` (setara `e67ac21`). Perubahan sesi ini **belum ter-deploy**.
+- **Situs live:** menyajikan `assets/index-BVfsBiiE.js` (setara `e67ac21`). Perubahan **`784e4e5` belum ter-deploy**.
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js`).
-- **Menunggu dari pengguna:** (1) ✓ migrasi `202610150001_scope_indicators_and_drop_quality.sql` **sudah dijalankan sukses** di Supabase SQL Editor (2026-10-14); (2) perintah commit & push; (3) **Actions → Deploy to GitHub Pages → Run workflow**.
+- **Menunggu dari pengguna:** ✓ migrasi `202610150001_scope_indicators_and_drop_quality.sql` **sudah dijalankan sukses** di Supabase SQL Editor (2026-10-14); ✓ perubahan **sudah di-commit & di-push** (`784e4e5`). Sisa: **Actions → Deploy to GitHub Pages → Run workflow**, lalu verifikasi situs live memuat bundle baru.
 
-## Tugas terbaru (BELUM DI-COMMIT — scoping Indikator SPM per unit + hapus peran quality)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `784e4e5`; MENUNGGU DEPLOY — scoping Indikator SPM per unit + hapus peran quality)
 
 **Judul:** Batasi halaman Indikator SPM ke unit pengguna + hapus peran Mutu (`quality`) (2026-10-14)
 
@@ -614,7 +614,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
-  - Tugas **scoping halaman Indikator SPM per unit + hapus peran `quality` (Mutu)** (2026-10-14) **selesai di kode, migrasi sudah dijalankan pengguna (sukses), tapi BELUM di-commit/push/deploy**. Menunggu: (1) perintah commit & push dari pengguna; (2) **Actions → Deploy to GitHub Pages → Run workflow**; (3) verifikasi situs live memuat bundle baru.
+  - Tugas **scoping halaman Indikator SPM per unit + hapus peran `quality` (Mutu)** (2026-10-14) **selesai di kode, migrasi sudah dijalankan pengguna (sukses), dan sudah di-commit & di-push (`784e4e5`)**. Sisa: **Actions → Deploy to GitHub Pages → Run workflow**, lalu verifikasi situs live memuat bundle baru.
   - Tugas **perbaikan bug `getMonthRange`/`profileUnitIds` + harness uji vitest** dan **penyederhanaan halaman Unit & pengguna (tab + modal, tabel 10 baris)** (2026-10-14) **sudah selesai, ter-commit (`e67ac21`), ter-push, dan ter-deploy** (run #29).
   - Tugas **Multi-unit per profil (`unit_ids`) + pembaruan scope unit** (2026-10-14) **sudah selesai**: commit `5a08244`, migrasi dijalankan pengguna, **sudah ter-deploy** (run #25; run #26–#28 untuk head `5bef35a`), dan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) sudah disesuaikan (commit `5bef35a` + pembaruan sesi ini).
   - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) lewat commit `b25aeba` — juga **sudah di-deploy** (run #24).
@@ -634,6 +634,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `784e4e5` Scope SPM indicators to user units and remove quality role
 - `e67ac21` Add bug fixes + vitest UI harness; fix getMonthRange TZ + profileUnitIds dedupe
 - `5bef35a` Document multi-unit profile unit_ids support
 - `5a08244` Support multi-unit per profile with unit_ids array and scope updates
