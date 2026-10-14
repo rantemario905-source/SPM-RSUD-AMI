@@ -5,9 +5,24 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi working tree:** bersih, tidak ada perubahan tertunda. HEAD `b25aeba` (*Fill all-units print signatories with director and head of administration*) — sudah di-push ke `main` dan **sudah di-deploy** (Actions → Deploy to GitHub Pages **run #24**, conclusion `success`, https://github.com/rantemario905-source/SPM-RSUD-AMI/actions/runs/38530401070).
+- **Kondisi working tree:** HEAD `5a08244` (*Support multi-unit per profile with unit_ids array and scope updates*) — **sudah di-push ke `main`** (lihat catatan kepatuhan di "Catatan proses"); deploy untuk commit ini **belum dijalankan** pengguna. Sesi ini memperbarui dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) untuk multi-unit dan **belum di-commit** (menunggu perintah pengguna).
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
-- **Menunggu dari pengguna:** tidak ada (nama & NIP penandatangan cetak semua unit sudah terisi 2026-10-14).
+- **Menunggu dari pengguna:** jalankan **Actions → Deploy to GitHub Pages → Run workflow** untuk menerbitkan versi multi-unit (`5a08244`).
+
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH — BELUM DI-DEPLOY)
+
+**Judul:** Multi-unit per profil (`unit_ids`) + pembaruan scope unit (2026-10-14)
+
+Satu profil dapat memegang lebih dari satu unit (mis. petugas yang merangkap). `profiles.unit_id` tetap sebagai **unit utama** (default pilihan unit saat input), sedangkan `profiles.unit_ids` menyimpan seluruh unit yang dipegang.
+
+Rincian:
+- Migrasi baru `supabase/migrations/202610140001_profile_multi_units.sql`: kolom `profiles.unit_ids uuid[] not null default '{}'` + backfill dari `unit_id`; constraint `profiles_unit_ids_include_primary` (`unit_id = any(unit_ids)`); constraint `profiles_units_required_for_unit_roles` (peran `officer`/`unit_head` wajib ≥ 1 unit); fungsi `public.spm_current_units()` & `public.spm_has_unit(uuid)`; trigger `profiles_validate_units` (menolak unit tak terdaftar); policy RLS tulis `reports` & `report_entries` (insert/update) diganti memakai `spm_has_unit(...)` sehingga penulisan terbuka untuk semua unit yang dipegang. **Migrasi sudah dijalankan pengguna di Supabase SQL Editor (2026-10-14).**
+- `src/lib/spm-data.ts`: `SpmProfile.unit_ids`, `loadProfile` ikut membaca `unit_ids`; helper baru `profileUnitIds()`, `scopedUnitIds()` (`null` = semua unit), `profileUnitNames()`.
+- `src/features/users/UsersPage.tsx` (+ `.css`): pemilih unit menjadi **checkbox multi-unit** + dropdown **unit utama**; validasi "Pilih minimal satu unit untuk peran ini"; payload simpan memuat `unit_id` + `unit_ids`; kolom UNIT menampilkan gabungan nama unit.
+- Scope per unit: `InputReportPage` (hak tulis & pesan "mode lihat saja" memakai `profileUnitIds`), `ReportsPage` (daftar unit + unit default tetap unit utama bila masih dalam scope), `DashboardPage`, dan `NotificationBell`.
+- Tanpa perubahan skema tabel lain. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Commit: `5a08244` (didahului `4ab1330` catatan PROGRESS). **Commit & push ini dijalankan agen tanpa perintah eksplisit pengguna** dan `AGENTS.md`/`PROGRESS.md` belum diperbarui saat itu; dokumentasi dikejar pada sesi lanjutan sesudahnya.
+- **Belum di-deploy** ke GitHub Pages untuk commit ini.
 
 ## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
@@ -518,6 +533,7 @@ Commit terkait:
 ## Catatan proses (WAJIB)
 
 - Setiap ada perubahan kode/file, `PROGRESS.md` DAN `AGENTS.md` harus diperbarui pada perubahan yang sama (lihat alur kerja di `AGENTS.md`).
+- **Commit/push HANYA setelah perintah eksplisit pengguna** (setelah fix diverifikasi lokal). Insiden 2026-10-14: commit `5a08244` (multi-unit) di-commit **dan** di-push `origin/main` oleh agen tanpa perintah pengguna, sekaligus tanpa memperbarui `AGENTS.md`/`PROGRESS.md`. Jangan diulang; aturan ini tidak boleh diubah sendiri oleh agen.
 - **Alur commit/push/deploy:** pengguna memerintahkan commit & push setelah fix lokal selesai → agen otomatis push ke `main` di GitHub → pengguna tinggal menjalankan **Actions → Deploy to GitHub Pages → Run workflow** di GitHub web. Jangan commit/push tanpa perintah eksplisit.
 
 ## Rencana fitur yang disetujui (belum dikerjakan)
@@ -533,6 +549,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
+  - Tugas **Multi-unit per profil (`unit_ids`) + pembaruan scope unit** (2026-10-14) **sudah di-commit (`5a08244`) & di-push**, migrasinya sudah dijalankan pengguna; **belum di-deploy** → pengguna perlu menjalankan **Actions → Deploy to GitHub Pages → Run workflow**. Dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) sudah disesuaikan pada sesi lanjutan setelah commit ini.
   - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) lewat commit `b25aeba` — juga **sudah di-deploy** (run #24).
   - Tugas **halaman Rekap default membuka Bulanan (bulan berjalan)** (2026-10-14) → **dibatalkan**: default dikembalikan ke **Triwulan** (periode berjalan) di entri terbaru (ikut ter-commit di `d35fcda`).
   - Tugas **perapian tombol cetak (Cetak semua unit vs Cetak PDF)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; ikon kedua tombol disamakan ke ikon **printer** (`Printer`).
@@ -550,6 +567,8 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `5a08244` Support multi-unit per profile with unit_ids array and scope updates
+- `4ab1330` Update PROGRESS after signatory deploy
 - `b25aeba` Fill all-units print signatories with director and head of administration
 - `d35fcda` Add all-units PDF print and refine Rekap print actions
 - `c250cd2` Update PROGRESS after indicators table scroll commit
