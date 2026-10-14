@@ -9,7 +9,7 @@ import type { AppPage } from '../../types/spm'
 import './AppShell.css'
 
 const roleNames: Record<string, string> = {
-  admin: 'Administrator', officer: 'Petugas unit', unit_head: 'Kepala unit', leadership: 'Pimpinan',
+  admin: 'Administrator', officer: 'Kepala Ruangan', unit_head: 'Kepala Instalasi', leadership: 'Pimpinan',
 }
 
 interface AppShellProps { activePage: AppPage; onNavigate: (page: AppPage) => void; children: ReactNode }

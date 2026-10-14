@@ -10,7 +10,7 @@ type UserRole = 'officer' | 'unit_head' | 'leadership' | 'admin'
 interface UserProfile { id: string; full_name: string; role: string; unit_id: string | null; unit_ids?: string[] | null; email: string | null; permissions: Record<string, boolean>; active?: boolean }
 
 const roleNames: Record<string, string> = {
-  admin: 'Administrator', officer: 'Petugas unit', unit_head: 'Kepala unit', leadership: 'Pimpinan',
+  admin: 'Administrator', officer: 'Kepala Ruangan', unit_head: 'Kepala Instalasi', leadership: 'Pimpinan',
 }
 
 const rolePermissions: Record<UserRole, Record<string, boolean>> = {

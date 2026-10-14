@@ -41,8 +41,8 @@ Deploy tidak berjalan otomatis saat upload/push file. Setelah file terbaru diung
 
 | Peran | Ringkasan | Input laporan | Rekap & unduh | Indikator SPM | Periode | Perubahan | Unit & pengguna |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Petugas unit (`officer`) | ya | ya | ya | - | - | - | - |
-| Kepala unit (`unit_head`) | ya | ya | ya | ya (edit) | - | - | - |
+| Kepala Ruangan (`officer`) | ya | ya | ya | - | - | - | - |
+| Kepala Instalasi (`unit_head`) | ya | ya | ya | ya (edit) | - | - | - |
 | Pimpinan (`leadership`) | ya | ya | ya | ya (edit) | - | - | - |
 | Administrator (`admin`) | ya | ya | ya | ya | ya | ya | ya |
 

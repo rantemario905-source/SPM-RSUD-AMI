@@ -5,13 +5,27 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`784e4e5`** (*Scope SPM indicators to user units and remove quality role*) — **sudah di-push**, **belum di-deploy**. Commit ini memuat scoping halaman Indikator SPM ke unit pengguna, penghapusan peran `quality`, migrasi `202610150001_scope_indicators_and_drop_quality.sql`, dan pembaruan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`); working tree bersih.
-- **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #29** (head `e67ac21`, conclusion `success`). Sebelumnya: run #25 (`5a08244`), run #26–#28 (`5bef35a`).
-- **Situs live:** menyajikan `assets/index-BVfsBiiE.js` (setara `e67ac21`). Perubahan **`784e4e5` belum ter-deploy**.
-- **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js`).
-- **Menunggu dari pengguna:** ✓ migrasi `202610150001_scope_indicators_and_drop_quality.sql` **sudah dijalankan sukses** di Supabase SQL Editor (2026-10-14); ✓ perubahan **sudah di-commit & di-push** (`784e4e5`). Sisa: **Actions → Deploy to GitHub Pages → Run workflow**, lalu verifikasi situs live memuat bundle baru.
+- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`aed52fd`** (*Update PROGRESS after indicators scope commit*; konten kode = `784e4e5` *Scope SPM indicators to user units and remove quality role*) — **sudah di-push** dan **sudah di-deploy**. Working tree (belum di-commit) berisi: catatan deploy + penggantian label peran (`Kepala Instalasi`/`Kepala Ruangan`) di `AppShell.tsx`, `UsersPage.tsx`, `README.md`, `AGENTS.md`, `PROGRESS.md`.
+- **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #30** (head `784e4e5`, conclusion `success`, 2026-10-14 13:29 UTC). Sebelumnya: run #29 (`e67ac21`), run #25 (`5a08244`), run #26–#28 (`5bef35a`).
+- **Situs live:** menyajikan `assets/index-CkZ7ZXKN.js` + `assets/index-B6lgt_Ho.css` (bundle baru; sebelumnya `index-BVfsBiiE.js`). Perubahan scoping Indikator SPM + hapus peran `quality` (`784e4e5`) **sudah ter-deploy**.
+- **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js` + `index-B6lgt_Ho.css`). Bundle live dicek isinya: memuat `unit_id.is.null` & `unit_ids` (logika scoping), **2× `sb_publishable_`**, **0× `eyJ…`**. Hash JS lokal beda dari live wajar: `vite.config.ts` memakai `base: '/SPM-RSUD-AMI/'` saat `GITHUB_ACTIONS=true` sedangkan lokal `/` (hash CSS justru identik: `index-B6lgt_Ho.css`).
+- **Menunggu dari pengguna (uji fungsional manual):** login sebagai **Kepala Instalasi** (`unit_head`) → halaman Indikator SPM hanya menampilkan unitnya (+ indikator global); **Unit & pengguna** tidak lagi memuat akun Mutu; **Ringkasan** tetap menampilkan semua indikator.
+- **Pekerjaan belum ter-commit (working tree):** penggantian **label peran** tampilan — `unit_head` → **Kepala Instalasi**, `officer` → **Kepala Ruangan** (lihat tugas terbaru). Kode peran di DB tidak berubah.
 
-## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `784e4e5`; MENUNGGU DEPLOY — scoping Indikator SPM per unit + hapus peran quality)
+## Tugas terbaru (PERLU VERIFIKASI LOKAL & DEPLOY — ganti label peran Kepala Instalasi / Kepala Ruangan)
+
+**Judul:** Ganti label peran tampilan: `unit_head` → **Kepala Instalasi**, `officer` → **Kepala Ruangan** (2026-10-14)
+
+Permintaan pengguna: mengganti nama tampilan peran — "Kepala unit" menjadi **Kepala Instalasi** dan "Petugas unit" menjadi **Kepala Ruangan**. **Kode peran di DB tidak berubah** (`unit_head`/`officer`), hanya label yang dilihat pengguna.
+
+Rincian:
+- `src/components/layout/AppShell.tsx` & `src/features/users/UsersPage.tsx`: peta `roleNames` → `officer: 'Kepala Ruangan'`, `unit_head: 'Kepala Instalasi'` (muncul di label peran sidebar profil serta tabel/filter pengguna di **Unit & pengguna**).
+- `README.md`: tabel peran diperbarui — baris `Petugas unit (officer)` → **Kepala Ruangan**, `Kepala unit (unit_head)` → **Kepala Instalasi**.
+- `AGENTS.md`: catatan konvensi label peran ditambahkan (kode peran tetap; hanya tampilan).
+- Tanpa perubahan DB/migrasi/RLS.
+- Verifikasi: `npm run lint` ✓, `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-BXQZqDAu.js`; CSS tetap `index-B6lgt_Ho.css`). Bundle hasil build dicek: `Kepala Instalasi` 4×, `Kepala Ruangan` 4×, `Kepala unit`/`Petugas unit` **0×**.
+
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY — scoping Indikator SPM per unit + hapus peran quality)
 
 **Judul:** Batasi halaman Indikator SPM ke unit pengguna + hapus peran Mutu (`quality`) (2026-10-14)
 
@@ -24,6 +38,7 @@ Rincian:
 - **Peran `quality` dihapus:** `src/lib/access.ts` (entri dihapus — `crossunit` kini hanya `leadership`/`admin`), `src/components/layout/AppShell.tsx` (label peran), `src/features/users/UsersPage.tsx` (`UserRole`, `roleNames`, `rolePermissions`, `baseRoles`), `tests/UsersPage.test.tsx` (uji "tanpa izin" memakai `leadership`), `README.md` (baris tabel Mutu + catatan kelola indikator + daftar migrasi), `AGENTS.md`.
 - Migrasi baru `supabase/migrations/202610150001_scope_indicators_and_drop_quality.sql`: lepaskan referensi FK ke profil quality (`report_periods.updated_by` dikosongkan; `reports.created_by` yang NOT NULL dialihkan ke administrator pertama agar laporan tidak hilang) → `delete from public.profiles where role = 'quality'` → check `profiles_role_check` dipersempit ke `('admin','officer','unit_head','leadership')`; policy SELECT & `for all` pada `indicators` diganti — baca indikator aktif lintas unit tetap terbuka (agar Input laporan tetap menampilkan unit lain) tetapi kelola dibatasi `spm_has_unit(unit_id)` kecuali `view_all_reports`/`manage_users`. **Sudah dijalankan pengguna (sukses) 2026-10-14** (percobaan pertama gagal: kolom `reports.updated_by` tidak ada; migrasi diperbaiki memakai `report_periods.updated_by` + pengalihan `reports.created_by`, lalu berhasil).
 - Verifikasi: `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js`).
+- **Deploy (sesi lanjutan):** Actions → Deploy to GitHub Pages **run #30** (head `784e4e5`) conclusion `success` (2026-10-14 13:29 UTC). Situs live menyajikan `assets/index-CkZ7ZXKN.js`; isi bundle memuat `unit_id.is.null`/`unit_ids` dan `sb_publishable_` (2×) tanpa `eyJ…` (0×). Sisa uji fungsional login manual (unit head/global/Ringkasan) diserahkan ke pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY — perbaikan bug + harness uji)
 
@@ -614,7 +629,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
-  - Tugas **scoping halaman Indikator SPM per unit + hapus peran `quality` (Mutu)** (2026-10-14) **selesai di kode, migrasi sudah dijalankan pengguna (sukses), dan sudah di-commit & di-push (`784e4e5`)**. Sisa: **Actions → Deploy to GitHub Pages → Run workflow**, lalu verifikasi situs live memuat bundle baru.
+  - Tugas **scoping halaman Indikator SPM per unit + hapus peran `quality` (Mutu)** (2026-10-14) **selesai di kode, migrasi sudah dijalankan pengguna (sukses), sudah di-commit & di-push (`784e4e5`), dan sudah ter-deploy** (Deploy to GitHub Pages **run #30**, head `784e4e5`). Situs live memuat `assets/index-CkZ7ZXKN.js`. Sisa: **uji fungsional manual** (login sebagai Kepala Instalasi → Indikator SPM hanya unitnya + global; Unit & pengguna tanpa akun Mutu; Ringkasan tetap semua indikator).
   - Tugas **perbaikan bug `getMonthRange`/`profileUnitIds` + harness uji vitest** dan **penyederhanaan halaman Unit & pengguna (tab + modal, tabel 10 baris)** (2026-10-14) **sudah selesai, ter-commit (`e67ac21`), ter-push, dan ter-deploy** (run #29).
   - Tugas **Multi-unit per profil (`unit_ids`) + pembaruan scope unit** (2026-10-14) **sudah selesai**: commit `5a08244`, migrasi dijalankan pengguna, **sudah ter-deploy** (run #25; run #26–#28 untuk head `5bef35a`), dan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) sudah disesuaikan (commit `5bef35a` + pembaruan sesi ini).
   - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) lewat commit `b25aeba` — juga **sudah di-deploy** (run #24).
