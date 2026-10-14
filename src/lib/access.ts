@@ -10,12 +10,23 @@ const rolePages: Record<string, AppPage[]> = {
   admin: allPages,
 }
 
-export function allowedPages(role: string | null, isPreview: boolean): AppPage[] {
+const permissionPages: { permission: string; page: AppPage }[] = [
+  { permission: 'manage_indicators', page: 'indicators' },
+  { permission: 'manage_periods', page: 'periods' },
+  { permission: 'view_audit', page: 'audit' },
+  { permission: 'manage_users', page: 'users' },
+  { permission: 'view_all_reports', page: 'crossunit' },
+]
+
+export function allowedPages(role: string | null, permissions: Record<string, boolean> | null | undefined, isPreview: boolean): AppPage[] {
   if (isPreview) return allPages
-  if (!role) return basePages
-  return rolePages[role] ?? basePages
+  const base = role ? rolePages[role] ?? basePages : basePages
+  const extra = permissionPages
+    .filter(({ permission }) => Boolean(permissions?.[permission]))
+    .map(({ page }) => page)
+  return Array.from(new Set<AppPage>([...base, ...extra]))
 }
 
-export function canAccessPage(role: string | null, isPreview: boolean, page: AppPage): boolean {
-  return allowedPages(role, isPreview).includes(page)
+export function canAccessPage(role: string | null, permissions: Record<string, boolean> | null | undefined, isPreview: boolean, page: AppPage): boolean {
+  return allowedPages(role, permissions, isPreview).includes(page)
 }

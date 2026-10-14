@@ -109,7 +109,7 @@ function ReportsPage() {
   const [allUnitsData, setAllUnitsData] = useState<AllUnitsData | null>(null)
   const [allLoading, setAllLoading] = useState(false)
   const unit = units.find((item) => item.id === unitId) ?? units[0]
-  const canPrintAllUnits = canAccessPage(auth.role, auth.isPreview, 'crossunit')
+  const canPrintAllUnits = canAccessPage(auth.role, auth.permissions, auth.isPreview, 'crossunit')
 
   useEffect(() => {
     if (!client || !auth.userId) return

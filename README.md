@@ -48,6 +48,18 @@ Deploy tidak berjalan otomatis saat upload/push file. Setelah file terbaru diung
 
 Menu difilter di `src/components/layout/AppShell.tsx` berdasarkan peta peran di `src/lib/access.ts`; `App.tsx` juga menjaga agar halaman terlarang tidak dirender (dialihkan ke Ringkasan).
 
+**Izin akses menambah menu (2026-10-14):** selain peran, `allowedPages(role, permissions, isPreview)` membuka menu tambahan sesuai izin profil. Menu = halaman dasar peran **digabung** halaman dari izin berikut:
+
+| Izin | Menu yang terbuka |
+| --- | --- |
+| `manage_indicators` | Indikator SPM |
+| `manage_periods` | Periode |
+| `view_audit` | Perubahan (Audit) |
+| `manage_users` | Unit & pengguna |
+| `view_all_reports` | Rekap lintas unit |
+
+Izin lain bekerja sebagai kemampuan di dalam halaman: `input_reports` mengizinkan input laporan, `edit_locked_periods` mengizinkan koreksi entri pada periode terkunci (tanpa menu baru), dan `manage_users` juga membuka pengelolaan unit/pengguna. Perubahan izin berlaku setelah pengguna tersebut masuk kembali (profil dimuat saat login).
+
 ## Akses baca dan tulis
 
 - **Baca lintas unit:** semua pengguna terautentikasi dapat melihat laporan/entri semua unit (capaian agregat, tanpa identitas pasien) agar dapat membandingkan data unit lain.

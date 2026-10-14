@@ -33,7 +33,7 @@ function AppShell({ activePage, onNavigate, children }: AppShellProps) {
   const activeLabel = navigation.flatMap((group) => group.items).find((item) => item.id === activePage)?.label ?? 'Ringkasan'
   const auth = useAuth()
   const displayName = auth.email?.split('@')[0] ?? 'Pratinjau'
-  const visiblePages = allowedPages(auth.role, auth.isPreview)
+  const visiblePages = allowedPages(auth.role, auth.permissions, auth.isPreview)
   const visibleGroups = navigation
     .map((group) => ({ ...group, items: group.items.filter((item) => visiblePages.includes(item.id)) }))
     .filter((group) => group.items.length > 0)

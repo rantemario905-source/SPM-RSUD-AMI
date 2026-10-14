@@ -21,7 +21,7 @@ function App() {
   const client = getSupabaseClient()
   const progress = useProgress()
   const firstRender = useRef(true)
-  const allowed = useMemo(() => allowedPages(auth.role, auth.isPreview), [auth.role, auth.isPreview])
+  const allowed = useMemo(() => allowedPages(auth.role, auth.permissions, auth.isPreview), [auth.role, auth.permissions, auth.isPreview])
 
   useEffect(() => {
     if (!client || auth.isPreview) return

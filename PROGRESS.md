@@ -11,6 +11,23 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js` + `index-B6lgt_Ho.css`). Bundle live dicek isinya: memuat `unit_id.is.null` & `unit_ids` (logika scoping), **2× `sb_publishable_`**, **0× `eyJ…`**. Hash JS lokal beda dari live wajar: `vite.config.ts` memakai `base: '/SPM-RSUD-AMI/'` saat `GITHUB_ACTIONS=true` sedangkan lokal `/` (hash CSS justru identik: `index-B6lgt_Ho.css`).
 - **Menunggu dari pengguna (uji fungsional manual):** login sebagai **Kepala Instalasi** (`unit_head`) → halaman Indikator SPM hanya menampilkan unitnya (+ indikator global); **Unit & pengguna** tidak lagi memuat akun Mutu; **Ringkasan** tetap menampilkan semua indikator.
 - **Pekerjaan belum ter-deploy:** penggantian **label peran** tampilan — `unit_head` → **Kepala Instalasi**, `officer` → **Kepala Ruangan** — sudah di-commit & di-push (`553ba4a`); sisa **Actions → Deploy to GitHub Pages → Run workflow**. Kode peran di DB tidak berubah.
+- **Perbaikan bug belum ter-commit (working tree):** izin akses kini **menggerakkan menu** (`allowedPages(role, permissions, isPreview)` di `src/lib/access.ts`) + `edit_locked_periods` di `InputReportPage` + tes `tests/access.test.ts` (lihat tugas terbaru). Verifikasi lokal: lint ✓, `npm test` ✓ (**48 lolos**, 1 todo), `npm run build` ✓ (`index-CHfnm_Hw.js`).
+
+## Tugas terbaru (PERLU COMMIT & DEPLOY — perbaikan bug: izin akses kini menggerakkan menu)
+
+**Judul:** Bug izin akses tidak berpengaruh — menu kini mengikuti izin (gabungan peran + izin) (2026-10-14)
+
+Laporan pengguna: setelah menambah izin (mis. **Kelola indikator SPM** dan **Edit periode terkunci**) pada akun **Kepala Ruangan** (`officer`) lalu disimpan, saat login akun itu tidak ada perubahan apa pun.
+
+**Akar masalah (dikonfirmasi probe test merah 3/3):** `allowedPages(role, isPreview)` di `src/lib/access.ts` **hanya melihat peran**, tidak membaca `permissions`. Akibatnya izin `manage_indicators`, `manage_periods`, `view_audit`, `manage_users`, `view_all_reports` tidak membuka menu apa pun; `edit_locked_periods` bahkan **tidak pernah dibaca di UI** (hanya di RLS). Padahal di sisi database (RLS) izin-izin itu sudah ditegakkan — jadi ini celah penjagaan di UI, bukan data. Keputusan pengguna (Opsi A): menu = halaman dasar peran **digabung** halaman dari izin.
+
+Rincian:
+- `src/lib/access.ts`: tanda tangan baru `allowedPages(role, permissions, isPreview)` + `canAccessPage(role, permissions, isPreview, page)`; peta `permissionPages` — `manage_indicators`→`indicators`, `manage_periods`→`periods`, `view_audit`→`audit`, `manage_users`→`users`, `view_all_reports`→`crossunit`; hasil digabung dengan `rolePages` dan dideduplikasi.
+- Pemanggil diperbarui: `src/App.tsx` (memo), `src/components/layout/AppShell.tsx` (`visiblePages`), `src/features/reports/ReportsPage.tsx` (`canPrintAllUnits`).
+- `src/features/reports/InputReportPage.tsx`: `edit_locked_periods` kini dihormati — `canEditLocked`, `lockedReadOnly` menggantikan `isLocked` pada penguncian input & tombol simpan; teks banner periode terkunci menyesuaikan ("Anda memiliki akses khusus untuk mengoreksi periode terkunci."). (Insert entri baru pada periode terkunci tetap ditolak RLS; yang diizinkan adalah koreksi entri yang sudah ada.)
+- Tes baru `tests/access.test.ts` (10 kasus) mengunci pemetaan izin→menu.
+- Catatan: perubahan izin berlaku setelah pengguna tersebut **login kembali** (profil dimuat saat login).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**48 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-CHfnm_Hw.js`).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `553ba4a`; MENUNGGU DEPLOY — ganti label peran Kepala Instalasi / Kepala Ruangan)
 
