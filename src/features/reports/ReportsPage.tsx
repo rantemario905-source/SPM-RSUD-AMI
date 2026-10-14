@@ -43,8 +43,8 @@ interface AllUnitsEntry { numerator: number | null; denominator: number | null; 
 interface AllUnitsData { indicators: SpmIndicator[]; entries: Map<string, AllUnitsEntry> }
 
 const allUnitsSignatories = {
-  left: { role: 'Direktur', name: '.................................', nip: '.................................' },
-  right: { role: 'Kasubbag Tata Usaha', name: '.................................', nip: '.................................' },
+  left: { role: 'Direktur', name: 'Ns. Achmad Fauzan, S.Kep', nip: '19760625 199603 1 001' },
+  right: { role: 'Kasubbag Tata Usaha', name: 'Suriami, SKM.,M.Kes', nip: '19731230 200701 2 011' },
 }
 
 function toIndicatorEntry(indicator: SpmIndicator): IndicatorEntry {

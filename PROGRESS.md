@@ -5,10 +5,23 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi working tree:** ada perubahan belum di-commit (`ReportsPage.tsx`, `ReportsPage.css`, `PROGRESS.md`). HEAD `c250cd2` (sudah di-push ke `main`).
+- **Kondisi working tree:** bersih, tidak ada perubahan tertunda. HEAD `d35fcda` (*Add all-units PDF print and refine Rekap print actions*) — sudah di-push ke `main` dan **sudah di-deploy** lewat Actions → Deploy to GitHub Pages (workflow dijalankan pengguna).
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- **Menunggu dari pengguna:** tidak ada (nama & NIP penandatangan cetak semua unit sudah terisi 2026-10-14).
 
 ## Tugas terbaru (BELUM DI-COMMIT)
+
+**Judul:** Isi nama & NIP penandatangan tetap cetak semua unit (2026-10-14)
+
+Permintaan pengguna: mengirimkan data penandatangan untuk mengganti placeholder `......` pada `allUnitsSignatories`.
+
+Rincian (`src/features/reports/ReportsPage.tsx`):
+- Kiri (Direktur): **Ns. Achmad Fauzan, S.Kep** · NIP. **19760625 199603 1 001**.
+- Kanan (Kasubbag Tata Usaha): **Suriami, SKM.,M.Kes** · NIP. **19731230 200701 2 011**.
+- Hanya data konstanta yang berubah (tanpa perubahan logika, DB, atau CSS). Format tampilan tetap `NIP. <nomor>`.
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓. **Belum di-commit.**
+
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Perapian tombol cetak di halaman Rekap (2026-10-14)
 
@@ -17,9 +30,9 @@ Permintaan pengguna: tombol **Cetak semua unit** dan **Cetak PDF** dibuat lebih 
 Rincian (`src/features/reports/ReportsPage.tsx` + `ReportsPage.css`):
 - Kedua tombol memakai gaya baru `.print-action` (ikon + label + keterangan kecil dua baris): **Cetak semua unit** → keterangan "Seluruh unit dalam satu PDF" dengan aksen hijau (`--forest-soft`), **Cetak PDF** → keterangan "Unit terpilih saja" bergaya netral putih.
 - Mobile (≤ 680px): grup tombol penuh lebar, tiap tombol `flex: 1`.
-- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓, `npm run build` ✓. **Belum di-commit.**
+- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Samakan ikon tombol cetak ke ikon printer (2026-10-14)
 
@@ -28,9 +41,9 @@ Permintaan pengguna: ikon pada kedua tombol cetak dibuat **sama** memakai ikon *
 Rincian (`src/features/reports/ReportsPage.tsx`):
 - Ikon tombol **Cetak semua unit** `Files` → `Printer` (sama dengan **Cetak PDF**), ukuran 17.
 - Impor `Files` dihapus dari `lucide-react`.
-- Pembeda tetap lewat label, keterangan kecil, dan aksen hijau. Verifikasi: `npm run lint` ✓, `npm run build` ✓. **Belum di-commit.**
+- Pembeda tetap lewat label, keterangan kecil, dan aksen hijau. Verifikasi: `npm run lint` ✓, `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Default jenis periode halaman Rekap dikembalikan ke **Triwulan** (2026-10-14)
 
@@ -39,9 +52,9 @@ Permintaan pengguna (revisi): jenis periode default **Bulanan** kurang disukai �
 Rincian (`src/features/reports/ReportsPage.tsx`):
 - Default `period` `'monthly'` → `'quarterly'`.
 - `month`/`quarter` tetap diturunkan dari tanggal berjalan (`new Date()`), mengikuti pola `currentYear`.
-- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓. **Belum di-commit.**
+- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Halaman Rekap default membuka **Bulanan** pada bulan berjalan (2026-10-14) — *dibatalkan, lihat entri di atas*
 
@@ -50,9 +63,9 @@ Permintaan pengguna: saat menu **Rekap & unduh** dibuka, langsung tampilkan **Bu
 Rincian (`src/features/reports/ReportsPage.tsx`):
 - Default `period` `'quarterly'` → `'monthly'`.
 - Default `month` (dulu tetap `10`) → **bulan berjalan** (`new Date().getMonth() + 1`) dan `quarter` (dulu tetap `4`) → **triwulan berjalan** (`Math.floor(monthIndex / 3) + 1`), mengikuti pola `currentYear` yang sudah ada.
-- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓. **Belum di-commit.**
+- Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (2026-10-14)
 
@@ -73,8 +86,9 @@ Rincian (`src/features/reports/ReportsPage.css`, dalam `@media print`):
 - `.report-print-unit-name` (judul unit, uppercase) dan `.report-print-signatures { break-inside: avoid }`.
 
 - Tanpa perubahan DB/migrasi. Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
-- **Belum di-commit** — menunggu perintah pengguna.
-- **Menunggu dari pengguna:** nama & NIP Direktur + Kasubbag Tata Usaha untuk mengganti placeholder.
+- Commit: `d35fcda` *Add all-units PDF print and refine Rekap print actions* (sudah di-push ke `main`; mencakup pula perapian tombol cetak, penyamaan ikon `Printer`, dan default periode **Triwulan** berjalan).
+- **Sudah di-deploy** ke GitHub Pages (workflow *Deploy to GitHub Pages* dijalankan pengguna).
+- Nama & NIP Direktur + Kasubbag Tata Usaha **sudah diisi** (2026-10-14) — lihat tugas terbaru di atas; placeholder `......` tidak lagi dipakai.
 
 ## Catatan akhir sesi — untuk besok (2026-10-13)
 
@@ -517,9 +531,9 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
-  - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **selesai di lokal, BELUM di-commit** — menunggu perintah pengguna; **nama & NIP penandatangan masih placeholder**, menunggu dikirim pengguna.
-  - Tugas **halaman Rekap default membuka Bulanan (bulan berjalan)** (2026-10-14) → **dibatalkan**: default dikembalikan ke **Triwulan** (periode berjalan) di entri terbaru.
-  - Tugas **perapian tombol cetak (Cetak semua unit vs Cetak PDF)** (2026-10-14) **selesai di lokal, BELUM di-commit**; ikon kedua tombol disamakan ke ikon **printer** (`Printer`).
+  - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) — perubahannya **belum di-commit**.
+  - Tugas **halaman Rekap default membuka Bulanan (bulan berjalan)** (2026-10-14) → **dibatalkan**: default dikembalikan ke **Triwulan** (periode berjalan) di entri terbaru (ikut ter-commit di `d35fcda`).
+  - Tugas **perapian tombol cetak (Cetak semua unit vs Cetak PDF)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; ikon kedua tombol disamakan ke ikon **printer** (`Printer`).
   - Tugas **batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal + header sticky** (2026-10-13) **sudah selesai & diterbitkan** (`09e491d`).
   - Tugas **form penandatangan + blok tanda tangan 2 kolom**, **tempat/tanggal di atas kolom Pengumpul Data (`Muara Badak, <tanggal>`), dan garis bawah pada nama penanda tangan** (2026-10-13) **sudah selesai & diterbitkan** (`5509f2d`).
   - Tugas **hapus tampilan "Rumus capaian" di halaman Indikator SPM + rapikan kotak ringkasan (compact)** (2026-10-12) **sudah selesai & diterbitkan** (`4cc49d5`).
@@ -534,6 +548,8 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `d35fcda` Add all-units PDF print and refine Rekap print actions
+- `c250cd2` Update PROGRESS after indicators table scroll commit
 - `09e491d` Limit indicators table to 10 visible rows with internal scroll
 - `5509f2d` Add print signatory form and refine signature block
 - `4cc49d5` Remove calculation method display on Indicators page and tidy summary
