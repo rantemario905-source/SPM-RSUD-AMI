@@ -3,7 +3,7 @@ import { Check, CircleAlert, Pencil, Plus, Search, Trash2, X } from 'lucide-reac
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadUnits, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
+import { loadIndicators, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './IndicatorsPage.css'
 
@@ -91,6 +91,7 @@ function IndicatorsPage() {
   const auth = useAuth()
   const client = getSupabaseClient()
   const [units, setUnits] = useState<SpmUnit[]>(sampleUnits.map(({ id, name }) => ({ id, code: id.toUpperCase(), name })))
+  const [profile, setProfile] = useState<SpmProfile | null>(null)
   const [indicators, setIndicators] = useState<CatalogIndicator[]>(auth.isPreview ? initialCatalog() : [])
   const [loading, setLoading] = useState(!auth.isPreview)
   const [saving, setSaving] = useState(false)
@@ -115,14 +116,18 @@ function IndicatorsPage() {
   }, [toast])
 
   useEffect(() => {
-    if (!client) return
+    if (!client || auth.isPreview || !auth.userId) return
     let active = true
-    Promise.all([loadUnits(client), loadIndicators(client)])
-      .then(([nextUnits, nextIndicators]) => {
+    Promise.all([loadUnits(client), loadProfile(client, auth.userId)])
+      .then(async ([allUnits, nextProfile]) => {
+        const scope = scopedUnitIds(nextProfile)
+        const scopedUnits = scope ? allUnits.filter((unit) => scope.includes(unit.id)) : allUnits
+        const nextIndicators = await loadIndicators(client, scope ?? undefined)
         if (!active) return
-        setUnits(nextUnits)
+        setProfile(nextProfile)
+        setUnits(scopedUnits)
         setIndicators(nextIndicators.map(fromDatabase))
-        setForm((current) => ({ ...current, unitId: nextUnits[0]?.id ?? '' }))
+        setForm((current) => ({ ...current, unitId: nextProfile.unit_id && scopedUnits.some((unit) => unit.id === nextProfile.unit_id) ? nextProfile.unit_id : scopedUnits[0]?.id ?? '' }))
         setUnitFilter('all')
       })
       .catch((loadError: unknown) => {
@@ -130,13 +135,21 @@ function IndicatorsPage() {
       })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [client])
+  }, [client, auth.isPreview, auth.userId])
 
   const filteredIndicators = useMemo(() => indicators.filter((indicator) => {
     const matchesText = `${indicator.code} ${indicator.name} ${indicator.definition}`.toLowerCase().includes(query.toLowerCase())
     const matchesUnit = unitFilter === 'all' || indicator.unitId === unitFilter
     return matchesText && matchesUnit
   }), [indicators, query, unitFilter])
+
+  const scopedIds = profile ? scopedUnitIds(profile) : null
+  const canManageAll = auth.isPreview || Boolean(profile?.permissions.view_all_reports) || Boolean(profile?.permissions.manage_users)
+
+  function canWriteIndicator(indicator: CatalogIndicator) {
+    if (canManageAll) return true
+    return Boolean(indicator.unitId) && (scopedIds ?? []).includes(indicator.unitId)
+  }
 
   useEffect(() => {
     function measureTable() {
@@ -336,14 +349,15 @@ function IndicatorsPage() {
           <thead><tr><th>KODE</th><th>UNIT / JENIS PELAYANAN</th><th>INDIKATOR &amp; DEFINISI</th><th>STANDAR</th><th>BERLAKU</th><th>STATUS</th><th><span className="sr-only">Aksi</span></th></tr></thead>
           <tbody>{filteredIndicators.map((indicator) => {
             const owner = units.find((unit) => unit.id === indicator.unitId)
+            const writable = canWriteIndicator(indicator)
             return <tr key={indicator.code}>
               <td className="indicator-code">{indicator.code}</td>
               <td>{owner?.name ?? 'Unit belum dipilih'}</td>
               <td className="catalog-name"><strong>{indicator.name}</strong><small>{indicator.definition}</small></td>
               <td className="catalog-standard">{indicator.standard}</td>
               <td>{indicator.effectiveYear}</td>
-              <td><button className={`active-toggle${indicator.enabled ? ' is-enabled' : ''}`} type="button" role="switch" aria-checked={indicator.enabled} onClick={() => void toggleIndicator(indicator)}><span />{indicator.enabled ? 'Aktif' : 'Nonaktif'}</button></td>
-              <td className="indicator-actions"><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} title="Edit indikator" onClick={() => openEdit(indicator)} disabled={saving}><Pencil size={14} /></button><button className="delete-indicator-button" type="button" aria-label={`Hapus ${indicator.code}`} title="Hapus indikator" onClick={() => setPendingDelete(indicator)} disabled={saving}><Trash2 size={14} /></button></td>
+              <td><button className={`active-toggle${indicator.enabled ? ' is-enabled' : ''}${writable ? '' : ' is-readonly'}`} type="button" role="switch" aria-checked={indicator.enabled} disabled={!writable || saving} onClick={() => void toggleIndicator(indicator)}><span />{indicator.enabled ? 'Aktif' : 'Nonaktif'}</button></td>
+              <td className="indicator-actions">{writable ? <><button className="edit-indicator-button" type="button" aria-label={`Edit ${indicator.code}`} title="Edit indikator" onClick={() => openEdit(indicator)} disabled={saving}><Pencil size={14} /></button><button className="delete-indicator-button" type="button" aria-label={`Hapus ${indicator.code}`} title="Hapus indikator" onClick={() => setPendingDelete(indicator)} disabled={saving}><Trash2 size={14} /></button></> : <span className="indicator-readonly">—</span>}</td>
             </tr>
           })}</tbody>
         </table>

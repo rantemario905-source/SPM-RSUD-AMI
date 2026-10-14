@@ -5,13 +5,27 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD `5bef35a` (*Document multi-unit profile unit_ids support*) — sudah di-push dan **sudah ter-deploy**. Yang **belum di-commit** (menunggu perintah eksplisit pengguna): `AGENTS.md`, `PROGRESS.md`, `src/features/users/UsersPage.tsx`, `src/features/users/UsersPage.css` (halaman Unit & pengguna), **ditambah** `src/lib/spm-data.ts` (perbaikan bug `getMonthRange` lintas zona + dedupe `profileUnitIds`), `package.json`/`package-lock.json` (devDependency `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/dom`), `vitest.config.ts`, dan `tests/` (harness uji baru: 38 lolos, 1 todo).
-- **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #28** (head `5bef35a`, conclusion `success`). Kode multi-unit `5a08244` terbit lebih dulu lewat run #25; run #26–#28 memakai head `5bef35a`.
-- **Situs live:** menyajikan `assets/index-BpQ3anPf.js` dengan key **publishable** (`sb_publishable_…`; tidak ada lagi key `eyJ…`) dan fitur multi-unit utuh. Perubahan sesi ini **belum ter-deploy** (menunggu commit & push lalu run workflow).
-- **Verifikasi sesi ini:** `npm run lint` ✓ (exit 0), `npm test` ✓ (**38 lolos**, 1 `todo`), `npm run build` ✓ (`✓ built`, `dist/assets/index-B30IVTH_.js`).
-- **Menunggu dari pengguna:** perintah commit & push, lalu **Actions → Deploy to GitHub Pages → Run workflow**.
+- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD `e67ac21` (sudah di-deploy, run #29). **Ada perubahan belum di-commit** pada worktree: scoping halaman Indikator SPM ke unit pengguna, penghapusan peran `quality`, migrasi baru `202610150001_scope_indicators_and_drop_quality.sql`, dan pembaruan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`).
+- **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #29** (head `e67ac21`, conclusion `success`). Sebelumnya: run #25 (`5a08244`), run #26–#28 (`5bef35a`).
+- **Situs live:** menyajikan `assets/index-BVfsBiiE.js` (setara `e67ac21`). Perubahan sesi ini **belum ter-deploy**.
+- **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js`).
+- **Menunggu dari pengguna:** (1) ✓ migrasi `202610150001_scope_indicators_and_drop_quality.sql` **sudah dijalankan sukses** di Supabase SQL Editor (2026-10-14); (2) perintah commit & push; (3) **Actions → Deploy to GitHub Pages → Run workflow**.
 
-## Tugas terbaru (BELUM DI-COMMIT — perbaikan bug + harness uji)
+## Tugas terbaru (BELUM DI-COMMIT — scoping Indikator SPM per unit + hapus peran quality)
+
+**Judul:** Batasi halaman Indikator SPM ke unit pengguna + hapus peran Mutu (`quality`) (2026-10-14)
+
+Permintaan pengguna: halaman **Indikator SPM** hanya menampilkan indikator unit yang diakses pengguna (bukan semua unit). **Ringkasan tidak diubah** (tetap melihat semua indikator — jawaban pengguna). Keputusan tambahan: peran **Mutu (`quality`) dihapus total** (hasil diskusi dengan atasan); batas tulis ditegakkan di RLS; profil quality lama **dihapus**; indikator global (`unit_id` kosong) tetap tampil untuk user ber-unit.
+
+Rincian:
+- `src/lib/spm-data.ts`: `loadIndicators(client, unitId?)` kini menerima `string | string[]`; untuk array memakai `.or('unit_id.is.null,unit_id.in.(…)')` sehingga indikator global ikut.
+- `src/features/indicators/IndicatorsPage.tsx`: memuat `loadProfile`; `scopedUnitIds(profile)` → `units` difilter ke scope; indikator dimuat via scope; dropdown filter, dropdown unit di form, ringkasan **Unit terdaftar**, dan default unit form mengikuti unit scope (default = unit utama profil). Helper `canWriteIndicator` → baris di luar cakupan tidak bisa diedit (toggle `disabled` + tombol aksi `—`). `leadership`/`admin` (tanpa unit) tetap melihat & mengelola semua.
+- `src/features/indicators/IndicatorsPage.css`: gaya `.indicator-readonly` dan `.active-toggle.is-readonly`.
+- **Peran `quality` dihapus:** `src/lib/access.ts` (entri dihapus — `crossunit` kini hanya `leadership`/`admin`), `src/components/layout/AppShell.tsx` (label peran), `src/features/users/UsersPage.tsx` (`UserRole`, `roleNames`, `rolePermissions`, `baseRoles`), `tests/UsersPage.test.tsx` (uji "tanpa izin" memakai `leadership`), `README.md` (baris tabel Mutu + catatan kelola indikator + daftar migrasi), `AGENTS.md`.
+- Migrasi baru `supabase/migrations/202610150001_scope_indicators_and_drop_quality.sql`: lepaskan referensi FK ke profil quality (`report_periods.updated_by` dikosongkan; `reports.created_by` yang NOT NULL dialihkan ke administrator pertama agar laporan tidak hilang) → `delete from public.profiles where role = 'quality'` → check `profiles_role_check` dipersempit ke `('admin','officer','unit_head','leadership')`; policy SELECT & `for all` pada `indicators` diganti — baca indikator aktif lintas unit tetap terbuka (agar Input laporan tetap menampilkan unit lain) tetapi kelola dibatasi `spm_has_unit(unit_id)` kecuali `view_all_reports`/`manage_users`. **Sudah dijalankan pengguna (sukses) 2026-10-14** (percobaan pertama gagal: kolom `reports.updated_by` tidak ada; migrasi diperbaiki memakai `report_periods.updated_by` + pengalihan `reports.created_by`, lalu berhasil).
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js`).
+
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY — perbaikan bug + harness uji)
 
 **Judul:** Perbaikan `getMonthRange` & `profileUnitIds` + harness uji (vitest + jsdom) (2026-10-14)
 
@@ -28,7 +42,7 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 **Peringatan (tidak diubah):** standar waktu + persentase, fragilitas pemisah ribuan, spasi satuan `formatAchievement` ("95 %") — dicatat sebagai `it.todo` di `spm-achievement.test.ts` (perlu penilaian data).
 
-## Tugas terbaru (BELUM DI-COMMIT — menunggu perintah pengguna)
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY — halaman Unit & pengguna)
 
 **Judul:** Sederhanakan tampilan halaman Unit & pengguna (tab + modal, tabel 10 baris) (2026-10-14)
 
@@ -600,6 +614,8 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
+  - Tugas **scoping halaman Indikator SPM per unit + hapus peran `quality` (Mutu)** (2026-10-14) **selesai di kode, migrasi sudah dijalankan pengguna (sukses), tapi BELUM di-commit/push/deploy**. Menunggu: (1) perintah commit & push dari pengguna; (2) **Actions → Deploy to GitHub Pages → Run workflow**; (3) verifikasi situs live memuat bundle baru.
+  - Tugas **perbaikan bug `getMonthRange`/`profileUnitIds` + harness uji vitest** dan **penyederhanaan halaman Unit & pengguna (tab + modal, tabel 10 baris)** (2026-10-14) **sudah selesai, ter-commit (`e67ac21`), ter-push, dan ter-deploy** (run #29).
   - Tugas **Multi-unit per profil (`unit_ids`) + pembaruan scope unit** (2026-10-14) **sudah selesai**: commit `5a08244`, migrasi dijalankan pengguna, **sudah ter-deploy** (run #25; run #26–#28 untuk head `5bef35a`), dan dokumentasi (`AGENTS.md`, `README.md`, `PROGRESS.md`) sudah disesuaikan (commit `5bef35a` + pembaruan sesi ini).
   - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) lewat commit `b25aeba` — juga **sudah di-deploy** (run #24).
   - Tugas **halaman Rekap default membuka Bulanan (bulan berjalan)** (2026-10-14) → **dibatalkan**: default dikembalikan ke **Triwulan** (periode berjalan) di entri terbaru (ikut ter-commit di `d35fcda`).
@@ -618,6 +634,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `e67ac21` Add bug fixes + vitest UI harness; fix getMonthRange TZ + profileUnitIds dedupe
 - `5bef35a` Document multi-unit profile unit_ids support
 - `5a08244` Support multi-unit per profile with unit_ids array and scope updates
 - `4ab1330` Update PROGRESS after signatory deploy

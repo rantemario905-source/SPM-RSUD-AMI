@@ -139,7 +139,7 @@ describe('UsersPage', () => {
   })
 
   it('menyembunyikan tombol pengelolaan untuk akun tanpa izin', async () => {
-    database.profiles = [{ ...admin, role: 'quality', permissions: {} }, officer, inactiveHead].map((profile) => ({ ...profile }))
+    database.profiles = [{ ...admin, role: 'leadership', permissions: {} }, officer, inactiveHead].map((profile) => ({ ...profile }))
     render(<UsersPage />)
     await screen.findByText('Siti Rahma')
     expect(screen.queryByRole('button', { name: /Tambah pengguna/ })).toBeNull()

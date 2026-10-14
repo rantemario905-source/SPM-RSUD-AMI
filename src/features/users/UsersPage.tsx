@@ -6,17 +6,16 @@ import { loadUnits, profileUnitNames, type SpmUnit } from '../../lib/spm-data'
 import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './UsersPage.css'
 
-type UserRole = 'officer' | 'unit_head' | 'quality' | 'leadership' | 'admin'
+type UserRole = 'officer' | 'unit_head' | 'leadership' | 'admin'
 interface UserProfile { id: string; full_name: string; role: string; unit_id: string | null; unit_ids?: string[] | null; email: string | null; permissions: Record<string, boolean>; active?: boolean }
 
 const roleNames: Record<string, string> = {
-  admin: 'Administrator', officer: 'Petugas unit', unit_head: 'Kepala unit', quality: 'Mutu', leadership: 'Pimpinan',
+  admin: 'Administrator', officer: 'Petugas unit', unit_head: 'Kepala unit', leadership: 'Pimpinan',
 }
 
 const rolePermissions: Record<UserRole, Record<string, boolean>> = {
   officer: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: false, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
   unit_head: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
-  quality: { view_dashboard: true, input_reports: true, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
   leadership: { view_dashboard: true, input_reports: true, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
   admin: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: true, manage_indicators: true, manage_periods: true, view_audit: true, manage_users: true, edit_locked_periods: true },
 }
@@ -33,7 +32,7 @@ const permissionLabels: { key: string; label: string }[] = [
   { key: 'edit_locked_periods', label: 'Edit periode terkunci' },
 ]
 
-const baseRoles: UserRole[] = ['officer', 'unit_head', 'quality', 'leadership']
+const baseRoles: UserRole[] = ['officer', 'unit_head', 'leadership']
 const tablePreviewRows = 10
 const visibleUnitNames = 2
 
