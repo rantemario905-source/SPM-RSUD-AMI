@@ -5,15 +5,15 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`553ba4a`** (*Rename unit_head/officer labels and record indicators scope deploy*) — **sudah di-push**, **belum di-deploy**. Commit ini memuat penggantian label peran (`Kepala Instalasi`/`Kepala Ruangan`) di `AppShell.tsx`, `UsersPage.tsx`, `README.md`, `AGENTS.md`, `PROGRESS.md` **plus** catatan deploy run #30. Konten kode sebelumnya = `784e4e5` (scoping Indikator SPM + hapus peran `quality`), sudah ter-deploy.
+- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`ab06e73`** (*Let permissions drive navigation menus and honor locked-period edits*) — **sudah di-push**, **belum di-deploy**. Komit ini memuat perbaikan bug izin akses→menu; sebelumnya `553ba4a` (label peran) juga belum ter-deploy. Konten kode ter-deploy terakhir = `784e4e5` (run #30).
 - **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #30** (head `784e4e5`, conclusion `success`, 2026-10-14 13:29 UTC). Sebelumnya: run #29 (`e67ac21`), run #25 (`5a08244`), run #26–#28 (`5bef35a`).
 - **Situs live:** menyajikan `assets/index-CkZ7ZXKN.js` + `assets/index-B6lgt_Ho.css` (bundle baru; sebelumnya `index-BVfsBiiE.js`). Perubahan scoping Indikator SPM + hapus peran `quality` (`784e4e5`) **sudah ter-deploy**.
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js` + `index-B6lgt_Ho.css`). Bundle live dicek isinya: memuat `unit_id.is.null` & `unit_ids` (logika scoping), **2× `sb_publishable_`**, **0× `eyJ…`**. Hash JS lokal beda dari live wajar: `vite.config.ts` memakai `base: '/SPM-RSUD-AMI/'` saat `GITHUB_ACTIONS=true` sedangkan lokal `/` (hash CSS justru identik: `index-B6lgt_Ho.css`).
 - **Menunggu dari pengguna (uji fungsional manual):** login sebagai **Kepala Instalasi** (`unit_head`) → halaman Indikator SPM hanya menampilkan unitnya (+ indikator global); **Unit & pengguna** tidak lagi memuat akun Mutu; **Ringkasan** tetap menampilkan semua indikator.
 - **Pekerjaan belum ter-deploy:** penggantian **label peran** tampilan — `unit_head` → **Kepala Instalasi**, `officer` → **Kepala Ruangan** — sudah di-commit & di-push (`553ba4a`); sisa **Actions → Deploy to GitHub Pages → Run workflow**. Kode peran di DB tidak berubah.
-- **Perbaikan bug belum ter-commit (working tree):** izin akses kini **menggerakkan menu** (`allowedPages(role, permissions, isPreview)` di `src/lib/access.ts`) + `edit_locked_periods` di `InputReportPage` + tes `tests/access.test.ts` (lihat tugas terbaru). Verifikasi lokal: lint ✓, `npm test` ✓ (**48 lolos**, 1 todo), `npm run build` ✓ (`index-CHfnm_Hw.js`).
+- **Perbaikan bug sudah ter-commit & ter-push (`ab06e73`), belum ter-deploy:** izin akses kini **menggerakkan menu** (`allowedPages(role, permissions, isPreview)` di `src/lib/access.ts`) + `edit_locked_periods` di `InputReportPage` + tes `tests/access.test.ts`. Verifikasi lokal: lint ✓, `npm test` ✓ (**48 lolos**, 1 todo), `npm run build` ✓ (`index-CHfnm_Hw.js`). Sisa: Actions → Deploy to GitHub Pages.
 
-## Tugas terbaru (PERLU COMMIT & DEPLOY — perbaikan bug: izin akses kini menggerakkan menu)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `ab06e73`; MENUNGGU DEPLOY — perbaikan bug: izin akses kini menggerakkan menu)
 
 **Judul:** Bug izin akses tidak berpengaruh — menu kini mengikuti izin (gabungan peran + izin) (2026-10-14)
 
