@@ -5,11 +5,11 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-14
-- **Kondisi working tree:** bersih, tidak ada perubahan tertunda. HEAD `d35fcda` (*Add all-units PDF print and refine Rekap print actions*) — sudah di-push ke `main` dan **sudah di-deploy** lewat Actions → Deploy to GitHub Pages (workflow dijalankan pengguna).
+- **Kondisi working tree:** bersih, tidak ada perubahan tertunda. HEAD `b25aeba` (*Fill all-units print signatories with director and head of administration*) — sudah di-push ke `main` dan **sudah di-deploy** (Actions → Deploy to GitHub Pages **run #24**, conclusion `success`, https://github.com/rantemario905-source/SPM-RSUD-AMI/actions/runs/38530401070).
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
 - **Menunggu dari pengguna:** tidak ada (nama & NIP penandatangan cetak semua unit sudah terisi 2026-10-14).
 
-## Tugas terbaru (BELUM DI-COMMIT)
+## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
 **Judul:** Isi nama & NIP penandatangan tetap cetak semua unit (2026-10-14)
 
@@ -19,7 +19,9 @@ Rincian (`src/features/reports/ReportsPage.tsx`):
 - Kiri (Direktur): **Ns. Achmad Fauzan, S.Kep** · NIP. **19760625 199603 1 001**.
 - Kanan (Kasubbag Tata Usaha): **Suriami, SKM.,M.Kes** · NIP. **19731230 200701 2 011**.
 - Hanya data konstanta yang berubah (tanpa perubahan logika, DB, atau CSS). Format tampilan tetap `NIP. <nomor>`.
-- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓. **Belum di-commit.**
+- Verifikasi: `npm run lint` ✓ (tanpa warning), `npm run build` ✓.
+- Commit: `b25aeba` *Fill all-units print signatories with director and head of administration* (sudah di-push ke `main`; `AGENTS.md` + `PROGRESS.md` ikut dalam commit).
+- **Sudah di-deploy**: Deploy to GitHub Pages **run #24**, conclusion `success`.
 
 ## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH & DI-DEPLOY)
 
@@ -531,7 +533,7 @@ Commit terkait:
 ## Langkah berikutnya
 
 - **Sesi berikutnya (rencana setelah 2026-10-14):**
-  - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) — perubahannya **belum di-commit**.
+  - Tugas **Cetak PDF semua unit dalam satu dokumen + penandatangan tetap (Direktur & Kasubbag Tata Usaha)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; **nama & NIP penandatangan sudah terisi** (Ns. Achmad Fauzan, S.Kep · 19760625 199603 1 001; Suriami, SKM.,M.Kes · 19731230 200701 2 011) lewat commit `b25aeba` — juga **sudah di-deploy** (run #24).
   - Tugas **halaman Rekap default membuka Bulanan (bulan berjalan)** (2026-10-14) → **dibatalkan**: default dikembalikan ke **Triwulan** (periode berjalan) di entri terbaru (ikut ter-commit di `d35fcda`).
   - Tugas **perapian tombol cetak (Cetak semua unit vs Cetak PDF)** (2026-10-14) **sudah selesai, ter-commit (`d35fcda`), ter-push, dan ter-deploy**; ikon kedua tombol disamakan ke ikon **printer** (`Printer`).
   - Tugas **batasi tampilan tabel Indikator SPM (± 10 baris) dengan scroll internal + header sticky** (2026-10-13) **sudah selesai & diterbitkan** (`09e491d`).
@@ -548,6 +550,7 @@ Commit terkait:
 
 ## Riwayat singkat (git)
 
+- `b25aeba` Fill all-units print signatories with director and head of administration
 - `d35fcda` Add all-units PDF print and refine Rekap print actions
 - `c250cd2` Update PROGRESS after indicators table scroll commit
 - `09e491d` Limit indicators table to 10 visible rows with internal scroll
