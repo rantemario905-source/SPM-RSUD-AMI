@@ -16,6 +16,27 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 - **Ringkasan = menu monitoring semua unit (`DashboardPage`) — SUDAH di-commit & di-push (`ef4dfc4`), belum di-deploy (2026-10-16):** semua pengguna (termasuk `officer`/`unit_head`) kini melihat **semua unit** di Ringkasan. Scope unit dihapus dari `DashboardPage` (tidak lagi memakai `loadProfile`/`scopedUnitIds`) — tanpa perubahan DB (RLS baca lintas unit sudah ada). Verifikasi lokal: lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-B8kGQ4ip.js` + `index-DBTFti1m.css`).
 
+- **Perbaikan cetak "Cetak semua unit" terpotong 1 halaman — BELUM di-commit (2026-10-16):** akar masalah = aturan sidebar menetap `@media (min-width: 681px)` (`.app-frame{height:100vh;overflow:hidden}`, `.main-column{height:100vh}`, `.page-content{overflow-y:auto}`) ikut berlaku di media cetak dan **tidak** di-reset oleh blok `@media print` lama → hasil cetak terpotong setinggi 1 viewport halaman. Perbaikan di `ReportsPage.css`: kontainer layout diberi `height:auto`/`overflow:visible` di blok print. Verifikasi harness headless: 1 → 9 halaman. Lokal: lint ✓, `npm test` ✓ (56 lolos, 1 todo), `npm run build` ✓ (`index-C75_m8ZO.css` + `index-qM3EKnoF.js`).
+
+## Tugas terbaru (BELUM DI-COMMIT — perbaikan bug: cetak "Cetak semua unit" terpotong 1 halaman, 2026-10-16)
+
+**Gejala (pengguna):** menekan **Cetak semua unit** menghasilkan cetakan **hanya 1 halaman dan terpotong**; harusnya memuat semua unit sampai blok tanda tangan di akhir.
+
+**Loop diagnosis (dibangun sebelum berhipotesis, di luar repo):** harness DOM/CSS berstruktur sama (`C:\Users\TEMP\AppData\Local\Temp\opencode\printbug\`; `harness.html` + `count.ps1`), 3 unit × 30 baris, dijalankan dengan Chrome headless `--print-to-pdf`, jumlah halaman dihitung dari PDF.
+- Sebelum perbaikan: `PAGES=1` — **merah**, persis gejala pengguna.
+- Uji diferensial (hanya melepas `height:100vh`/`overflow` pada print, variabel lain tetap): `PAGES=9` → hipotesis terkonfirmasi.
+- Sesudah perbaikan (memakai CSS hasil `npm run build`): `PAGES=9` — **hijau**; dokumen pendek (1 unit, 5 baris) tetap `PAGES=1` (tidak ada halaman kosong).
+
+**Hipotesis yang benar (akar masalah):** aturan **sidebar menetap** `@media (min-width: 681px)` di `AppShell.css` juga cocok pada media cetak (lebar halaman landscape ≥ 681px). Blok `@media print` lama hanya mengatur `display`/`padding` dan **tidak** me-reset tinggi/overflow, sehingga konten terpotong setinggi satu viewport halaman → 1 halaman. Regresi tak sengaja dari perubahan sidebar menetap 2026-10-14; **juga** memengaruhi **Cetak PDF** satu unit (bukan hanya cetak semua unit).
+
+**Perbaikan (`src/features/reports/ReportsPage.css`, blok `@media print`):** `.app-frame`, `.main-column`, `.page-content` diberi `height: auto !important` + `overflow: visible !important` (+ `min-height: 0` pada `.app-frame`, `max-height: none` pada `.page-content`). Struktur cetak & blok tanda tangan tidak diubah — sesuai rancangan awal.
+
+**Seam uji regresi:** tidak ada seam layout-cetak di vitest/jsdom (jsdom tidak menghitung paginasi), jadi tidak ada tes kode; dijaga lewat catatan invariant di `AGENTS.md` + harness headless di luar repo.
+
+**Verifikasi repo:** lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-C75_m8ZO.css` + `index-qM3EKnoF.js`). Tanpa perubahan DB.
+
+**Langkah berikutnya:** uji manual di browser (Ctrl+P → pratinjau: semua unit + tanda tangan pada banyak halaman, tidak terpotong); lalu commit/push & deploy bila disetujui.
+
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `ef4dfc4`; MENUNGGU DEPLOY — Ringkasan jadi menu monitoring semua unit, 2026-10-16)
 
 **Judul:** Ringkasan menampilkan semua unit & indikator untuk semua pengguna (2026-10-16)
