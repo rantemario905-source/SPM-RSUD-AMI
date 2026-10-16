@@ -3,7 +3,7 @@ import { Check, CircleAlert, Pencil, Plus, Search, Trash2, X } from 'lucide-reac
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
+import { indicatorColumns, loadIndicators, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './IndicatorsPage.css'
 
@@ -85,6 +85,18 @@ function fromDatabase(indicator: SpmIndicator): CatalogIndicator {
     effectiveYear: Number(indicator.effective_from.slice(0, 4)),
     enabled: indicator.active,
   }
+}
+
+function describeIndicatorError(error: unknown, code: string) {
+  const candidate = error as { code?: string; message?: string } | null
+  if (candidate?.code === '23505') {
+    return `Kode indikator "${code}" sudah digunakan — bisa jadi oleh indikator nonaktif atau unit lain yang tidak tampil di daftar Anda. Gunakan kode yang berbeda.`
+  }
+  if (candidate?.code === 'PGRST116') {
+    return 'Indikator tidak tersimpan: data tidak ditemukan atau unit Anda tidak berwenang mengubahnya. Muat ulang halaman lalu coba lagi.'
+  }
+  if (error instanceof Error) return error.message
+  return 'Indikator gagal disimpan.'
 }
 
 function IndicatorsPage() {
@@ -206,8 +218,14 @@ function IndicatorsPage() {
 
   async function saveIndicator(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const isEditing = dialog === 'edit'
     const unit = units.find((item) => item.id === form.unitId)
-    if (!unit) return
+    if (!unit) {
+      const message = 'Unit / jenis pelayanan tidak dikenali. Muat ulang halaman lalu coba lagi.'
+      setFormError(message)
+      setToast(message)
+      return
+    }
 
     const changed: CatalogIndicator = {
       id: editingId ?? undefined,
@@ -226,11 +244,11 @@ function IndicatorsPage() {
       analysis: '',
       unitId: form.unitId,
       effectiveYear: Number(form.effectiveYear),
-      enabled: dialog === 'edit' ? indicators.find((item) => item.id === editingId)?.enabled ?? true : true,
+      enabled: isEditing ? indicators.find((item) => item.id === editingId)?.enabled ?? true : true,
     }
 
     const duplicate = indicators.find((item) => {
-      const isEditingTarget = dialog === 'edit' && (item.id === editingId || item.code === editingCode)
+      const isEditingTarget = isEditing && (item.id === editingId || item.code === editingCode)
       return !isEditingTarget && item.code.trim().toUpperCase() === changed.code.toUpperCase()
     })
     if (duplicate) {
@@ -240,10 +258,20 @@ function IndicatorsPage() {
       return
     }
 
+    const editingRowId = isEditing ? editingId : null
+    if (client && isEditing && !editingRowId) {
+      const message = 'Data indikator tidak dikenali sehingga batal disimpan. Muat ulang halaman lalu coba lagi.'
+      setError(message)
+      setFormError(message)
+      setToast(message)
+      return
+    }
+
     setSaving(true)
     setError('')
     setFormError('')
     try {
+      let saved = changed
       if (client) {
         const record = {
           code: changed.code,
@@ -259,23 +287,22 @@ function IndicatorsPage() {
           effective_from: `${changed.effectiveYear}-01-01`,
           active: changed.enabled,
         }
-        const result = dialog === 'edit' && editingId
-          ? await client.from('indicators').update(record).eq('id', editingId)
-          : await client.from('indicators').insert(record)
-        if (result.error) {
-          if (result.error.code === '23505') throw new Error(`Kode indikator "${changed.code}" sudah digunakan. Gunakan kode yang berbeda.`)
-          throw result.error
-        }
+        const result = editingRowId
+          ? await client.from('indicators').update(record).eq('id', editingRowId).select(indicatorColumns).single()
+          : await client.from('indicators').insert(record).select(indicatorColumns).single()
+        if (result.error) throw result.error
+        saved = fromDatabase(result.data as SpmIndicator)
       }
-      if (dialog === 'edit' && editingId) {
-        setIndicators((current) => current.map((item) => item.id === editingId ? changed : item))
+      if (isEditing) {
+        const targetId = editingRowId
+        setIndicators((current) => current.map((item) => (targetId ? item.id === targetId : item.code === editingCode) ? saved : item))
       } else {
-        setIndicators((current) => [...current, changed])
+        setIndicators((current) => [...current, saved])
       }
-      setNotice(`${changed.code} ${dialog === 'edit' ? 'diperbarui' : 'ditambahkan'}${client ? ' di database.' : ' di pratinjau.'}`)
+      setNotice(`${saved.code} ${isEditing ? 'diperbarui' : 'ditambahkan'}${client ? ' di database.' : ' di pratinjau.'}`)
       setDialog(null)
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : 'Indikator gagal disimpan.'
+      const message = describeIndicatorError(saveError, changed.code)
       setError(message)
       setFormError(message)
       setToast(message)
@@ -325,7 +352,6 @@ function IndicatorsPage() {
     <section className="indicators-page">
       <div className="indicators-heading">
         <div><span className="eyebrow">PENGELOLAAN DATA</span><h1>Indikator SPM</h1><p>Master indikator, standar, definisi operasional, dan jenis input per unit.</p></div>
-        <button className="primary-button" type="button" onClick={openCreate}><Plus size={16} /> Tambah indikator</button>
       </div>
 
       {auth.isPreview && <div className="indicator-demo-note"><CircleAlert size={16} /><span><strong>Mode simulasi.</strong> Perubahan hanya berlaku sementara di browser.</span></div>}
@@ -340,6 +366,7 @@ function IndicatorsPage() {
         <label className="indicator-search"><Search size={15} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari kode, nama, atau definisi" /></label>
         <label className="indicator-filter"><span className="sr-only">Filter unit</span><select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}><option value="all">Semua unit</option>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
         <span className="indicator-result-count">{filteredIndicators.length} indikator</span>
+        <button className="primary-button" type="button" onClick={openCreate} disabled={saving}><Plus size={16} /> Tambah indikator</button>
       </div>
 
       {notice && <div className="indicator-success" role="status"><Check size={15} />{notice}</div>}
@@ -350,7 +377,7 @@ function IndicatorsPage() {
           <tbody>{filteredIndicators.map((indicator) => {
             const owner = units.find((unit) => unit.id === indicator.unitId)
             const writable = canWriteIndicator(indicator)
-            return <tr key={indicator.code}>
+            return <tr key={indicator.id ?? indicator.code}>
               <td className="indicator-code">{indicator.code}</td>
               <td>{owner?.name ?? 'Unit belum dipilih'}</td>
               <td className="catalog-name"><strong>{indicator.name}</strong><small>{indicator.definition}</small></td>

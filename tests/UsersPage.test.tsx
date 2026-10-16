@@ -14,7 +14,7 @@ const authState = vi.hoisted(() => ({
 
 vi.mock('../src/auth/AuthContext', () => ({ useAuth: () => authState }))
 
-const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[] }))
+const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[] }))
 
 vi.mock('../src/lib/supabase', async () => {
   const { createFakeClient } = await import('./support/fake-supabase')

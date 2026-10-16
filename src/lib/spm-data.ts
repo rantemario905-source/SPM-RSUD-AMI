@@ -81,10 +81,12 @@ export async function loadUnits(client: SupabaseClient) {
   return (data ?? []) as SpmUnit[]
 }
 
+export const indicatorColumns = 'id, code, service_name, name, operational_definition, standard, calculation_method, unit_label, calculation_scale, result_unit, unit_id, effective_from, effective_until, active'
+
 export async function loadIndicators(client: SupabaseClient, unitId?: string | string[]) {
   let request = client
     .from('indicators')
-    .select('id, code, service_name, name, operational_definition, standard, calculation_method, unit_label, calculation_scale, result_unit, unit_id, effective_from, effective_until, active')
+    .select(indicatorColumns)
     .order('code')
   if (typeof unitId === 'string') {
     request = request.or(`unit_id.is.null,unit_id.eq.${unitId}`)
