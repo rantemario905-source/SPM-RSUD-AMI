@@ -3,7 +3,7 @@ import { ArrowRight, CalendarDays, Check, CircleAlert, FileDown, History, LockKe
 import { useAuth } from '../../auth/AuthContext'
 import { demoReports, serviceProgress } from '../../data/demo'
 import { getSupabaseClient } from '../../lib/supabase'
-import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, scopedUnitIds, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadUnits, periodLabel, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
 import type { AppPage, ReportStatus } from '../../types/spm'
 import './DashboardPage.css'
 
@@ -48,12 +48,10 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
   useEffect(() => {
     if (!client || auth.isPreview || !auth.userId) return
     let active = true
-    Promise.all([loadUnits(client), loadPeriods(client), loadProfile(client, auth.userId)])
-      .then(([allUnits, nextPeriods, profile]) => {
+    Promise.all([loadUnits(client), loadPeriods(client)])
+      .then(([allUnits, nextPeriods]) => {
         if (!active) return
-        const scope = scopedUnitIds(profile)
-        const scopedUnits = scope ? allUnits.filter((unit) => scope.includes(unit.id)) : allUnits
-        setUnits(scopedUnits)
+        setUnits(allUnits)
         setPeriods(nextPeriods)
         setPeriodStart((current) => nextPeriods.some((item) => item.period_start === current) ? current : nextPeriods[0]?.period_start ?? '')
       })

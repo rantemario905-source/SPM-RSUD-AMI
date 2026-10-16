@@ -4,7 +4,7 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 ## Status saat ini
 
-- **Tanggal update terakhir:** 2026-10-14
+- **Tanggal update terakhir:** 2026-10-16
 - **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`573dae1`** (*Update PROGRESS after hash routing and topbar commit*) — **sudah di-push & ter-deploy** (run #33). Seluruh kerja routing hash (Back/Forward), sidebar menetap, dan menu pengguna topbar (chip 3D + animasi + bulatan notifikasi 3D) kini **live**, sekaligus membawa `ab06e73` (izin akses→menu) & `553ba4a` (label peran).
 - **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #33** (head `573dae1`, conclusion `success`, 2026-10-14 15:42→15:45 UTC). Sebelumnya: run #32 (`36e7c56`), run #31 (`061d5e4`), run #30 (`784e4e5`), run #29 (`e67ac21`), run #26–#28 (`5bef35a`).
 - **Situs live:** menyajikan `assets/index-CThM4i0c.js` + `assets/index-DBTFti1m.css` (bundle baru; sebelumnya `index-CkZ7ZXKN.js` + `index-B6lgt_Ho.css`). Verifikasi isi bundle live: `#/dashboard` (routing hash) ada; CSS memuat `.user-chip`/`user-menu-slide`/`.notification-button`/`.user-role-badge`; `security-note` **0** (blok lama sudah terhapus); **2× `sb_publishable_`**, **0× `eyJ…`**. Hash CSS live **identik** dengan build lokal (`index-DBTFti1m.css`); hash JS beda wajar karena CI memakai `base: '/SPM-RSUD-AMI/'`.
@@ -13,6 +13,23 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 - **Label peran (tampilan):** `unit_head` → **Kepala Instalasi**, `officer` → **Kepala Ruangan** (`553ba4a`) — **sudah ter-deploy** (run #31+). Kode peran di DB tidak berubah.
 - **Perbaikan bug izin akses→menu (`ab06e73`) — sudah ter-deploy** (run #32+): izin akses kini **menggerakkan menu** (`allowedPages(role, permissions, isPreview)` di `src/lib/access.ts`) + `edit_locked_periods` di `InputReportPage` + tes `tests/access.test.ts`.
 - **Pekerjaan topbar/routing SUDAH di-commit, di-push, & ter-deploy (`30c706d`+`573dae1`, run #33):** (1) **routing hash** agar tombol Back/Forward menelusuri menu lalu kembali ke layar login — `src/lib/routes.ts`, `src/lib/router.tsx`, `src/lib/routerContext.ts`, `main.tsx`, `AuthGate.tsx`, `App.tsx`; (2) **sidebar menetap** di desktop + hanya konten kanan bergulir (`AppShell.css`); (3) **menu pengguna** dipindah ke topbar dengan badge nama peran (hijau muda), avatar, dan nama dari `profiles.full_name`, dropdown **Log Out** (`src/components/layout/UserMenu.tsx`/`.css`, `AuthContext.fullName`). Penyesuaian lanjutan: **notifikasi paling kanan**, label `SESI AKTIF` dihapus (pill kini hanya `MODE PRATINJAU`), badge teks `Role` dihapus, blok `Sesi terlindungi / Pengguna terautentikasi` dihapus, **chip avatar+nama diberi garis 3D** dengan jarak presisi (**8px** antar aksi, 10px peran→chip, 9px dalam chip), tombol notifikasi 36×36 dibuat **bulatan 3D** seragam, dan dropdown **beranimasi** (panel meluncur turun dari avatar + item Log Out menyusul, hanya transform/opacity, dimatikan saat `prefers-reduced-motion`). Verifikasi lokal: lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-BHVZOD8u.js` + `index-DBTFti1m.css`).
+
+- **Ringkasan = menu monitoring semua unit (`DashboardPage`) — BELUM di-commit (2026-10-16):** semua pengguna (termasuk `officer`/`unit_head`) kini melihat **semua unit** di Ringkasan. Scope unit dihapus dari `DashboardPage` (tidak lagi memakai `loadProfile`/`scopedUnitIds`) — tanpa perubahan DB (RLS baca lintas unit sudah ada). Verifikasi lokal: lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-B8kGQ4ip.js` + `index-DBTFti1m.css`).
+
+## Tugas terbaru (BELUM DI-COMMIT — Ringkasan jadi menu monitoring semua unit, 2026-10-16)
+
+**Judul:** Ringkasan menampilkan semua unit & indikator untuk semua pengguna (2026-10-16)
+
+Permintaan pengguna: Ringkasan saat ini hanya menampilkan indikator sesuai unit yang diakses; diinginkan **semua pengguna melihat semua indikator** di Ringkasan agar menjadi **menu monitoring** kelengkapan & capaian setiap unit RSUD AMI.
+
+Rincian implementasi:
+- Penyaring tunggal ada di `src/features/dashboard/DashboardPage.tsx` (efek pemuat: `scopedUnitIds(profile)` → `scopedUnits`). **Dihapus**: impor `loadProfile`/`scopedUnitIds` dicabut; efek jadi `Promise.all([loadUnits(client), loadPeriods(client)])` + `setUnits(allUnits)` (semua unit, tanpa filter). Sisanya (query `reports`/`report_entries`, hitung kelengkapan/capaian per unit, metrik, tabel, panel) tidak berubah karena sudah generik terhadap `units`.
+- **Tanpa perubahan skema/RLS/migrasi:** baca sudah lintas unit — `reports`/`report_entries` SELECT `using (true)` (`202610090003_cross_unit_read.sql`); `indicators` aktif lintas unit boleh dibaca (`202610150001`); `loadIndicators(supabase)` memang tanpa filter unit.
+- Hanya baca → **hak tulis tetap dibatasi unit** (tombol Input → `InputReportPage` yang masih UI + RLS `spm_has_unit`).
+- Keputusan pengguna (2026-10-16): cakupan **hanya Ringkasan** (Notifikasi/Indikator/Rekap/Perubahan tidak diubah); daftar unit **ditampilkan semua** (mengikuti scroll halaman, tanpa batas tinggi internal).
+- Verifikasi: lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-B8kGQ4ip.js` + `index-DBTFti1m.css`). Tanpa perubahan DB.
+
+**Langkah berikutnya:** uji manual login sebagai `officer` → Ringkasan menampilkan semua unit + metrik lintas unit; lalu commit/push & deploy bila disetujui pengguna.
 
 ## Tugas terbaru (SUDAH DI-COMMIT, DI-PUSH, & TER-DEPLOY `30c706d`+`573dae1`, run #33 — routing Back, sidebar menetap, menu pengguna di topbar)
 
