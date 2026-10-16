@@ -5,7 +5,7 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 ## Status saat ini
 
 - **Tanggal update terakhir:** 2026-10-16
-- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`ef4dfc4`** (*Show all units on the Ringkasan page for every user*) — **sudah di-push, belum di-deploy**. Komit ini membuat Ringkasan menampilkan semua unit bagi semua pengguna (menu monitoring); sebelumnya `573dae1` (docs run #33) & `30c706d` (routing hash + sidebar menetap + menu pengguna topbar) sudah **live** (run #33).
+- **Kondisi repo:** `main` sinkron dengan `origin/main`, HEAD **`62cfdf5`** (*Fix Cetak semua unit being clipped to a single page*) — **sudah di-push, belum di-deploy**. Komit ini memperbaiki hasil cetak yang terpotong 1 halaman; sebelumnya `ef4dfc4`/`0d4c089` (Ringkasan semua unit) & `573dae1` (docs run #33) juga belum di-deploy — jadi satu kali deploy akan membawa **semua**: Ringkasan semua unit + perbaikan cetak.
 - **Deploy terakhir:** Actions → Deploy to GitHub Pages **run #33** (head `573dae1`, conclusion `success`, 2026-10-14 15:42→15:45 UTC). Sebelumnya: run #32 (`36e7c56`), run #31 (`061d5e4`), run #30 (`784e4e5`), run #29 (`e67ac21`), run #26–#28 (`5bef35a`).
 - **Situs live:** menyajikan `assets/index-CThM4i0c.js` + `assets/index-DBTFti1m.css` (bundle baru; sebelumnya `index-CkZ7ZXKN.js` + `index-B6lgt_Ho.css`). Verifikasi isi bundle live: `#/dashboard` (routing hash) ada; CSS memuat `.user-chip`/`user-menu-slide`/`.notification-button`/`.user-role-badge`; `security-note` **0** (blok lama sudah terhapus); **2× `sb_publishable_`**, **0× `eyJ…`**. Hash CSS live **identik** dengan build lokal (`index-DBTFti1m.css`); hash JS beda wajar karena CI memakai `base: '/SPM-RSUD-AMI/'`.
 - **Verifikasi sesi ini:** `npm run lint` ✓ (tanpa warning), `npm test` ✓ (**38 lolos**, 1 todo), `npm run build` ✓ (`dist/assets/index-1hveh2I-.js` + `index-B6lgt_Ho.css`). Bundle live dicek isinya: memuat `unit_id.is.null` & `unit_ids` (logika scoping), **2× `sb_publishable_`**, **0× `eyJ…`**. Hash JS lokal beda dari live wajar: `vite.config.ts` memakai `base: '/SPM-RSUD-AMI/'` saat `GITHUB_ACTIONS=true` sedangkan lokal `/` (hash CSS justru identik: `index-B6lgt_Ho.css`).
@@ -16,9 +16,9 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 - **Ringkasan = menu monitoring semua unit (`DashboardPage`) — SUDAH di-commit & di-push (`ef4dfc4`), belum di-deploy (2026-10-16):** semua pengguna (termasuk `officer`/`unit_head`) kini melihat **semua unit** di Ringkasan. Scope unit dihapus dari `DashboardPage` (tidak lagi memakai `loadProfile`/`scopedUnitIds`) — tanpa perubahan DB (RLS baca lintas unit sudah ada). Verifikasi lokal: lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-B8kGQ4ip.js` + `index-DBTFti1m.css`).
 
-- **Perbaikan cetak "Cetak semua unit" terpotong 1 halaman — BELUM di-commit (2026-10-16):** akar masalah = aturan sidebar menetap `@media (min-width: 681px)` (`.app-frame{height:100vh;overflow:hidden}`, `.main-column{height:100vh}`, `.page-content{overflow-y:auto}`) ikut berlaku di media cetak dan **tidak** di-reset oleh blok `@media print` lama → hasil cetak terpotong setinggi 1 viewport halaman. Perbaikan di `ReportsPage.css`: kontainer layout diberi `height:auto`/`overflow:visible` di blok print. Verifikasi harness headless: 1 → 9 halaman. Lokal: lint ✓, `npm test` ✓ (56 lolos, 1 todo), `npm run build` ✓ (`index-C75_m8ZO.css` + `index-qM3EKnoF.js`).
+- **Perbaikan cetak "Cetak semua unit" terpotong 1 halaman — SUDAH di-commit & di-push (`62cfdf5`), belum di-deploy (2026-10-16):** akar masalah = aturan sidebar menetap `@media (min-width: 681px)` (`.app-frame{height:100vh;overflow:hidden}`, `.main-column{height:100vh}`, `.page-content{overflow-y:auto}`) ikut berlaku di media cetak dan **tidak** di-reset oleh blok `@media print` lama → hasil cetak terpotong setinggi 1 viewport halaman. Perbaikan di `ReportsPage.css`: kontainer layout diberi `height:auto`/`overflow:visible` di blok print. Verifikasi harness headless: 1 → 9 halaman. Lokal: lint ✓, `npm test` ✓ (56 lolos, 1 todo), `npm run build` ✓ (`index-C75_m8ZO.css` + `index-qM3EKnoF.js`).
 
-## Tugas terbaru (BELUM DI-COMMIT — perbaikan bug: cetak "Cetak semua unit" terpotong 1 halaman, 2026-10-16)
+## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `62cfdf5`; MENUNGGU DEPLOY — perbaikan bug: cetak "Cetak semua unit" terpotong 1 halaman, 2026-10-16)
 
 **Gejala (pengguna):** menekan **Cetak semua unit** menghasilkan cetakan **hanya 1 halaman dan terpotong**; harusnya memuat semua unit sampai blok tanda tangan di akhir.
 
@@ -35,7 +35,7 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 **Verifikasi repo:** lint ✓ (tanpa warning), `npm test` ✓ (**56 lolos**, 1 todo), `npm run build` ✓ (`index-C75_m8ZO.css` + `index-qM3EKnoF.js`). Tanpa perubahan DB.
 
-**Langkah berikutnya:** uji manual di browser (Ctrl+P → pratinjau: semua unit + tanda tangan pada banyak halaman, tidak terpotong); lalu commit/push & deploy bila disetujui.
+**Langkah berikutnya:** kode sudah ter-commit & ter-push (`62cfdf5`). Sisa: **Actions → Deploy to GitHub Pages → Run workflow** (satu kali deploy membawa Ringkasan semua unit + perbaikan cetak), lalu uji manual di browser (Ctrl+P → pratinjau: semua unit + tanda tangan pada banyak halaman, tidak terpotong).
 
 ## Tugas terbaru (SUDAH DI-COMMIT & DI-PUSH `ef4dfc4`; MENUNGGU DEPLOY — Ringkasan jadi menu monitoring semua unit, 2026-10-16)
 
