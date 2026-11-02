@@ -59,6 +59,7 @@ begin
       'indicator_id', old.indicator_id,
       'numerator', old.numerator,
       'denominator', old.denominator,
+      'result_text', old.result_text,
       'analysis', old.analysis,
       'evidence_note', old.evidence_note
     ) else null end,
@@ -66,6 +67,7 @@ begin
       'indicator_id', new.indicator_id,
       'numerator', new.numerator,
       'denominator', new.denominator,
+      'result_text', new.result_text,
       'analysis', new.analysis,
       'evidence_note', new.evidence_note
     )

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, CalendarDays, Check, CircleAlert, FileDown, History, LockKeyhole, Plus } from 'lucide-react'
+import { ArrowRight, CalendarDays, Check, CircleAlert, FileDown, History, LockKeyhole, Plus, Search } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { demoReports, serviceProgress } from '../../data/demo'
 import { getSupabaseClient } from '../../lib/supabase'
+import { isSimpleView } from '../../lib/access'
 import { loadIndicators, loadPeriods, loadUnits, periodLabel, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
+import { entryHasValue, indicatorResult, type IndicatorResultTone } from '../../lib/spm-achievement'
 import type { AppPage, ReportStatus } from '../../types/spm'
 import './DashboardPage.css'
 
@@ -29,8 +31,20 @@ interface DashboardRow {
   totalIndicators?: number
 }
 
+interface DashboardIndicatorRow {
+  id: string
+  unit: string
+  code: string
+  name: string
+  standard: string
+  value: string | null
+  badge: string
+  tone: IndicatorResultTone
+}
+
 function DashboardPage({ onNavigate }: DashboardPageProps) {
   const auth = useAuth()
+  const simpleView = isSimpleView(auth.role, auth.permissions, auth.isPreview)
   const client = getSupabaseClient()
   const [periods, setPeriods] = useState<SpmPeriod[]>(auth.isPreview ? previewPeriods : [])
   const [periodStart, setPeriodStart] = useState(() => {
@@ -42,6 +56,8 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [rows, setRows] = useState<DashboardRow[]>(auth.isPreview ? demoReports : [])
   const [progress, setProgress] = useState(auth.isPreview ? serviceProgress : [])
   const [totals, setTotals] = useState(auth.isPreview ? { recorded: 28, total: 36, completion: 84 } : { recorded: 0, total: 0, completion: 0 })
+  const [indicatorRows, setIndicatorRows] = useState<DashboardIndicatorRow[]>([])
+  const [indicatorQuery, setIndicatorQuery] = useState('')
   const [loading, setLoading] = useState(!auth.isPreview)
   const [error, setError] = useState('')
 
@@ -71,10 +87,10 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
       ])
       if (reportResult.error) throw reportResult.error
       const reports = reportResult.data ?? []
-      let entries: { report_id: string; indicator_id: string; numerator: number | null; denominator: number | null; analysis: string; updated_at: string }[] = []
+      let entries: { report_id: string; indicator_id: string; numerator: number | null; denominator: number | null; result_text: string | null; analysis: string; updated_at: string }[] = []
       if (reports.length) {
         const { data, error: entryError } = await supabase.from('report_entries')
-          .select('report_id, indicator_id, numerator, denominator, analysis, updated_at')
+          .select('report_id, indicator_id, numerator, denominator, result_text, analysis, updated_at')
           .in('report_id', reports.map((report) => report.id))
         if (entryError) throw entryError
         entries = data ?? []
@@ -90,8 +106,7 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
         const unitIndicators = indicators.filter((indicator) => indicator.active && (indicator.unit_id === null || indicator.unit_id === unit.id))
         const completed = reportEntries.filter((entry) => {
           const indicator = indicatorById.get(entry.indicator_id)
-          const needsDenominator = indicator ? indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct' : true
-          return entry.numerator !== null && (!needsDenominator || entry.denominator !== null)
+          return indicator ? entryHasValue(entry, indicator) : false
         }).length
         const completion = unitIndicators.length ? Math.min(100, Math.round(completed / unitIndicators.length * 100)) : 0
         const latest = reportEntries.reduce((date, entry) => entry.updated_at > date ? entry.updated_at : date, report?.updated_at ?? '')
@@ -110,10 +125,30 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
       const expected = nextRows.reduce((sum, row) => sum + (row.totalIndicators ?? 0), 0)
       const recorded = nextRows.reduce((sum, row) => sum + (row.completedIndicators ?? 0), 0)
       const progressRows = nextRows.map((row) => ({ name: row.unit, done: row.completedIndicators ?? 0, total: row.totalIndicators ?? 0, color: row.completion >= 80 ? 'green' : row.completion >= 40 ? 'blue' : 'amber' }))
+      const nextIndicatorRows: DashboardIndicatorRow[] = []
+      for (const unit of units) {
+        const report = reportByUnit.get(unit.id)
+        const reportEntries = report ? entryByReport.get(report.id) ?? [] : []
+        const entryByIndicator = new Map(reportEntries.map((entry) => [entry.indicator_id, entry]))
+        const unitIndicators = indicators.filter((indicator) => indicator.active && (indicator.unit_id === null || indicator.unit_id === unit.id))
+        for (const indicator of unitIndicators) {
+          const result = indicatorResult(indicator, entryByIndicator.get(indicator.id) ?? null)
+          nextIndicatorRows.push({
+            id: `${unit.id}|${indicator.id}`,
+            unit: unit.name,
+            code: indicator.code,
+            name: indicator.name,
+            standard: indicator.standard,
+            ...result,
+          })
+        }
+      }
+      nextIndicatorRows.sort((left, right) => left.unit.localeCompare(right.unit, 'id') || left.code.localeCompare(right.code, 'id'))
       if (active) {
         setError('')
         setRows(nextRows.sort((left, right) => right.completion - left.completion))
         setProgress(progressRows)
+        setIndicatorRows(nextIndicatorRows)
         setTotals({ recorded, total: expected, completion: expected ? Math.round(recorded / expected * 100) : 0 })
       }
     }
@@ -125,10 +160,14 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   const selectedPeriod = periods.find((item) => item.period_start === periodStart)
   const period = selectedPeriod ? periodLabel(selectedPeriod.period_start) : 'Belum ada periode'
+  const indicatorSearch = indicatorQuery.trim().toLowerCase()
+  const visibleIndicatorRows = indicatorSearch
+    ? indicatorRows.filter((row) => `${row.name} ${row.code} ${row.unit}`.toLowerCase().includes(indicatorSearch))
+    : indicatorRows
 
   return (
     <div className="dashboard-page">
-      <div className="page-heading"><div><span className="eyebrow">{formattedDate}</span><h1>Ringkasan SPM</h1><p>Pantau pengumpulan dan capaian Standar Pelayanan Minimal rumah sakit.</p></div><div className="heading-actions"><label className="period-select"><CalendarDays size={15} /><select aria-label="Pilih periode laporan" value={periodStart} onChange={(event) => { setLoading(true); setPeriodStart(event.target.value) }}>{periods.map((item) => <option key={item.period_start} value={item.period_start}>{periodLabel(item.period_start)}</option>)}</select></label><button className="primary-button" type="button" onClick={() => onNavigate('entry')}><Plus size={16} /> Input laporan</button></div></div>
+      <div className="page-heading"><div><span className="eyebrow">{formattedDate}</span><h1>Ringkasan SPM</h1><p>{simpleView ? 'Capaian Standar Pelayanan Minimal seluruh unit.' : 'Pantau pengumpulan dan capaian Standar Pelayanan Minimal rumah sakit.'}</p></div><div className="heading-actions"><label className="period-select"><CalendarDays size={15} /><select aria-label="Pilih periode laporan" value={periodStart} onChange={(event) => { setLoading(true); setPeriodStart(event.target.value) }}>{periods.map((item) => <option key={item.period_start} value={item.period_start}>{periodLabel(item.period_start)}</option>)}</select></label>{!simpleView && <button className="primary-button" type="button" onClick={() => onNavigate('entry')}><Plus size={16} /> Input laporan</button>}</div></div>
       {auth.isPreview && <div className="data-notice"><CircleAlert size={16} /><span><strong>Data simulasi.</strong> Angka di halaman ini hanya contoh untuk pratinjau, bukan data resmi RSUD.</span></div>}
       {error && <div className="data-notice" role="alert"><CircleAlert size={16} /><span>{error}</span></div>}
       <section className="metric-grid" aria-label="Ringkasan periode">
@@ -136,12 +175,18 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
         <article className="metric-card"><div className="metric-top"><span>Kelengkapan input</span><span className="metric-icon green-icon"><Check size={16} /></span></div><strong className="metric-value">{totals.completion}<small>%</small></strong><div className="metric-foot"><span className="metric-subtle">dari indikator aktif</span></div></article>
         <article className="metric-card"><div className="metric-top"><span>Belum lengkap</span><span className="metric-icon coral-icon"><CircleAlert size={16} /></span></div><strong className="metric-value">{Math.max(0, totals.total - totals.recorded)}</strong><div className="metric-foot"><span className="metric-subtle">indikator belum lengkap</span></div></article>
       </section>
-      <div className="dashboard-columns">
-        <section className="panel progress-panel"><div className="panel-heading"><div><h2>Progres pelaporan unit</h2><p>Indikator terkumpul untuk {period}</p></div><button className="text-button" type="button" onClick={() => onNavigate('reports')}>Semua unit <ArrowRight size={14} /></button></div><div className="progress-list">{progress.map((item) => { const percent = item.total ? Math.round((item.done / item.total) * 100) : 0; return <div className="progress-row" key={item.name}><div className="progress-label"><span>{item.name}</span><strong>{item.done}<small>/{item.total}</small></strong></div><div className="progress-track"><span className={`progress-fill fill-${item.color}`} style={{ width: `${percent}%` }} /></div><span className="progress-percent">{percent}%</span></div> })}{!progress.length && <p className="metric-subtle">{loading ? 'Memuat progres…' : 'Belum ada unit atau indikator aktif.'}</p>}</div><div className="progress-footnote"><span className="legend-dot" /> Data masuk <span className="legend-dot legend-pale" /> Belum masuk</div></section>
-        <section className="panel attention-panel"><div className="panel-heading"><div><h2>Perlu perhatian</h2><p>Data dan periode</p></div><span className="attention-total">{rows.filter((row) => row.status === 'Belum diisi').length}</span></div>{rows.filter((row) => row.status === 'Belum diisi').slice(0, 2).map((row) => <div className="attention-item" key={row.id}><span className="attention-mark mark-coral"><CircleAlert size={15} /></span><div><strong>{row.unit} belum mengisi</strong><small>{period} · belum ada input</small></div><button type="button" aria-label={`Buka input ${row.unit}`} onClick={() => onNavigate('entry')}><ArrowRight size={15} /></button></div>)}<div className="attention-item"><span className="attention-mark mark-amber"><LockKeyhole size={15} /></span><div><strong>{selectedPeriod?.state === 'locked' ? `${period} terkunci` : 'Periode sedang terbuka'}</strong><small>{selectedPeriod?.state === 'locked' ? 'Data hanya bisa dikoreksi sesuai izin.' : 'Unit dapat mengisi data periode ini.'}</small></div><button type="button" aria-label="Buka pengaturan periode" onClick={() => onNavigate('periods')}><ArrowRight size={15} /></button></div><div className="attention-item"><span className="attention-mark mark-blue"><History size={15} /></span><div><strong>Jejak perubahan</strong><small>Audit data laporan</small></div><button type="button" aria-label="Lihat jejak perubahan" onClick={() => onNavigate('audit')}><ArrowRight size={15} /></button></div></section>
+      <div className={`dashboard-columns${simpleView ? ' is-simple' : ''}`}>
+        <section className="panel progress-panel"><div className="panel-heading"><div><h2>Progres pelaporan unit</h2><p>Indikator terkumpul untuk {period}</p></div>{!simpleView && <button className="text-button" type="button" onClick={() => onNavigate('reports')}>Semua unit <ArrowRight size={14} /></button>}</div><div className="progress-list">{progress.map((item) => { const percent = item.total ? Math.round((item.done / item.total) * 100) : 0; return <div className="progress-row" key={item.name}><div className="progress-label"><span>{item.name}</span><strong>{item.done}<small>/{item.total}</small></strong></div><div className="progress-track"><span className={`progress-fill fill-${item.color}`} style={{ width: `${percent}%` }} /></div><span className="progress-percent">{percent}%</span></div> })}{!progress.length && <p className="metric-subtle">{loading ? 'Memuat progres…' : 'Belum ada unit atau indikator aktif.'}</p>}</div><div className="progress-footnote"><span className="legend-dot" /> Data masuk <span className="legend-dot legend-pale" /> Belum masuk</div></section>
+        {!simpleView && <section className="panel attention-panel"><div className="panel-heading"><div><h2>Perlu perhatian</h2><p>Data dan periode</p></div><span className="attention-total">{rows.filter((row) => row.status === 'Belum diisi').length}</span></div>{rows.filter((row) => row.status === 'Belum diisi').slice(0, 2).map((row) => <div className="attention-item" key={row.id}><span className="attention-mark mark-coral"><CircleAlert size={15} /></span><div><strong>{row.unit} belum mengisi</strong><small>{period} · belum ada input</small></div><button type="button" aria-label={`Buka input ${row.unit}`} onClick={() => onNavigate('entry')}><ArrowRight size={15} /></button></div>)}<div className="attention-item"><span className="attention-mark mark-amber"><LockKeyhole size={15} /></span><div><strong>{selectedPeriod?.state === 'locked' ? `${period} terkunci` : 'Periode sedang terbuka'}</strong><small>{selectedPeriod?.state === 'locked' ? 'Data hanya bisa dikoreksi sesuai izin.' : 'Unit dapat mengisi data periode ini.'}</small></div><button type="button" aria-label="Buka pengaturan periode" onClick={() => onNavigate('periods')}><ArrowRight size={15} /></button></div><div className="attention-item"><span className="attention-mark mark-blue"><History size={15} /></span><div><strong>Jejak perubahan</strong><small>Audit data laporan</small></div><button type="button" aria-label="Lihat jejak perubahan" onClick={() => onNavigate('audit')}><ArrowRight size={15} /></button></div></section>}
       </div>
-      <section className="panel recent-panel"><div className="panel-heading"><div><h2>Data terbaru</h2><p>Input capaian langsung dari unit pelayanan</p></div><button className="text-button" type="button" onClick={() => onNavigate('reports')}>Lihat rekap <ArrowRight size={14} /></button></div><div className="table-wrap"><table className="report-table"><thead><tr><th>UNIT / INSTALASI</th><th>PERIODE</th><th>KELENGKAPAN</th><th>KONDISI</th><th>TERAKHIR DIUBAH</th><th><span className="sr-only">Aksi</span></th></tr></thead><tbody>{rows.slice(0, 8).map((report) => <tr key={report.id}><td><strong>{report.unit}</strong><small>{report.id.slice(0, 8)}</small></td><td>{report.period}</td><td><div className="table-progress"><span><i style={{ width: `${report.completion}%` }} /></span><small>{report.completion}%</small></div></td><td><span className={`status-badge ${statusClass[report.status]}`}>{report.status}</span></td><td className="updated-cell">{report.updatedAt}<small className="changed-by">{report.changedBy}</small></td><td><button className="row-action" type="button" aria-label={`Buka data ${report.unit}`} onClick={() => onNavigate(report.status === 'Belum diisi' ? 'entry' : 'audit')}><ArrowRight size={15} /></button></td></tr>)}</tbody></table>{!rows.length && <div className="metric-subtle">{loading ? 'Memuat laporan…' : 'Belum ada laporan untuk periode ini.'}</div>}</div></section>
-      <div className="quarter-callout"><div className="quarter-icon"><CalendarDays size={18} /></div><div><strong>Rekap periode tersedia</strong><span>Rekap triwulan dan tahunan menggunakan capaian yang tersimpan.</span></div><button type="button" onClick={() => onNavigate('reports')}>Buka rekap <ArrowRight size={14} /></button></div>
+      {simpleView && (
+        <section className="panel indicator-panel">
+          <div className="panel-heading"><div><h2>Capaian indikator per unit</h2><p>{period} · {visibleIndicatorRows.length} dari {indicatorRows.length} indikator</p></div><label className="indicator-search"><span className="sr-only">Cari indikator atau unit</span><Search size={14} /><input value={indicatorQuery} onChange={(event) => setIndicatorQuery(event.target.value)} placeholder="Cari indikator atau unit" /></label></div>
+          <div className="table-wrap"><table className="report-table indicator-result-table"><thead><tr><th>INDIKATOR</th><th>UNIT</th><th>STANDAR</th><th>CAPAIAN</th><th>STATUS</th></tr></thead><tbody>{visibleIndicatorRows.map((row) => <tr key={row.id}><td><strong>{row.name}</strong><small>{row.code}</small></td><td className="indicator-unit-cell">{row.unit}</td><td className="indicator-standard-cell">{row.standard}</td><td className="indicator-value-cell">{row.value ?? '—'}</td><td><span className={`status-badge result-tone-${row.tone}`}>{row.badge}</span></td></tr>)}</tbody></table>{!visibleIndicatorRows.length && <div className="metric-subtle">{loading ? 'Memuat indikator…' : indicatorQuery ? 'Tidak ada indikator atau unit yang cocok.' : 'Belum ada indikator aktif.'}</div>}</div>
+        </section>
+      )}
+      {!simpleView && <section className="panel recent-panel"><div className="panel-heading"><div><h2>Data terbaru</h2><p>Input capaian langsung dari unit pelayanan</p></div><button className="text-button" type="button" onClick={() => onNavigate('reports')}>Lihat rekap <ArrowRight size={14} /></button></div><div className="table-wrap"><table className="report-table"><thead><tr><th>UNIT / INSTALASI</th><th>PERIODE</th><th>KELENGKAPAN</th><th>KONDISI</th><th>TERAKHIR DIUBAH</th><th><span className="sr-only">Aksi</span></th></tr></thead><tbody>{rows.slice(0, 8).map((report) => <tr key={report.id}><td><strong>{report.unit}</strong><small>{report.id.slice(0, 8)}</small></td><td>{report.period}</td><td><div className="table-progress"><span><i style={{ width: `${report.completion}%` }} /></span><small>{report.completion}%</small></div></td><td><span className={`status-badge ${statusClass[report.status]}`}>{report.status}</span></td><td className="updated-cell">{report.updatedAt}<small className="changed-by">{report.changedBy}</small></td><td><button className="row-action" type="button" aria-label={`Buka data ${report.unit}`} onClick={() => onNavigate(report.status === 'Belum diisi' ? 'entry' : 'audit')}><ArrowRight size={15} /></button></td></tr>)}</tbody></table>{!rows.length && <div className="metric-subtle">{loading ? 'Memuat laporan…' : 'Belum ada laporan untuk periode ini.'}</div>}</div></section>}
+      {!simpleView && <div className="quarter-callout"><div className="quarter-icon"><CalendarDays size={18} /></div><div><strong>Rekap periode tersedia</strong><span>Rekap triwulan dan tahunan menggunakan capaian yang tersimpan.</span></div><button type="button" onClick={() => onNavigate('reports')}>Buka rekap <ArrowRight size={14} /></button></div>}
     </div>
   )
 }

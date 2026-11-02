@@ -14,11 +14,12 @@ const authState = vi.hoisted(() => ({
 
 vi.mock('../src/auth/AuthContext', () => ({ useAuth: () => authState }))
 
-const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[] }))
+const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[], report_periods: [] as Row[], reports: [] as Row[], report_entries: [] as Row[] }))
 
 vi.mock('../src/lib/supabase', async () => {
   const { createFakeClient } = await import('./support/fake-supabase')
-  return { getSupabaseClient: () => createFakeClient(database) }
+  const client = createFakeClient(database)
+  return { getSupabaseClient: () => client }
 })
 
 const units: Row[] = [
@@ -168,5 +169,23 @@ describe('UsersPage', () => {
       if (clientHeight) Object.defineProperty(HTMLElement.prototype, 'clientHeight', clientHeight)
       HTMLElement.prototype.getBoundingClientRect = boundingRect
     }
+  })
+
+  it('menyimpan izin Tampilan Pimpinan dan mengunci izin lain di modal', async () => {
+    render(<UsersPage />)
+    fireEvent.click(await screen.findByRole('button', { name: /Edit profil Siti Rahma/ }))
+    const dialog = await screen.findByRole('dialog')
+    const simple = within(dialog).getByRole('checkbox', { name: /Tampilan Pimpinan/ }) as HTMLInputElement
+    expect(simple.checked).toBe(false)
+
+    fireEvent.click(simple)
+    expect(simple.checked).toBe(true)
+    expect(within(dialog).getByText(/Menu lain disembunyikan/)).toBeTruthy()
+    expect((within(dialog).getByRole('checkbox', { name: 'Input laporan' }) as HTMLInputElement).disabled).toBe(true)
+    expect((within(dialog).getByRole('checkbox', { name: 'Lihat ringkasan' }) as HTMLInputElement).checked).toBe(true)
+
+    fireEvent.submit(dialog.querySelector('form') as HTMLFormElement)
+    expect(await screen.findByText('Profil Siti Rahma diperbarui.')).toBeTruthy()
+    expect(database.profiles.find((profile) => profile.id === longUid)?.permissions).toMatchObject({ simple_view: true, view_dashboard: true })
   })
 })

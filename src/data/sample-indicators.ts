@@ -1,5 +1,5 @@
 export type IndicatorInputType = 'ratio' | 'number' | 'duration' | 'category' | 'text'
-export type IndicatorCalculation = 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct'
+export type IndicatorCalculation = 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct' | 'free_text'
 
 export interface IndicatorEntry {
   code: string
@@ -10,6 +10,7 @@ export interface IndicatorEntry {
   unit: string
   numerator: string
   denominator: string
+  resultText?: string
   value: string
   analysis: string
   calculation?: IndicatorCalculation

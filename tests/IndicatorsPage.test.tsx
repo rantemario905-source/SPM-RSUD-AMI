@@ -15,7 +15,7 @@ const authState = vi.hoisted(() => ({
 
 vi.mock('../src/auth/AuthContext', () => ({ useAuth: () => authState }))
 
-const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[] }))
+const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[], report_periods: [] as Row[], reports: [] as Row[], report_entries: [] as Row[] }))
 
 vi.mock('../src/lib/supabase', async () => {
   const { createFakeClient } = await import('./support/fake-supabase')
@@ -112,6 +112,55 @@ describe('IndicatorsPage', () => {
     expect((await within(dialog).findByRole('alert')).textContent).toContain('Data indikator tidak dikenali')
     expect(screen.getByRole('dialog')).toBeTruthy()
     expect(database.indicators).toHaveLength(1)
+  })
+
+  it('menampilkan pilihan rumus yang mudah dipahami dan menyimpan rumus pilihan', async () => {
+    render(<IndicatorsPage />)
+    await screen.findByText('Belum ada indikator. Tambahkan indikator pertama atau periksa data unit.')
+
+    fireEvent.click(screen.getByRole('button', { name: /Tambah indikator/ }))
+    const dialog = await screen.findByRole('dialog')
+
+    const percentage = within(dialog).getByRole('radio', { name: /Persentase/ }) as HTMLInputElement
+    expect(percentage.checked).toBe(true)
+    expect(within(dialog).getByRole('radio', { name: /Rata-rata/ })).toBeTruthy()
+    expect(within(dialog).getByRole('radio', { name: /Rasio per 1\.000/ })).toBeTruthy()
+    expect(within(dialog).getByRole('radio', { name: /Jumlah \(hitung banyaknya\)/ })).toBeTruthy()
+    expect(within(dialog).getByRole('radio', { name: /Nilai akhir \(skor\/angka jadi\)/ })).toBeTruthy()
+    expect(within(dialog).getByText(/Satuan hasil otomatis/)).toBeTruthy()
+    expect(within(dialog).getByText(/Bingung memilih/)).toBeTruthy()
+
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Jumlah \(hitung banyaknya\)/ }))
+    expect(within(dialog).getByText(/Bila angka Anda berupa skor atau nilai akhir/)).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Nilai akhir \(skor\/angka jadi\)/ }))
+    expect(within(dialog).getByText(/Bila Anda menghitung banyaknya/)).toBeTruthy()
+
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Rata-rata/ }))
+    expect(within(dialog).getByText('225 ÷ 50 = 4,5 menit')).toBeTruthy()
+    fireEvent.change(within(dialog).getByLabelText('Satuan hasil'), { target: { value: 'menit' } })
+    fillForm(dialog, { code: 'RJ-07', name: 'Waktu tunggu rawat jalan' })
+    submitModal(dialog)
+
+    expect(await screen.findByText('RJ-07 ditambahkan di database.')).toBeTruthy()
+    expect(database.indicators[0].calculation_method).toBe('average')
+    expect(database.indicators[0].unit_label).toBe('menit')
+  })
+
+  it('menyimpan indikator dengan capaian teks bebas tanpa satuan hasil', async () => {
+    render(<IndicatorsPage />)
+    await screen.findByText('Belum ada indikator. Tambahkan indikator pertama atau periksa data unit.')
+
+    fireEvent.click(screen.getByRole('button', { name: /Tambah indikator/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Teks bebas/ }))
+    expect(within(dialog).getByText(/Capaian diketik bebas/)).toBeTruthy()
+    expect(within(dialog).queryByLabelText('Satuan hasil')).toBeNull()
+    fillForm(dialog, { code: 'PROPER-01', name: 'Proper lingkungan' })
+    fireEvent.change(within(dialog).getByLabelText('Standar'), { target: { value: 'Biru' } })
+    submitModal(dialog)
+
+    expect(await screen.findByText('PROPER-01 ditambahkan di database.')).toBeTruthy()
+    expect(database.indicators[0]).toMatchObject({ calculation_method: 'free_text', unit_label: '', standard: 'Biru' })
   })
 
   it('menampilkan galat dari database saat kode sudah dipakai indikator lain', async () => {

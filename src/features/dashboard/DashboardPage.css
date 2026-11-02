@@ -13,6 +13,21 @@
 .status-saved { color: #317355; background: #e9f3ec; }
 .status-locked { color: #67558b; background: #f0edf7; }
 .changed-by { display: block; margin-top: 3px; color: #a0aaa4; font-size: 8px; }
+.dashboard-columns.is-simple { grid-template-columns: 1fr; }
+.indicator-panel { margin-bottom: 15px; padding: 17px 18px; }
+.indicator-panel .panel-heading { align-items: flex-start; }
+.indicator-search { display: flex; height: 33px; align-items: center; gap: 6px; padding: 0 9px; color: #7c8a83; background: #fff; border: 1px solid var(--line); border-radius: 5px; }
+.indicator-search input { width: 190px; border: 0; outline: 0; color: #34473d; font-size: 10px; }
+.indicator-result-table { white-space: normal; }
+.indicator-result-table td:first-child { min-width: 230px; }
+.indicator-result-table .indicator-unit-cell { color: #40594c; font-weight: 600; }
+.indicator-result-table .indicator-standard-cell { color: #40564a; font-weight: 600; }
+.indicator-result-table .indicator-value-cell { color: #325d47; font-variant-numeric: tabular-nums; font-weight: 600; }
+.result-tone-baik { color: #317355; background: #e9f3ec; }
+.result-tone-perhatian { color: #a8533d; background: #faece7; }
+.result-tone-netral { color: #516b86; background: #eaf0f6; }
+.result-tone-kosong { color: #687875; background: #edf1ef; }
 @keyframes dashboard-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 1080px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.dashboard-columns { grid-template-columns: 1fr; } }
 @media (max-width: 680px) { .page-heading { align-items: flex-start; flex-direction: column; gap: 15px; }.page-heading h1 { font-size: 24px; }.heading-actions { width: 100%; }.period-select { flex: 1; }.period-select select { max-width: none; flex: 1; }.metric-grid { gap: 8px; }.metric-card { padding: 12px; }.metric-top { font-size: 10px; }.metric-value { font-size: 24px; }.metric-foot { flex-wrap: wrap; font-size: 8px; }.progress-panel, .attention-panel, .recent-panel { padding: 14px 12px; }.progress-row { grid-template-columns: minmax(95px, 1fr) minmax(55px, 1.2fr) 30px; gap: 8px; }.progress-label { font-size: 9px; }.quarter-callout { align-items: flex-start; flex-wrap: wrap; }.quarter-callout button { margin-left: 43px; } }
+@media (max-width: 680px) { .indicator-panel { padding: 14px 12px; }.indicator-panel .panel-heading { flex-direction: column; }.indicator-search { width: 100%; }.indicator-search input { width: 100%; } }

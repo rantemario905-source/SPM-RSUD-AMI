@@ -13,7 +13,7 @@ export interface SpmIndicator {
   name: string
   operational_definition: string
   standard: string
-  calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct'
+  calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct' | 'free_text'
   unit_label: string
   calculation_scale: number | null
   result_unit: string
@@ -42,6 +42,7 @@ export interface SpmReportEntry {
   indicator_id: string
   numerator: number | null
   denominator: number | null
+  result_text: string | null
   analysis: string
   evidence_note: string
   updated_at: string

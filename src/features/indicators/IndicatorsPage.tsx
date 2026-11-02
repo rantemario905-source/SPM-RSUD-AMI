@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Check, CircleAlert, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import { Check, CircleAlert, Info, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
+import { calculationOption, calculationOptions, calculationPreview } from '../../lib/spm-calculation'
 import { indicatorColumns, loadIndicators, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './IndicatorsPage.css'
@@ -40,14 +41,6 @@ const emptyForm: IndicatorForm = {
   effectiveYear: '2026',
 }
 
-const calculationLabel: Record<IndicatorCalculation, string> = {
-  percentage: 'Numerator ÷ denominator × 100%',
-  average: 'Numerator ÷ denominator (rerata)',
-  scaled: 'Rasio × skala',
-  numerator: 'Nilai numerator',
-  direct: 'Nilai capaian langsung',
-}
-
 const tablePreviewRows = 10
 
 function getCalculation(indicator: IndicatorEntry): IndicatorCalculation {
@@ -72,7 +65,7 @@ function fromDatabase(indicator: SpmIndicator): CatalogIndicator {
     name: indicator.name,
     definition: indicator.operational_definition,
     standard: indicator.standard,
-    type: calculation === 'average' ? 'duration' : calculation === 'numerator' || calculation === 'direct' ? 'number' : 'ratio',
+    type: calculation === 'average' ? 'duration' : calculation === 'numerator' || calculation === 'direct' ? 'number' : calculation === 'free_text' ? 'text' : 'ratio',
     calculation,
     unit: indicator.unit_label,
     scale: indicator.calculation_scale ?? undefined,
@@ -120,6 +113,15 @@ function IndicatorsPage() {
   const [pendingDelete, setPendingDelete] = useState<CatalogIndicator | null>(null)
   const tableWrapRef = useRef<HTMLDivElement | null>(null)
   const [tableMaxHeight, setTableMaxHeight] = useState<number | null>(null)
+  const activeCalculation = calculationOption(form.calculation)
+
+  function changeCalculation(next: IndicatorCalculation) {
+    setForm((current) => ({
+      ...current,
+      calculation: next,
+      unit: next === 'percentage' ? '%' : next === 'free_text' ? '' : current.unit === '%' ? '' : current.unit,
+    }))
+  }
 
   useEffect(() => {
     if (!toast) return
@@ -233,9 +235,9 @@ function IndicatorsPage() {
       name: form.name.trim(),
       definition: form.definition.trim(),
       standard: form.standard.trim(),
-      type: form.calculation === 'average' ? 'duration' : form.calculation === 'numerator' || form.calculation === 'direct' ? 'number' : 'ratio',
+      type: form.calculation === 'average' ? 'duration' : form.calculation === 'numerator' || form.calculation === 'direct' ? 'number' : form.calculation === 'free_text' ? 'text' : 'ratio',
       calculation: form.calculation,
-      unit: form.unit.trim(),
+      unit: form.calculation === 'free_text' ? '' : form.calculation === 'scaled' ? form.resultUnit.trim() : form.unit.trim(),
       scale: form.calculation === 'scaled' ? Number(form.scale) : undefined,
       resultUnit: form.calculation === 'scaled' ? form.resultUnit.trim() : undefined,
       numerator: '',
@@ -403,9 +405,41 @@ function IndicatorsPage() {
             {formError && <div className="indicator-form-error" role="alert"><CircleAlert size={15} /><span>{formError}</span></div>}
             <label>Nama indikator<input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
             <label>Definisi operasional<textarea required rows={3} value={form.definition} onChange={(event) => setForm((current) => ({ ...current, definition: event.target.value }))} /></label>
-            <div className="indicator-form-grid"><label>Standar<input required value={form.standard} onChange={(event) => setForm((current) => ({ ...current, standard: event.target.value }))} placeholder="Contoh: ≥ 80%" /></label><label>Rumus capaian<select value={form.calculation} onChange={(event) => setForm((current) => ({ ...current, calculation: event.target.value as IndicatorCalculation }))}>{Object.entries(calculationLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
-            <div className="indicator-form-grid"><label>Satuan hasil<input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder="%, menit, jam, tim" /></label>{form.calculation === 'scaled' ? <label>Pengali skala<input type="number" min="1" step="any" value={form.scale} onChange={(event) => setForm((current) => ({ ...current, scale: event.target.value }))} placeholder="Contoh: 1.000" /></label> : <div className="formula-preview"><span>HASIL CAPAIAN</span><strong>{form.calculation === 'percentage' ? 'Persentase' : form.calculation === 'average' ? `Rerata${form.unit ? ` (${form.unit})` : ''}` : form.calculation === 'direct' ? 'Nilai capaian langsung' : 'Nilai numerator'}</strong></div>}</div>
-            {form.calculation === 'scaled' && <label>Satuan hasil skala<input value={form.resultUnit} onChange={(event) => setForm((current) => ({ ...current, resultUnit: event.target.value }))} placeholder="Contoh: per 1.000 pasien" /></label>}
+            <label>Standar<input required value={form.standard} onChange={(event) => setForm((current) => ({ ...current, standard: event.target.value }))} placeholder="Contoh: ≥ 80%" /></label>
+            <fieldset className="indicator-calculation">
+              <legend>Rumus capaian<small>Pilih cara menghitung capaian indikator ini.</small></legend>
+              <div className="calculation-options">
+                {calculationOptions.map((option) => {
+                  const selected = form.calculation === option.value
+                  return <label key={option.value} className={`calculation-option${selected ? ' is-selected' : ''}`}>
+                    <input type="radio" name="indicator-calculation" value={option.value} checked={selected} onChange={() => changeCalculation(option.value)} />
+                    <span className="calculation-option-copy">
+                      <span className="calculation-option-head"><strong>{option.name}</strong><small>{option.short}</small></span>
+                      <span className="calculation-option-desc">{option.description}</span>
+                      <span className="calculation-option-example">Contoh: {option.example}</span>
+                    </span>
+                    <span className="calculation-option-check" aria-hidden>{selected ? <Check size={13} /> : null}</span>
+                  </label>
+                })}
+              </div>
+              {activeCalculation.contrast && <div className="calculation-compare"><Info size={14} /><span>{activeCalculation.contrast}</span></div>}
+              <details className="calculation-guide">
+                <summary><Info size={14} /> Bingung memilih? Lihat panduan singkat</summary>
+                <ul>{calculationOptions.map((option) => <li key={option.value}><strong>{option.name}</strong><span>{option.guidance}</span></li>)}</ul>
+              </details>
+              <div className="calculation-preview" aria-live="polite">
+                <span>CONTOH PERHITUNGAN</span>
+                <strong>{calculationPreview(form.calculation, form.unit)}</strong>
+                <small>{activeCalculation.inputHint}</small>
+              </div>
+            </fieldset>
+            {form.calculation === 'percentage'
+              ? <div className="calculation-unit-note"><Check size={14} /><span>Satuan hasil otomatis: <strong>%</strong></span></div>
+              : form.calculation === 'free_text'
+                ? <div className="calculation-unit-note"><Info size={14} /><span>Capaian diketik bebas. Tidak perlu mengisi satuan hasil, jumlah, atau total.</span></div>
+                : form.calculation === 'scaled'
+                  ? <div className="indicator-form-grid"><label>Pengali skala<input type="number" min="1" step="any" value={form.scale} onChange={(event) => setForm((current) => ({ ...current, scale: event.target.value }))} placeholder="Contoh: 1.000" /></label><label>Satuan hasil skala<input value={form.resultUnit} onChange={(event) => setForm((current) => ({ ...current, resultUnit: event.target.value }))} placeholder="Contoh: per 1.000 pasien" /></label></div>
+                : <label>Satuan hasil<input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder={activeCalculation.unitPlaceholder} /></label>}
             <div className="indicator-form-actions"><button className="secondary-button" type="button" onClick={() => setDialog(null)}>Batal</button><button className="primary-button" type="submit" disabled={saving || units.length === 0}><Check size={15} />{saving ? 'Menyimpan…' : 'Simpan indikator'}</button></div>
           </form>
         </section>

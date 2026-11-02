@@ -14,10 +14,10 @@ const roleNames: Record<string, string> = {
 }
 
 const rolePermissions: Record<UserRole, Record<string, boolean>> = {
-  officer: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: false, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
-  unit_head: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
-  leadership: { view_dashboard: true, input_reports: true, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false },
-  admin: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: true, manage_indicators: true, manage_periods: true, view_audit: true, manage_users: true, edit_locked_periods: true },
+  officer: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: false, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false, simple_view: false },
+  unit_head: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: false, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false, simple_view: false },
+  leadership: { view_dashboard: true, input_reports: true, view_own_unit_reports: false, view_all_reports: true, manage_indicators: true, manage_periods: false, view_audit: false, manage_users: false, edit_locked_periods: false, simple_view: false },
+  admin: { view_dashboard: true, input_reports: true, view_own_unit_reports: true, view_all_reports: true, manage_indicators: true, manage_periods: true, view_audit: true, manage_users: true, edit_locked_periods: true, simple_view: false },
 }
 
 const permissionLabels: { key: string; label: string }[] = [
@@ -30,6 +30,7 @@ const permissionLabels: { key: string; label: string }[] = [
   { key: 'view_audit', label: 'Lihat audit' },
   { key: 'manage_users', label: 'Kelola unit & pengguna' },
   { key: 'edit_locked_periods', label: 'Edit periode terkunci' },
+  { key: 'simple_view', label: 'Tampilan Pimpinan (Ringkasan + Rekap lintas unit)' },
 ]
 
 const baseRoles: UserRole[] = ['officer', 'unit_head', 'leadership']
@@ -183,7 +184,11 @@ function UsersPage() {
   }
 
   function togglePermission(key: string) {
-    setForm((current) => ({ ...current, permissions: { ...current.permissions, [key]: !current.permissions[key] } }))
+    setForm((current) => {
+      const permissions = { ...current.permissions, [key]: !current.permissions[key] }
+      if (key === 'simple_view' && permissions.simple_view) permissions.view_dashboard = true
+      return { ...current, permissions }
+    })
   }
 
   function toggleUnit(id: string) {
@@ -492,7 +497,10 @@ function UsersPage() {
                 </fieldset>
               )}
               {formError && <p className="users-field-error" role="alert">{formError}</p>}
-              <fieldset className="permission-fieldset"><legend>Izin akses</legend><div className="permission-grid">{permissionLabels.map(({ key, label }) => <label className="permission-item" key={key}><input type="checkbox" checked={Boolean(form.permissions[key])} onChange={() => togglePermission(key)} /><span>{label}</span></label>)}</div></fieldset>
+              <fieldset className="permission-fieldset"><legend>Izin akses</legend><div className="permission-grid">{permissionLabels.map(({ key, label }) => {
+                const lockedBySimpleView = Boolean(form.permissions.simple_view) && key !== 'simple_view' && key !== 'view_dashboard'
+                return <label className={`permission-item${key === 'simple_view' ? ' permission-item-wide' : ''}`} key={key}><input type="checkbox" checked={Boolean(form.permissions[key])} disabled={lockedBySimpleView} onChange={() => togglePermission(key)} /><span>{label}</span></label>
+              })}</div>{form.permissions.simple_view && <p className="permission-note">Menu lain disembunyikan. Akun hanya melihat halaman Ringkasan dan Rekap lintas unit.</p>}</fieldset>
               <div className="users-modal-actions">
                 <button className="secondary-button" type="button" onClick={closeProfileDialog} disabled={saving}><X size={15} /> Batal</button>
                 <button className="primary-button" type="submit" disabled={saving || loading || (needsUnit && !units.length)}>{form.id ? <Check size={15} /> : <UserRoundPlus size={15} />} {form.id ? 'Simpan perubahan' : 'Tautkan profil'}</button>

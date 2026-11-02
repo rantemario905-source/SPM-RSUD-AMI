@@ -4,9 +4,12 @@ export interface FakeDatabase {
   units: Row[]
   profiles: Row[]
   indicators: Row[]
+  report_periods: Row[]
+  reports: Row[]
+  report_entries: Row[]
 }
 
-type Operation = 'select' | 'update' | 'insert' | 'delete'
+type Operation = 'select' | 'update' | 'insert' | 'upsert' | 'delete'
 
 type FakeError = { code: string; message: string }
 
@@ -21,12 +24,35 @@ export function createFakeClient(database: FakeDatabase) {
 
   function from(table: keyof FakeDatabase) {
     const filters: Row = {}
+    const inFilters: Record<string, unknown[]> = {}
     let operation: Operation = 'select'
     let payload: Row | null = null
+    let upsertPayload: Row[] | null = null
 
-    const matching = () => database[table].filter((row) => Object.entries(filters).every(([column, value]) => row[column] === value))
+    const matching = () => database[table].filter((row) => (
+      Object.entries(filters).every(([column, value]) => row[column] === value)
+      && Object.entries(inFilters).every(([column, values]) => values.some((value) => row[column] === value))
+    ))
 
     const run = (): { rows: Row[]; error: FakeError | null } => {
+      if (operation === 'upsert' && upsertPayload) {
+        const saved: Row[] = []
+        for (const item of upsertPayload) {
+          const target = database[table].find((row) => (
+            (item.id !== undefined && row.id === item.id)
+            || (item.report_id !== undefined && item.indicator_id !== undefined && row.report_id === item.report_id && row.indicator_id === item.indicator_id)
+          ))
+          if (target) {
+            Object.assign(target, item)
+            saved.push(target)
+          } else {
+            const inserted = { id: item.id ?? `fake-${++sequence}`, active: true, ...item }
+            database[table] = [...database[table], inserted]
+            saved.push(inserted)
+          }
+        }
+        return { rows: saved, error: null }
+      }
       if (operation === 'insert' && payload) {
         const violation = uniqueViolation(table, payload, [])
         if (violation) return { rows: [], error: violation }
@@ -58,6 +84,10 @@ export function createFakeClient(database: FakeDatabase) {
         filters[column] = value
         return builder
       },
+      in: (column: string, values: unknown[]) => {
+        inFilters[column] = values
+        return builder
+      },
       update: (values: Row) => {
         operation = 'update'
         payload = values
@@ -66,6 +96,11 @@ export function createFakeClient(database: FakeDatabase) {
       insert: (values: Row) => {
         operation = 'insert'
         payload = values
+        return builder
+      },
+      upsert: (values: Row | Row[]) => {
+        operation = 'upsert'
+        upsertPayload = Array.isArray(values) ? values : [values]
         return builder
       },
       delete: () => {

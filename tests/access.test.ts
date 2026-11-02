@@ -44,4 +44,20 @@ describe('allowedPages', () => {
     expect(canAccessPage('officer', { manage_indicators: true }, false, 'indicators')).toBe(true)
     expect(canAccessPage('officer', {}, false, 'indicators')).toBe(false)
   })
+
+  it('membatasi Tampilan Pimpinan ke Ringkasan dan Rekap lintas unit', () => {
+    expect(allowedPages('leadership', { view_dashboard: true, simple_view: true, view_all_reports: true, manage_indicators: true }, false)).toEqual(['dashboard', 'crossunit'])
+    expect(canAccessPage('leadership', { simple_view: true }, false, 'crossunit')).toBe(true)
+    expect(canAccessPage('leadership', { simple_view: true }, false, 'dashboard')).toBe(true)
+    expect(canAccessPage('leadership', { simple_view: true }, false, 'indicators')).toBe(false)
+  })
+
+  it('mengabaikan Tampilan Pimpinan untuk admin dan pratinjau', () => {
+    expect(allowedPages('admin', { simple_view: true }, false)).toContain('users')
+    expect(allowedPages(null, { simple_view: true }, true)).toContain('periods')
+  })
+
+  it('tidak mengubah menu akun tanpa Tampilan Pimpinan', () => {
+    expect(allowedPages('leadership', { simple_view: false }, false)).toContain('crossunit')
+  })
 })

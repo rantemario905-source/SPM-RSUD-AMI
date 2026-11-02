@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { achievement, formatAchievement, formatValue, meetsStandard, parseTarget } from '../src/lib/spm-achievement'
+import { achievement, entryAchievementText, entryHasValue, formatAchievement, formatValue, meetsStandard, parseTarget } from '../src/lib/spm-achievement'
 import { sampleUnits } from '../src/data/sample-indicators'
 
 const percentage = { calculation_method: 'percentage' } as const
@@ -7,6 +7,7 @@ const numerator = { calculation_method: 'numerator' } as const
 const direct = { calculation_method: 'direct' } as const
 const average = { calculation_method: 'average' } as const
 const scaled = { calculation_method: 'scaled' } as const
+const freeText = { calculation_method: 'free_text' } as const
 
 const catalog = sampleUnits.flatMap((unit) => unit.indicators.map((indicator) => ({ ...indicator, unitName: unit.name })))
 
@@ -66,6 +67,14 @@ describe('achievement', () => {
 
   it('mengembalikan null bila numerator belum diisi', () => {
     expect(achievement({ numerator: null, denominator: 10 }, percentage)).toBeNull()
+  })
+
+  it('tidak menghitung angka untuk capaian teks bebas', () => {
+    expect(achievement({ numerator: null, denominator: null, result_text: 'Biru' }, freeText)).toBeNull()
+    expect(entryAchievementText({ numerator: null, denominator: null, result_text: 'Biru' }, freeText)).toBe('Biru')
+    expect(entryAchievementText({ numerator: null, denominator: null, result_text: '  ' }, freeText)).toBeNull()
+    expect(entryHasValue({ numerator: null, denominator: null, result_text: 'Hijau' }, freeText)).toBe(true)
+    expect(entryHasValue({ numerator: null, denominator: null, result_text: '' }, freeText)).toBe(false)
   })
 
   it('tidak pernah menghasilkan NaN untuk data indikator contoh', () => {

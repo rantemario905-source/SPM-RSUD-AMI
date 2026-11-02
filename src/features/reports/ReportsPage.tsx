@@ -39,7 +39,7 @@ function saveSignature(value: SignatureFields) {
 
 type PrintMode = 'single' | 'all'
 
-interface AllUnitsEntry { numerator: number | null; denominator: number | null; analysis: string }
+interface AllUnitsEntry { numerator: number | null; denominator: number | null; result_text: string | null; analysis: string }
 interface AllUnitsData { indicators: SpmIndicator[]; entries: Map<string, AllUnitsEntry> }
 
 const allUnitsSignatories = {
@@ -51,15 +51,16 @@ function toIndicatorEntry(indicator: SpmIndicator): IndicatorEntry {
   return {
     code: indicator.code, name: indicator.name, definition: indicator.operational_definition,
     standard: indicator.standard,
-    type: indicator.calculation_method === 'average' ? 'duration' : indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct' ? 'number' : 'ratio',
+    type: indicator.calculation_method === 'average' ? 'duration' : indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct' ? 'number' : indicator.calculation_method === 'free_text' ? 'text' : 'ratio',
     calculation: indicator.calculation_method, unit: indicator.unit_label,
     scale: indicator.calculation_scale ?? undefined, resultUnit: indicator.result_unit,
-    numerator: '', denominator: '', value: '', analysis: '',
+    numerator: '', denominator: '', resultText: '', value: '', analysis: '',
   }
 }
 
 function getAchievement(entry: IndicatorEntry) {
   const calculation = entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
+  if (calculation === 'free_text') return entry.resultText?.trim() || '—'
   const numerator = Number(entry.numerator)
   const denominator = Number(entry.denominator)
   if (entry.numerator === '') return '—'
@@ -98,7 +99,7 @@ function ReportsPage() {
   const [years, setYears] = useState<string[]>(auth.isPreview ? [String(currentYear)] : [])
   const [year, setYear] = useState(String(currentYear))
   const [indicators, setIndicators] = useState<SpmIndicator[]>([])
-  const [entriesByMonth, setEntriesByMonth] = useState<Record<string, { numerator: number | null; denominator: number | null; analysis: string }>>({})
+  const [entriesByMonth, setEntriesByMonth] = useState<Record<string, { numerator: number | null; denominator: number | null; result_text: string | null; analysis: string }>>({})
   const [loading, setLoading] = useState(!auth.isPreview)
   const [error, setError] = useState('')
   const [signature, setSignature] = useState<SignatureFields>(loadSignature)
@@ -156,16 +157,16 @@ function ReportsPage() {
       ])
       if (reportResult.error) throw reportResult.error
       const reports = reportResult.data ?? []
-      let nextEntries: Record<string, { numerator: number | null; denominator: number | null; analysis: string }> = {}
+      let nextEntries: Record<string, { numerator: number | null; denominator: number | null; result_text: string | null; analysis: string }> = {}
       if (reports.length) {
         const { data, error: entryError } = await supabase.from('report_entries')
-          .select('report_id, indicator_id, numerator, denominator, analysis')
+          .select('report_id, indicator_id, numerator, denominator, result_text, analysis')
           .in('report_id', reports.map((item) => item.id))
         if (entryError) throw entryError
         const periodByReport = new Map(reports.map((item) => [item.id, item.period_start]))
         nextEntries = Object.fromEntries((data ?? []).map((item) => [
           `${periodByReport.get(item.report_id)}|${item.indicator_id}`,
-          { numerator: item.numerator, denominator: item.denominator, analysis: item.analysis },
+          { numerator: item.numerator, denominator: item.denominator, result_text: item.result_text, analysis: item.analysis },
         ]))
       }
       if (active) {
@@ -215,7 +216,7 @@ function ReportsPage() {
     if (auth.isPreview) return year === '2026' && monthNumber === 10 ? getAchievement(entry) : '—'
     const periodStart = `${year}-${String(monthNumber).padStart(2, '0')}-01`
     const row = entriesByMonth[`${periodStart}|${indicators.find((item) => item.code === entry.code)?.id}`]
-    return row ? getAchievement({ ...entry, numerator: row.numerator === null ? '' : String(row.numerator), denominator: row.denominator === null ? '' : String(row.denominator) }) : '—'
+    return row ? getAchievement({ ...entry, numerator: row.numerator === null ? '' : String(row.numerator), denominator: row.denominator === null ? '' : String(row.denominator), resultText: row.result_text ?? '' }) : '—'
   }
 
   function getStoredEntry(entry: IndicatorEntry, monthNumber: number) {
@@ -223,7 +224,7 @@ function ReportsPage() {
     const periodStart = `${year}-${String(monthNumber).padStart(2, '0')}-01`
     const id = indicators.find((item) => item.code === entry.code)?.id
     const savedEntry = id ? entriesByMonth[`${periodStart}|${id}`] : undefined
-    return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
+    return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), resultText: savedEntry.result_text ?? '', analysis: savedEntry.analysis } : null
   }
 
   function getUnitStoredEntry(target: SpmUnit, entry: IndicatorEntry, monthNumber: number) {
@@ -231,7 +232,7 @@ function ReportsPage() {
     const id = allUnitsData?.indicators.find((item) => item.code === entry.code)?.id
     const periodStart = `${year}-${String(monthNumber).padStart(2, '0')}-01`
     const savedEntry = id ? allUnitsData?.entries.get(`${target.id}|${periodStart}|${id}`) : undefined
-    return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), analysis: savedEntry.analysis } : null
+    return savedEntry ? { ...entry, numerator: savedEntry.numerator === null ? '' : String(savedEntry.numerator), denominator: savedEntry.denominator === null ? '' : String(savedEntry.denominator), resultText: savedEntry.result_text ?? '', analysis: savedEntry.analysis } : null
   }
 
   function getUnitMonthlyValue(target: SpmUnit, entry: IndicatorEntry, monthNumber: number) {
@@ -239,7 +240,7 @@ function ReportsPage() {
     const id = allUnitsData?.indicators.find((item) => item.code === entry.code)?.id
     const periodStart = `${year}-${String(monthNumber).padStart(2, '0')}-01`
     const row = id ? allUnitsData?.entries.get(`${target.id}|${periodStart}|${id}`) : undefined
-    return row ? getAchievement({ ...entry, numerator: row.numerator === null ? '' : String(row.numerator), denominator: row.denominator === null ? '' : String(row.denominator) }) : '—'
+    return row ? getAchievement({ ...entry, numerator: row.numerator === null ? '' : String(row.numerator), denominator: row.denominator === null ? '' : String(row.denominator), resultText: row.result_text ?? '' }) : '—'
   }
 
   async function fetchAllUnitsData(): Promise<AllUnitsData> {
@@ -255,14 +256,14 @@ function ReportsPage() {
     const entries = new Map<string, AllUnitsEntry>()
     if (reports.length) {
       const { data, error } = await client.from('report_entries')
-        .select('report_id, indicator_id, numerator, denominator, analysis')
+        .select('report_id, indicator_id, numerator, denominator, result_text, analysis')
         .in('report_id', reports.map((item) => item.id))
       if (error) throw error
       const unitByReport = new Map(reports.map((item) => [item.id, item]))
       for (const row of data ?? []) {
         const report = unitByReport.get(row.report_id)
         if (!report?.unit_id) continue
-        entries.set(`${report.unit_id}|${report.period_start}|${row.indicator_id}`, { numerator: row.numerator, denominator: row.denominator, analysis: row.analysis })
+        entries.set(`${report.unit_id}|${report.period_start}|${row.indicator_id}`, { numerator: row.numerator, denominator: row.denominator, result_text: row.result_text, analysis: row.analysis })
       }
     }
     return { indicators: nextIndicators, entries }

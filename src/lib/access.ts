@@ -18,8 +18,15 @@ const permissionPages: { permission: string; page: AppPage }[] = [
   { permission: 'view_all_reports', page: 'crossunit' },
 ]
 
+export function isSimpleView(role: string | null, permissions: Record<string, boolean> | null | undefined, isPreview: boolean): boolean {
+  if (isPreview || role === 'admin') return false
+  return Boolean(permissions?.simple_view)
+}
+
 export function allowedPages(role: string | null, permissions: Record<string, boolean> | null | undefined, isPreview: boolean): AppPage[] {
   if (isPreview) return allPages
+  if (role === 'admin') return allPages
+  if (isSimpleView(role, permissions, isPreview)) return ['dashboard', 'crossunit']
   const base = role ? rolePages[role] ?? basePages : basePages
   const extra = permissionPages
     .filter(({ permission }) => Boolean(permissions?.[permission]))

@@ -3,7 +3,7 @@ import { Bell, CircleAlert, Info } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, scopedUnitIds } from '../../lib/spm-data'
-import { achievement, achievementUnit, formatValue, meetsStandard, parseTarget } from '../../lib/spm-achievement'
+import { achievement, achievementUnit, entryHasValue, formatValue, meetsStandard, parseTarget } from '../../lib/spm-achievement'
 import type { AppPage } from '../../types/spm'
 import './NotificationBell.css'
 
@@ -66,7 +66,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
           : []
         const reportIds = reports.map((report) => report.id)
         const entries = reportIds.length
-          ? (await supabase.from('report_entries').select('report_id, indicator_id, numerator, denominator, analysis').in('report_id', reportIds)).data ?? []
+          ? (await supabase.from('report_entries').select('report_id, indicator_id, numerator, denominator, result_text, analysis').in('report_id', reportIds)).data ?? []
           : []
         if (!active) return
         const reportByUnit = new Map(reports.map((report) => [report.unit_id, report]))
@@ -82,8 +82,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
           const unitIndicators = activeIndicators.filter((indicator) => indicator.unit_id === null || indicator.unit_id === unit.id)
           const completed = reportEntries.filter((entry) => {
             const indicator = indicatorById.get(entry.indicator_id)
-            const needsDenominator = indicator ? indicator.calculation_method !== 'numerator' && indicator.calculation_method !== 'direct' : true
-            return entry.numerator !== null && (!needsDenominator || entry.denominator !== null)
+            return indicator ? entryHasValue(entry, indicator) : false
           }).length
           if (unitIndicators.length && completed < unitIndicators.length) {
             incomplete += 1
@@ -102,6 +101,7 @@ function NotificationBell({ onNavigate }: NotificationBellProps) {
           for (const indicator of unitIndicators) {
             const entry = entryByIndicator.get(indicator.id)
             if (!entry) continue
+            if (indicator.calculation_method === 'free_text') continue
             const target = parseTarget(indicator.standard)
             const value = achievement(entry, indicator)
             if (!target || value === null) continue

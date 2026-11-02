@@ -49,6 +49,9 @@
 .permission-fieldset legend { padding: 0 5px; color: #58685f; font-size: 11px; font-weight: 600; }
 .permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 14px; }
 .permission-item { display: flex; align-items: center; gap: 7px; color: #4b5d53; font-weight: 400; font-size: 11px; }
+.permission-item-wide { grid-column: 1 / -1; }
+.permission-item input:disabled + span { color: #98a39d; }
+.permission-note { margin: 8px 0 0; color: #6b7d72; font-size: 10px; line-height: 1.45; }
 .permission-item input { width: 15px; min-width: 15px; min-height: 15px; height: 15px; margin: 0; accent-color: var(--forest); }
 .unit-fieldset { margin-top: 2px; }
 .users-unit-options { max-height: 186px; overflow-y: auto; overscroll-behavior: contain; }

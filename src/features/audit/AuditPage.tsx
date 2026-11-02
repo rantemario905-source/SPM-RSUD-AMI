@@ -11,6 +11,7 @@ interface AuditItem { title: string; changes: string; person: string; date: stri
 const fieldLabels: Record<string, string> = {
   numerator: 'Numerator',
   denominator: 'Denominator',
+  result_text: 'Capaian teks',
   analysis: 'Analisa',
   evidence_note: 'Catatan bukti',
   period_start: 'Periode',
