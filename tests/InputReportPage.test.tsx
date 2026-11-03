@@ -83,4 +83,21 @@ describe('InputReportPage', () => {
       denominator: null,
     })
   })
+
+  it('menyembunyikan periode masa depan dari pilihan', async () => {
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const nextStart = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`
+    const nextEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-28`
+    database.report_periods = [
+      { period_start: periodStart, period_end: periodEnd, state: 'open' },
+      { period_start: nextStart, period_end: nextEnd, state: 'open' },
+    ]
+
+    render(<InputReportPage />)
+    const periodSelect = await screen.findByLabelText('Pilih periode input') as HTMLSelectElement
+    const values = Array.from(periodSelect.options).map((option) => option.value)
+
+    expect(values).toContain(periodStart)
+    expect(values).not.toContain(nextStart)
+  })
 })

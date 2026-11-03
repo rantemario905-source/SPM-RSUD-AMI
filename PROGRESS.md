@@ -25,6 +25,26 @@ Catatan progres agar pekerjaan dapat dilanjutkan antar sesi. Perbarui file ini s
 
 - **Tombol "Tambah indikator" dipindah ke baris toolbar — SELESAI DIVERIFIKASI & TER-DEPLOY (commit `f1c7c9b`, run #36) (2026-10-16):** permintaan pengguna = perbaiki posisi tombol "Tambah indikator" di halaman **Indikator SPM** karena setelah kartu/filter "Rumus capaian" dihapus, tombol di pojok kanan-atas judul terlihat "kurang pas". Keputusan pengguna (dikonfirmasi): pindah ke **baris toolbar** (pilihan 1 dari 3), mengikuti pola halaman **Unit & pengguna**. Perubahan: `IndicatorsPage.tsx` (tombol dihapus dari `.indicators-heading`, ditambahkan di `.indicator-toolbar` **setelah** `.indicator-result-count`, dengan `disabled={saving}`), `IndicatorsPage.css` (`.indicator-toolbar` + `flex-wrap: wrap`; di ≤ 800px `.indicator-toolbar .primary-button { flex: 1 1 100%; justify-content: center }`). Verifikasi geometri headless (harness `indicators-fixed-measure.html` + CSS hasil build `index-akR9hb8Y.css`): desktop 1440 → tombol `x=1246, y=304, right=1382` (sebaris toolbar, **rata kanan tepat** dengan tepi tabel, 9px dari penghitung); sempit 480 → tombol **penuh lebar** (`w=480`) di baris sendiri, toolbar membungkus rapi tanpa meluber. Lokal: lint ✓ (tanpa warning), `npm test` ✓ (naik ke **59 lolos**, 1 todo), `npm run build` ✓ (`index-akR9hb8Y.css` + `index-DDBGeHFt.js`). Tanpa perubahan DB.
 
+## Audit Keamanan & Perbaikan Bug (2026-11-03)
+
+**Tahap 1 — akun tanpa profil:** `AuthGate.tsx` kini menolak akun Supabase Auth yang tidak punya baris `profiles` dengan pesan “Akun Anda belum terdaftar di sistem profil. Hubungi administrator.” lalu `signOut()`.
+
+**Tahap 2 — `profiles.active` ditegakkan di database:**
+- `supabase/migrations/202610110003_profiles_active.sql` (file yang sebelumnya hilang) dibuat idempoten: menambah kolom `active` bila belum ada, mengisi `true` untuk nilai kosong, lalu `default true` + `not null`.
+- `supabase/migrations/202611030001_enforce_active_profiles.sql` mengganti helper `spm_current_role`, `spm_current_unit`, `spm_can`, dan `spm_current_units` agar hanya membaca profil `active`. Akun nonaktif langsung kehilangan izin/unit pada query RLS berikutnya, meskipun sesi JWT lama masih valid.
+
+**Tahap 3 — input periode masa depan diblokir:**
+- `supabase/migrations/202611030002_block_future_period_entries.sql`: `spm_ensure_periods()` hanya membuat periode **sampai bulan berjalan** (tidak lagi Jan–Des); policy insert `reports`/`report_entries` dan update `report_entries` menambah syarat `period_start <= date_trunc('month', current_date)::date` untuk semua jalur, termasuk `edit_locked_periods`.
+- `InputReportPage.tsx` menandai `isFuture` sebagai hanya-baca (badge “Periode belum berjalan”, input & tombol simpan nonaktif).
+- `loadPeriods()` menyaring periode setelah bulan berjalan, sehingga periode masa depan lama yang masih `open` di DB tidak lagi tampil di Ringkasan, Input, Rekap, Periode, maupun notifikasi.
+- Tes regresi `tests/InputReportPage.test.tsx` memastikan periode masa depan tidak muncul di pilihan periode.
+
+**Temuan manual yang masih disarankan:** nonaktifkan **Public Signup** di Supabase Auth. Izin `manage_users` memang memberi akses penuh ke profil (termasuk mengubah peran sendiri) — ini konsekuensi desain izin admin, bukan eskalasi tanpa izin.
+
+**Status migrasi:** tiga migrasi di atas **sudah dijalankan pengguna** pada 2026-11-03. Perubahan kode/dokumen juga **belum di-commit**.
+
+**Verifikasi repo setelah patch:** `npm run lint` ✓, `npx vitest run --no-file-parallelism` ✓ (**81 lolos**, 1 todo, **11 berkas**), `npm run build` ✓ (`dist/assets/index-DcfuCKcG.css` + `index-CP9s9XvA.js`).
+
 ## Tugas terbaru (BELUM DI-COMMIT — Tampilan Pimpinan / `simple_view`, 2026-11-02)
 
 **Permintaan pengguna:** akun Direktur hanya perlu **dua menu: Ringkasan dan Rekap lintas unit**; menu lain tidak perlu tampil. Ringkasan langsung menampilkan semua indikator SPM dan capaiannya, dengan pemilih periode dan pencarian.

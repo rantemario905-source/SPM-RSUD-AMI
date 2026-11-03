@@ -8,10 +8,10 @@
 .input-period select { max-width: 180px; color: #34443e; background: transparent; border: 0; outline: 0; font-size: 11px; }
 .input-demo-note { margin-bottom: 13px; padding: 10px 13px; color: #705b25; background: #fff9e9; border: 1px solid #f1e5c3; border-radius: 5px; font-size: 10px; }
 .period-state { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 12px 14px; background: #edf5ef; border: 1px solid #dce9df; border-radius: 5px; }
-.period-state.is-locked { background: #f3f0f8; border-color: #e5def0; }
+.period-state.is-locked { background: #f3f0f8; border-color: #e5def0; }.period-state.is-future { background: #f3f0f8; border-color: #e5def0; }
 .period-state-icon { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; color: #39765e; background: #dcece1; border-radius: 6px; }
-.is-locked .period-state-icon { color: #67568d; background: #e7e0f0; }
-.period-state > div { display: flex; flex: 1; flex-direction: column; gap: 3px; }.period-state strong { color: #345442; font-size: 11px; }.is-locked strong { color: #534671; }.period-state small { color: #75867b; font-size: 10px; }.completion-count { color: #64766c; white-space: nowrap; font-size: 10px; }
+.is-locked .period-state-icon { color: #67568d; background: #e7e0f0; }.is-future .period-state-icon { color: #67568d; background: #e7e0f0; }
+.period-state > div { display: flex; flex: 1; flex-direction: column; gap: 3px; }.period-state strong { color: #345442; font-size: 11px; }.is-locked strong { color: #534671; }.is-future strong { color: #534671; }.period-state small { color: #75867b; font-size: 10px; }.completion-count { color: #64766c; white-space: nowrap; font-size: 10px; }
 .input-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
 .input-table { width: 100%; min-width: 1050px; border-collapse: collapse; text-align: left; }
 .input-table th { padding: 11px 12px; color: #7e8c84; background: #fbfcfb; border-bottom: 1px solid var(--line); font-size: 8px; letter-spacing: .05em; }

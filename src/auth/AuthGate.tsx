@@ -55,7 +55,15 @@ function AuthGate({ children }: AuthGateProps) {
       .then(({ data }) => {
         if (!active) return
         const row = data as { full_name: string | null; role: string; permissions: Record<string, boolean>; active: boolean | null } | null
-        if (row && row.active === false) {
+        if (!row) {
+          if (active) {
+            setProfile(null)
+            setError('Akun Anda belum terdaftar di sistem profil. Hubungi administrator.')
+            void client.auth.signOut()
+          }
+          return
+        }
+        if (row.active === false) {
           if (active) {
             setProfile(null)
             setError('Akun Anda telah dinonaktifkan. Hubungi administrator.')
@@ -63,7 +71,7 @@ function AuthGate({ children }: AuthGateProps) {
           }
           return
         }
-        setProfile(row ? { id: userId, fullName: row.full_name ?? null, role: row.role, permissions: row.permissions } : null)
+        setProfile({ id: userId, fullName: row.full_name ?? null, role: row.role, permissions: row.permissions })
       })
     return () => { active = false }
   }, [client, session])

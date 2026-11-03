@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { calculationOption } from '../../lib/spm-calculation'
-import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, profileUnitIds, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
+import { currentMonthStart, loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, profileUnitIds, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import './InputReportPage.css'
 
 interface InputEntry extends IndicatorEntry { indicatorId: string }
@@ -49,6 +49,7 @@ function InputReportPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [currentMonth] = useState(() => currentMonthStart())
 
   useEffect(() => {
     if (!client || !auth.userId) return
@@ -62,7 +63,7 @@ function InputReportPage() {
         setUnitId(nextProfile.unit_id ?? nextUnits[0]?.id ?? '')
         const runningNow = new Date()
         const runningStart = `${runningNow.getFullYear()}-${String(runningNow.getMonth() + 1).padStart(2, '0')}-01`
-        setPeriodStart(nextPeriods.find((item) => item.period_start === runningStart)?.period_start ?? nextPeriods[0]?.period_start ?? '')
+        setPeriodStart(nextPeriods.find((item) => item.period_start === runningStart)?.period_start ?? nextPeriods.find((item) => item.period_start <= runningStart)?.period_start ?? nextPeriods[0]?.period_start ?? '')
       })
       .catch((loadError: unknown) => {
         if (active) {
@@ -106,13 +107,14 @@ function InputReportPage() {
 
   const selectedPeriod = periods.find((period) => period.period_start === periodStart)
   const isLocked = selectedPeriod?.state === 'locked'
+  const isFuture = Boolean(periodStart) && periodStart > currentMonth
   const selectedUnit = units.find((item) => item.id === unitId)
   const ownUnits = units.filter((item) => profileUnitIds(profile).includes(item.id))
   const canEditAnyUnit = Boolean(profile?.permissions.view_all_reports) || Boolean(profile?.permissions.manage_users)
   const ownsSelectedUnit = auth.isPreview || canEditAnyUnit || (Boolean(unitId) && profileUnitIds(profile).includes(unitId))
   const canInput = auth.isPreview || (Boolean(profile?.permissions.input_reports) && ownsSelectedUnit)
   const canEditLocked = auth.isPreview || Boolean(profile?.permissions.edit_locked_periods)
-  const lockedReadOnly = Boolean(isLocked) && !canEditLocked
+  const lockedReadOnly = isFuture || (Boolean(isLocked) && !canEditLocked)
   const completedCount = useMemo(() => entries.filter((entry) => {
     const calculation = entryCalculation(entry)
     if (calculation === 'free_text') return Boolean(entry.resultText?.trim())
@@ -183,7 +185,7 @@ function InputReportPage() {
       {error && <div className="input-demo-note" role="alert"><CircleAlert size={15} /> {error}</div>}
       {periods.length === 0 && !loadingSetup && <div className="input-demo-note">Belum ada periode pelaporan. Jalankan migration data aplikasi di Supabase.</div>}
       {!ownsSelectedUnit && <div className="input-demo-note">Mode lihat saja. Anda hanya dapat menginput data unit {ownUnits.map((item) => item.name).join(', ') || 'Anda'}.</div>}
-      <div className={`period-state${isLocked ? ' is-locked' : ''}`}><span className="period-state-icon">{isLocked ? <LockKeyhole size={16} /> : <Check size={16} />}</span><div><strong>{isLocked ? 'Periode terkunci' : 'Periode terbuka'}</strong><small>{isLocked ? (canEditLocked ? 'Anda memiliki akses khusus untuk mengoreksi periode terkunci.' : 'Input hanya dapat diubah oleh petugas yang memiliki akses khusus.') : 'Perubahan nilai akan dicatat pada laporan periode ini.'}</small></div><span className="completion-count">{completedCount}/{entries.length} indikator terisi</span></div>
+      <div className={`period-state${isLocked ? ' is-locked' : isFuture ? ' is-future' : ''}`}><span className="period-state-icon">{isLocked || isFuture ? <LockKeyhole size={16} /> : <Check size={16} />}</span><div><strong>{isFuture ? 'Periode belum berjalan' : isLocked ? 'Periode terkunci' : 'Periode terbuka'}</strong><small>{isFuture ? 'Input untuk periode mendatang belum dibuka. Pilih periode berjalan atau sebelumnya.' : isLocked ? (canEditLocked ? 'Anda memiliki akses khusus untuk mengoreksi periode terkunci.' : 'Input hanya dapat diubah oleh petugas yang memiliki akses khusus.') : 'Perubahan nilai akan dicatat pada laporan periode ini.'}</small></div><span className="completion-count">{completedCount}/{entries.length} indikator terisi</span></div>
       <div className="input-help"><Info size={14} /><span><strong>Jumlah</strong> = bagian yang dihitung (mis. 80 pasien patuh). <strong>Total</strong> = keseluruhan pembanding (mis. 100 pasien). Indikator <strong>Jumlah (hitung banyaknya)</strong> cukup diisi jumlahnya; <strong>Nilai akhir (skor/angka jadi)</strong> cukup diisi capaiannya; <strong>Teks bebas</strong> diketik langsung (mis. Biru, Hijau, Merah).</span></div>
       <div className="input-table-wrap"><table className="input-table"><thead><tr><th>INDIKATOR / DEFINISI OPERASIONAL</th><th>STANDAR</th><th>NILAI / JUMLAH</th><th>TOTAL (PENYEBUT)</th><th>CAPAIAN</th><th>ANALISA</th></tr></thead><tbody>{entries.map((entry, index) => {
         const method = entryCalculation(entry)

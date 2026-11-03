@@ -100,10 +100,17 @@ export async function loadIndicators(client: SupabaseClient, unitId?: string | s
   return (data ?? []) as SpmIndicator[]
 }
 
+export function currentMonthStart(now = new Date()) {
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}-01`
+}
+
 export async function loadPeriods(client: SupabaseClient) {
   const { data, error } = await client.from('report_periods').select('period_start, period_end, state').order('period_start', { ascending: false })
   if (error) throw error
-  return (data ?? []) as SpmPeriod[]
+  const current = currentMonthStart()
+  return ((data ?? []) as SpmPeriod[]).filter((period) => period.period_start <= current)
 }
 
 export function periodLabel(periodStart: string) {
