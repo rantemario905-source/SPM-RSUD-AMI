@@ -14,6 +14,8 @@ export interface SpmIndicator {
   operational_definition: string
   standard: string
   calculation_method: 'percentage' | 'average' | 'scaled' | 'numerator' | 'direct' | 'free_text'
+  helper_kind: 'time_span' | 'date_span' | null
+  helper_min_sample: number | null
   unit_label: string
   calculation_scale: number | null
   result_unit: string
@@ -82,7 +84,7 @@ export async function loadUnits(client: SupabaseClient) {
   return (data ?? []) as SpmUnit[]
 }
 
-export const indicatorColumns = 'id, code, service_name, name, operational_definition, standard, calculation_method, unit_label, calculation_scale, result_unit, unit_id, effective_from, effective_until, active'
+export const indicatorColumns = 'id, code, service_name, name, operational_definition, standard, calculation_method, helper_kind, helper_min_sample, unit_label, calculation_scale, result_unit, unit_id, effective_from, effective_until, active'
 
 export async function loadIndicators(client: SupabaseClient, unitId?: string | string[]) {
   let request = client

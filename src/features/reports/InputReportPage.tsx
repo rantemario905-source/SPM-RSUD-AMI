@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Building2, CalendarDays, Check, CircleAlert, Info, LockKeyhole, Save } from 'lucide-react'
+import { Building2, CalendarDays, Check, CircleAlert, Info, LockKeyhole, Save, Wrench } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { calculationOption } from '../../lib/spm-calculation'
+import type { HelperKind } from '../../lib/spm-helper'
 import { currentMonthStart, loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, profileUnitIds, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
+import HelperRecordsModal from './HelperRecordsModal'
 import './InputReportPage.css'
 
-interface InputEntry extends IndicatorEntry { indicatorId: string }
+interface InputEntry extends IndicatorEntry { indicatorId: string; helperKind?: HelperKind | null; helperMinSample?: number | null }
 
 const previewPeriods: SpmPeriod[] = [
   { period_start: '2026-10-01', period_end: '2026-10-31', state: 'open' },
@@ -26,6 +28,8 @@ function entryFromIndicator(indicator: SpmIndicator, saved?: Record<string, unkn
     resultUnit: indicator.result_unit, numerator: numeric(saved?.numerator),
     denominator: numeric(saved?.denominator), resultText: typeof saved?.result_text === 'string' ? saved.result_text : '', value: '',
     analysis: typeof saved?.analysis === 'string' ? saved.analysis : '',
+    helperKind: indicator.helper_kind ?? null,
+    helperMinSample: indicator.helper_min_sample ?? null,
   }
 }
 
@@ -44,6 +48,7 @@ function InputReportPage() {
   const [periodStart, setPeriodStart] = useState(auth.isPreview ? '2026-10-01' : '')
   const [entries, setEntries] = useState<InputEntry[]>(auth.isPreview ? sampleUnits[0].indicators.map((entry) => ({ ...entry, indicatorId: entry.code })) : [])
   const [reportId, setReportId] = useState<string | null>(null)
+  const [helperEntry, setHelperEntry] = useState<InputEntry | null>(null)
   const [loadingSetup, setLoadingSetup] = useState(!auth.isPreview)
   const [loadingEntries, setLoadingEntries] = useState(!auth.isPreview)
   const [saving, setSaving] = useState(false)
@@ -115,6 +120,8 @@ function InputReportPage() {
   const canInput = auth.isPreview || (Boolean(profile?.permissions.input_reports) && ownsSelectedUnit)
   const canEditLocked = auth.isPreview || Boolean(profile?.permissions.edit_locked_periods)
   const lockedReadOnly = isFuture || (Boolean(isLocked) && !canEditLocked)
+  const isUnitOwner = auth.isPreview || (Boolean(unitId) && profileUnitIds(profile).includes(unitId))
+  const canOpenHelper = isUnitOwner && (auth.isPreview || Boolean(profile?.permissions.input_reports)) && !isFuture && (!isLocked || canEditLocked)
   const completedCount = useMemo(() => entries.filter((entry) => {
     const calculation = entryCalculation(entry)
     if (calculation === 'free_text') return Boolean(entry.resultText?.trim())
@@ -195,7 +202,7 @@ function InputReportPage() {
         const withoutDenominator = direct || freeText || method === 'numerator'
         const disabled = Boolean(lockedReadOnly) || !canInput || loadingEntries
         return <tr key={entry.indicatorId}>
-          <td className="indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span className="indicator-meta">{entry.code}<span className="calculation-badge">{option.name}</span></span></td>
+          <td className="indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span className="indicator-meta">{entry.code}<span className="calculation-badge">{option.name}</span>{entry.helperKind && <span className="calculation-badge">alat bantu</span>}{entry.helperKind && canOpenHelper && <button className="helper-open" type="button" onClick={() => setHelperEntry(entry)} disabled={disabled}><Wrench size={12} /> Alat bantu</button>}</span></td>
           <td className="standard-cell">{entry.standard}</td>
           {freeText
             ? <td><input aria-label={`Capaian ${entry.name}`} title={option.inputHint} type="text" value={entry.resultText ?? ''} disabled={disabled} placeholder="Ketik capaian (mis. Biru)" onChange={(event) => updateEntry(index, 'resultText', event.target.value)} /></td>
@@ -210,6 +217,28 @@ function InputReportPage() {
         </tr>
       })}</tbody></table>{entries.length === 0 && <div className="input-demo-note">{loadingSetup || loadingEntries ? 'Memuat data input…' : 'Belum ada indikator aktif untuk unit dan periode ini.'}</div>}</div>
       <div className="input-footer"><span>{saved ? <><Check size={15} /> {auth.isPreview ? 'Tersimpan di pratinjau' : 'Tersimpan di database'}</> : !canInput ? (ownsSelectedUnit ? 'Akun ini tidak memiliki izin input laporan.' : `Mode lihat saja untuk ${selectedUnit?.name ?? 'unit lain'}.`) : 'Simpan perubahan sebelum berpindah halaman.'}</span><button className="primary-button" type="button" disabled={saveDisabled} onClick={() => void saveEntries()}><Save size={15} /> {saving ? 'Menyimpan…' : 'Simpan input'}</button></div>
+      {helperEntry?.helperKind && <HelperRecordsModal
+        indicatorId={helperEntry.indicatorId}
+        indicatorName={helperEntry.name}
+        kind={helperEntry.helperKind}
+        unitLabel={helperEntry.unit}
+        unitId={unitId}
+        periodStart={periodStart}
+        reportId={reportId}
+        userId={auth.userId ?? null}
+        minSample={helperEntry.helperMinSample ?? null}
+        canEdit={canOpenHelper}
+        isPreview={auth.isPreview}
+        onClose={() => setHelperEntry(null)}
+        onSaved={(result) => {
+          if (result.reportId) setReportId(result.reportId)
+          setSaved(false)
+          const savedId = helperEntry.indicatorId
+          setEntries((current) => current.map((entry) => entry.indicatorId === savedId
+            ? { ...entry, numerator: result.numerator === null ? '' : String(result.numerator), denominator: result.denominator === null ? '' : String(result.denominator) }
+            : entry))
+        }}
+      />}
     </section>
   )
 }

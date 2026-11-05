@@ -7,6 +7,7 @@ export interface FakeDatabase {
   report_periods: Row[]
   reports: Row[]
   report_entries: Row[]
+  indicator_helper_records: Row[]
 }
 
 type Operation = 'select' | 'update' | 'insert' | 'upsert' | 'delete'
@@ -27,6 +28,7 @@ export function createFakeClient(database: FakeDatabase) {
     const inFilters: Record<string, unknown[]> = {}
     let operation: Operation = 'select'
     let payload: Row | null = null
+    let insertPayload: Row[] | null = null
     let upsertPayload: Row[] | null = null
 
     const matching = () => database[table].filter((row) => (
@@ -53,12 +55,16 @@ export function createFakeClient(database: FakeDatabase) {
         }
         return { rows: saved, error: null }
       }
-      if (operation === 'insert' && payload) {
-        const violation = uniqueViolation(table, payload, [])
-        if (violation) return { rows: [], error: violation }
-        const inserted = { id: payload.id ?? `fake-${++sequence}`, active: true, ...payload }
-        database[table] = [...database[table], inserted]
-        return { rows: [inserted], error: null }
+      if (operation === 'insert' && insertPayload) {
+        const inserted: Row[] = []
+        for (const item of insertPayload) {
+          const violation = uniqueViolation(table, item, [])
+          if (violation) return { rows: [], error: violation }
+          const row = { id: item.id ?? `fake-${++sequence}`, active: true, ...item }
+          database[table] = [...database[table], row]
+          inserted.push(row)
+        }
+        return { rows: inserted, error: null }
       }
       if (operation === 'update' && payload) {
         const changes = payload
@@ -93,9 +99,9 @@ export function createFakeClient(database: FakeDatabase) {
         payload = values
         return builder
       },
-      insert: (values: Row) => {
+      insert: (values: Row | Row[]) => {
         operation = 'insert'
-        payload = values
+        insertPayload = Array.isArray(values) ? values : [values]
         return builder
       },
       upsert: (values: Row | Row[]) => {

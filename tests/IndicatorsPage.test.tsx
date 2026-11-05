@@ -15,7 +15,7 @@ const authState = vi.hoisted(() => ({
 
 vi.mock('../src/auth/AuthContext', () => ({ useAuth: () => authState }))
 
-const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[], report_periods: [] as Row[], reports: [] as Row[], report_entries: [] as Row[] }))
+const database = vi.hoisted(() => ({ units: [] as Row[], profiles: [] as Row[], indicators: [] as Row[], report_periods: [] as Row[], reports: [] as Row[], report_entries: [] as Row[], indicator_helper_records: [] as Row[] }))
 
 vi.mock('../src/lib/supabase', async () => {
   const { createFakeClient } = await import('./support/fake-supabase')
@@ -67,6 +67,7 @@ beforeEach(() => {
   database.units = units.map((unit) => ({ ...unit }))
   database.profiles = [{ ...admin }]
   database.indicators = []
+  database.indicator_helper_records = []
 })
 
 afterEach(() => {
@@ -161,6 +162,68 @@ describe('IndicatorsPage', () => {
 
     expect(await screen.findByText('PROPER-01 ditambahkan di database.')).toBeTruthy()
     expect(database.indicators[0]).toMatchObject({ calculation_method: 'free_text', unit_label: '', standard: 'Biru' })
+  })
+
+  it('menyimpan alat bantu perhitungan pada indikator rata-rata', async () => {
+    render(<IndicatorsPage />)
+    await screen.findByText('Belum ada indikator. Tambahkan indikator pertama atau periksa data unit.')
+
+    fireEvent.click(screen.getByRole('button', { name: /Tambah indikator/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).queryByLabelText('Alat bantu perhitungan')).toBeNull()
+
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Rata-rata/ }))
+    fireEvent.change(within(dialog).getByLabelText('Satuan hasil'), { target: { value: 'menit' } })
+    const helperSelect = within(dialog).getByLabelText('Alat bantu perhitungan') as HTMLSelectElement
+    fireEvent.change(helperSelect, { target: { value: 'time_span' } })
+    fillForm(dialog, { code: 'RJ-04', name: 'Waktu tunggu rawat jalan' })
+    fireEvent.change(within(dialog).getByLabelText('Standar'), { target: { value: '≤ 60 menit' } })
+    submitModal(dialog)
+
+    expect(await screen.findByText('RJ-04 ditambahkan di database.')).toBeTruthy()
+    expect(database.indicators[0]).toMatchObject({ calculation_method: 'average', helper_kind: 'time_span', unit_label: 'menit' })
+  })
+
+  it('menyimpan minimal sampel alat bantu dan mengosongkannya saat alat bantu dilepas', async () => {
+    render(<IndicatorsPage />)
+    await screen.findByText('Belum ada indikator. Tambahkan indikator pertama atau periksa data unit.')
+
+    fireEvent.click(screen.getByRole('button', { name: /Tambah indikator/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Rata-rata/ }))
+    fireEvent.change(within(dialog).getByLabelText('Satuan hasil'), { target: { value: 'menit' } })
+    fireEvent.change(within(dialog).getByLabelText('Alat bantu perhitungan'), { target: { value: 'time_span' } })
+    fireEvent.change(within(dialog).getByLabelText('Minimal sampel (opsional)'), { target: { value: '100' } })
+    fillForm(dialog, { code: 'RM-03', name: 'Waktu penyediaan dokumen rekam medis rawat jalan' })
+    submitModal(dialog)
+
+    expect(await screen.findByText('RM-03 ditambahkan di database.')).toBeTruthy()
+    expect(database.indicators[0]).toMatchObject({ helper_kind: 'time_span', helper_min_sample: 100 })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit RM-03' }))
+    const editDialog = await screen.findByRole('dialog')
+    fireEvent.change(within(editDialog).getByLabelText('Alat bantu perhitungan'), { target: { value: '' } })
+    submitModal(editDialog)
+
+    expect(await screen.findByText('RM-03 diperbarui di database.')).toBeTruthy()
+    expect(database.indicators[0]).toMatchObject({ helper_kind: null, helper_min_sample: null })
+  })
+
+  it('mereset alat bantu saat rumus bukan rata-rata', async () => {
+    render(<IndicatorsPage />)
+    await screen.findByText('Belum ada indikator. Tambahkan indikator pertama atau periksa data unit.')
+
+    fireEvent.click(screen.getByRole('button', { name: /Tambah indikator/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Rata-rata/ }))
+    fireEvent.change(within(dialog).getByLabelText('Alat bantu perhitungan'), { target: { value: 'date_span' } })
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Persentase/ }))
+    expect(within(dialog).queryByLabelText('Alat bantu perhitungan')).toBeNull()
+    fillForm(dialog)
+    submitModal(dialog)
+
+    expect(await screen.findByText('RJ-06 ditambahkan di database.')).toBeTruthy()
+    expect(database.indicators[0].helper_kind).toBeNull()
   })
 
   it('menampilkan galat dari database saat kode sudah dipakai indikator lain', async () => {

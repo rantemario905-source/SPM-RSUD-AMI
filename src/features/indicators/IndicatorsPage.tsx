@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { getSupabaseClient } from '../../lib/supabase'
 import { calculationOption, calculationOptions, calculationPreview } from '../../lib/spm-calculation'
 import { indicatorColumns, loadIndicators, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
+import { helperKindOption, helperKindOptions, type HelperKind } from '../../lib/spm-helper'
 import ConfirmDialog from '../../components/feedback/ConfirmDialog'
 import './IndicatorsPage.css'
 
@@ -13,6 +14,8 @@ interface CatalogIndicator extends IndicatorEntry {
   unitId: string
   effectiveYear: number
   enabled: boolean
+  helperKind?: HelperKind | null
+  helperMinSample?: number | null
 }
 
 interface IndicatorForm {
@@ -22,6 +25,8 @@ interface IndicatorForm {
   definition: string
   standard: string
   calculation: IndicatorCalculation
+  helperKind: HelperKind | ''
+  helperMinSample: string
   unit: string
   scale: string
   resultUnit: string
@@ -35,6 +40,8 @@ const emptyForm: IndicatorForm = {
   definition: '',
   standard: '',
   calculation: 'percentage',
+  helperKind: '',
+  helperMinSample: '',
   unit: '%',
   scale: '1000',
   resultUnit: 'per 1.000 pasien',
@@ -77,6 +84,8 @@ function fromDatabase(indicator: SpmIndicator): CatalogIndicator {
     unitId: indicator.unit_id ?? '',
     effectiveYear: Number(indicator.effective_from.slice(0, 4)),
     enabled: indicator.active,
+    helperKind: indicator.helper_kind ?? null,
+    helperMinSample: indicator.helper_min_sample ?? null,
   }
 }
 
@@ -119,6 +128,8 @@ function IndicatorsPage() {
     setForm((current) => ({
       ...current,
       calculation: next,
+      helperKind: next === 'average' ? current.helperKind : '',
+      helperMinSample: next === 'average' ? current.helperMinSample : '',
       unit: next === 'percentage' ? '%' : next === 'free_text' ? '' : current.unit === '%' ? '' : current.unit,
     }))
   }
@@ -208,6 +219,8 @@ function IndicatorsPage() {
       definition: indicator.definition,
       standard: indicator.standard,
       calculation: getCalculation(indicator),
+      helperKind: indicator.helperKind ?? '',
+      helperMinSample: indicator.helperMinSample ? String(indicator.helperMinSample) : '',
       unit: indicator.unit,
       scale: String(indicator.scale ?? 1000),
       resultUnit: indicator.resultUnit ?? 'per 1.000 pasien',
@@ -247,6 +260,8 @@ function IndicatorsPage() {
       unitId: form.unitId,
       effectiveYear: Number(form.effectiveYear),
       enabled: isEditing ? indicators.find((item) => item.id === editingId)?.enabled ?? true : true,
+      helperKind: form.calculation === 'average' && form.helperKind ? form.helperKind : null,
+      helperMinSample: form.calculation === 'average' && form.helperKind && Number(form.helperMinSample) > 0 ? Number(form.helperMinSample) : null,
     }
 
     const duplicate = indicators.find((item) => {
@@ -282,6 +297,8 @@ function IndicatorsPage() {
           operational_definition: changed.definition,
           standard: changed.standard,
           calculation_method: changed.calculation,
+          helper_kind: changed.helperKind ?? null,
+          helper_min_sample: changed.helperMinSample ?? null,
           unit_label: changed.unit,
           calculation_scale: changed.scale ?? null,
           result_unit: changed.resultUnit ?? changed.unit,
@@ -382,7 +399,7 @@ function IndicatorsPage() {
             return <tr key={indicator.id ?? indicator.code}>
               <td className="indicator-code">{indicator.code}</td>
               <td>{owner?.name ?? 'Unit belum dipilih'}</td>
-              <td className="catalog-name"><strong>{indicator.name}</strong><small>{indicator.definition}</small></td>
+              <td className="catalog-name"><strong>{indicator.name}</strong><small>{indicator.definition}</small>{indicator.helperKind && <span className="helper-badge">Alat bantu</span>}</td>
               <td className="catalog-standard">{indicator.standard}</td>
               <td>{indicator.effectiveYear}</td>
               <td><button className={`active-toggle${indicator.enabled ? ' is-enabled' : ''}${writable ? '' : ' is-readonly'}`} type="button" role="switch" aria-checked={indicator.enabled} disabled={!writable || saving} onClick={() => void toggleIndicator(indicator)}><span />{indicator.enabled ? 'Aktif' : 'Nonaktif'}</button></td>
@@ -440,6 +457,9 @@ function IndicatorsPage() {
                 : form.calculation === 'scaled'
                   ? <div className="indicator-form-grid"><label>Pengali skala<input type="number" min="1" step="any" value={form.scale} onChange={(event) => setForm((current) => ({ ...current, scale: event.target.value }))} placeholder="Contoh: 1.000" /></label><label>Satuan hasil skala<input value={form.resultUnit} onChange={(event) => setForm((current) => ({ ...current, resultUnit: event.target.value }))} placeholder="Contoh: per 1.000 pasien" /></label></div>
                 : <label>Satuan hasil<input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder={activeCalculation.unitPlaceholder} /></label>}
+            {form.calculation === 'average'
+              ? <><label>Alat bantu perhitungan<select aria-label="Alat bantu perhitungan" value={form.helperKind} onChange={(event) => setForm((current) => ({ ...current, helperKind: event.target.value as HelperKind | '' }))}><option value="">Tanpa alat bantu</option>{helperKindOptions.map((option) => <option key={option.value} value={option.value}>{option.name}</option>)}</select><small className="indicator-field-hint">{form.helperKind ? helperKindOption(form.helperKind)?.unitHint : 'Pilih bila petugas perlu mencatat data per pasien agar jumlah dan total terisi otomatis.'}</small></label>{form.helperKind && <label>Minimal sampel (opsional)<input aria-label="Minimal sampel (opsional)" type="number" min="1" step="1" value={form.helperMinSample} onChange={(event) => setForm((current) => ({ ...current, helperMinSample: event.target.value }))} placeholder="Contoh: 100" /><small className="indicator-field-hint">Hanya peringatan saat sampel belum mencapai angka ini; penyimpanan tetap diperbolehkan.</small></label>}</>
+              : null}
             <div className="indicator-form-actions"><button className="secondary-button" type="button" onClick={() => setDialog(null)}>Batal</button><button className="primary-button" type="submit" disabled={saving || units.length === 0}><Check size={15} />{saving ? 'Menyimpan…' : 'Simpan indikator'}</button></div>
           </form>
         </section>

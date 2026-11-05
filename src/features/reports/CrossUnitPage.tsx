@@ -33,6 +33,8 @@ function buildPreview() {
       indicators.push({
         id: indicatorId, code: item.code, service_name: unit.name, name: item.name,
         operational_definition: item.definition, standard: item.standard, calculation_method: calculation,
+        helper_kind: null,
+        helper_min_sample: null,
         unit_label: item.unit, calculation_scale: item.scale ?? null, result_unit: item.resultUnit ?? '%',
         unit_id: unit.id, effective_from: '2026-01-01', effective_until: null, active: true,
       })
