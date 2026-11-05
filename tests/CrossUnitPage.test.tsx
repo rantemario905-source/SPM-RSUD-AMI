@@ -93,12 +93,12 @@ describe('CrossUnitPage', () => {
 
     const ambulanceRow = within(section).getByText('Waktu pelayanan ambulance/mobil jenazah').closest('tr') as HTMLElement
     expect(within(ambulanceRow).getByText('Ambulance')).toBeTruthy()
-    expect(within(ambulanceRow).getByText('Memenuhi')).toBeTruthy()
+    expect(within(ambulanceRow).getByText('Tercapai')).toBeTruthy()
     expect(within(ambulanceRow).queryByText('Administrasi/Manajemen')).toBeNull()
 
     const administrationRow = within(section).getByText('Kepatuhan pelaporan').closest('tr') as HTMLElement
     expect(within(administrationRow).getByText('Administrasi/Manajemen')).toBeTruthy()
-    expect(within(administrationRow).getByText('Memenuhi')).toBeTruthy()
+    expect(within(administrationRow).getByText('Tercapai')).toBeTruthy()
   })
 
   it('menampilkan capaian teks bebas sebagai Tercatat tanpa penilaian standar otomatis', async () => {
@@ -116,7 +116,7 @@ describe('CrossUnitPage', () => {
     const row = within(section).getByText('Proper lingkungan').closest('tr') as HTMLElement
     expect(within(row).getByText('Tercatat')).toBeTruthy()
     expect(within(row).getByText('Hijau')).toBeTruthy()
-    expect(within(row).queryByText('Memenuhi')).toBeNull()
+    expect(within(row).queryByText('Tercapai')).toBeNull()
   })
 
   it('menyaring baris dengan pencarian nama indikator atau unit', async () => {

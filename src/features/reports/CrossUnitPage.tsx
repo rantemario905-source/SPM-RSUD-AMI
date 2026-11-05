@@ -258,7 +258,7 @@ function CrossUnitPage() {
                   <td>{entry?.numerator ?? '—'}</td>
                   <td>{entry?.denominator ?? '—'}</td>
                   <td>{value ?? '—'}</td>
-                  <td>{freeText ? (value ? <span className="cross-status status-netral">Tercatat</span> : '—') : met === null ? '—' : <span className={`cross-status status-${met ? 'baik' : 'perhatian'}`}>{met ? 'Memenuhi' : 'Di bawah standar'}</span>}</td>
+                  <td>{freeText ? (value ? <span className="cross-status status-netral">Tercatat</span> : '—') : met === null ? '—' : <span className={`cross-status status-${met ? 'baik' : 'perhatian'}`}>{met ? 'Tercapai' : 'Tidak tercapai'}</span>}</td>
                   <td className="cross-analysis-cell">{entry?.analysis || '—'}</td>
                 </tr>
               ))}</tbody>
@@ -268,7 +268,7 @@ function CrossUnitPage() {
         </section>
       )}
 
-      <div className="cross-footnote"><CalendarDays size={14} /> <span>Klik baris pada ringkasan untuk membuka detail unit. Mode <b>Semua unit</b> menampilkan setiap indikator pada unit pemiliknya; status <b>Memenuhi</b>, <b>Di bawah standar</b>, <b>Tercatat</b> untuk capaian teks, atau <b>Belum diisi</b>.</span></div>
+      <div className="cross-footnote"><CalendarDays size={14} /> <span>Klik baris pada ringkasan untuk membuka detail unit. Mode <b>Semua unit</b> menampilkan setiap indikator pada unit pemiliknya; status <b>Tercapai</b>, <b>Tidak tercapai</b>, <b>Tercatat</b> untuk capaian teks, atau <b>Belum diisi</b>.</span></div>
     </section>
   )
 }

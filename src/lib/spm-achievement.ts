@@ -90,7 +90,7 @@ export function indicatorResult(indicator: IndicatorResultIndicator, entry: Achi
   const target = parseTarget(indicator.standard)
   if (!target) return { value: formatAchievement(value, indicator), badge: 'Tanpa standar', tone: 'kosong' }
   const met = meetsStandard(value, target)
-  return { value: formatAchievement(value, indicator), badge: met ? 'Memenuhi' : 'Di bawah standar', tone: met ? 'baik' : 'perhatian' }
+  return { value: formatAchievement(value, indicator), badge: met ? 'Tercapai' : 'Tidak tercapai', tone: met ? 'baik' : 'perhatian' }
 }
 
 export function formatAchievement(value: number, indicator: AchievementIndicator & { unit_label?: string; result_unit?: string }): string {
