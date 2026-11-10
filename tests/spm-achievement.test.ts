@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { achievement, entryAchievementText, entryHasValue, formatAchievement, formatValue, meetsStandard, parseTarget } from '../src/lib/spm-achievement'
+import { achievement, aggregatePeriodEntry, entryAchievementText, entryHasValue, formatAchievement, formatValue, indicatorResult, meetsStandard, parseTarget } from '../src/lib/spm-achievement'
 import { sampleUnits } from '../src/data/sample-indicators'
 
 const percentage = { calculation_method: 'percentage' } as const
@@ -91,6 +91,44 @@ describe('achievement', () => {
       })
       .filter(Boolean)
     expect(broken).toEqual([])
+  })
+})
+
+describe('aggregatePeriodEntry', () => {
+  it('menjumlahkan pembilang dan penyebut lalu menghitung ulang persentase', () => {
+    const combined = aggregatePeriodEntry([
+      { numerator: 5, denominator: 10, result_text: null },
+      { numerator: 10, denominator: 10, result_text: null },
+    ], percentage)
+    expect(combined).toEqual({ numerator: 15, denominator: 20, result_text: null })
+    expect(indicatorResult({ calculation_method: 'percentage', standard: '≥ 80%' }, combined)).toMatchObject({ badge: 'Tidak tercapai' })
+  })
+
+  it('mengabaikan bulan yang penyebutnya kosong', () => {
+    expect(aggregatePeriodEntry([
+      { numerator: 1, denominator: null, result_text: null },
+      { numerator: 2, denominator: 10, result_text: null },
+    ], percentage)).toEqual({ numerator: 2, denominator: 10, result_text: null })
+  })
+
+  it('menjumlahkan numerator dan direct tanpa penyebut', () => {
+    expect(aggregatePeriodEntry([
+      { numerator: 7, denominator: null, result_text: null },
+      { numerator: 3, denominator: null, result_text: null },
+    ], numerator)).toEqual({ numerator: 10, denominator: null, result_text: null })
+    expect(aggregatePeriodEntry([{ numerator: 4.2, denominator: null, result_text: null }], direct)).toEqual({ numerator: 4.2, denominator: null, result_text: null })
+  })
+
+  it('memakai teks terakhir yang terisi untuk capaian teks bebas', () => {
+    expect(aggregatePeriodEntry([
+      { numerator: null, denominator: null, result_text: 'Biru' },
+      { numerator: null, denominator: null, result_text: 'Hijau' },
+    ], freeText)).toEqual({ numerator: null, denominator: null, result_text: 'Hijau' })
+  })
+
+  it('mengembalikan null bila tidak ada data', () => {
+    expect(aggregatePeriodEntry([], percentage)).toBeNull()
+    expect(aggregatePeriodEntry([{ numerator: null, denominator: null, result_text: '  ' }], freeText)).toBeNull()
   })
 })
 

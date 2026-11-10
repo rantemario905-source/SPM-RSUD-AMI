@@ -26,6 +26,7 @@ export function createFakeClient(database: FakeDatabase) {
   function from(table: keyof FakeDatabase) {
     const filters: Row = {}
     const inFilters: Record<string, unknown[]> = {}
+    const rangeFilters: { column: string; op: 'gte' | 'lte'; value: unknown }[] = []
     let operation: Operation = 'select'
     let payload: Row | null = null
     let insertPayload: Row[] | null = null
@@ -34,6 +35,11 @@ export function createFakeClient(database: FakeDatabase) {
     const matching = () => database[table].filter((row) => (
       Object.entries(filters).every(([column, value]) => row[column] === value)
       && Object.entries(inFilters).every(([column, values]) => values.some((value) => row[column] === value))
+      && rangeFilters.every(({ column, op, value }) => {
+        const current = row[column]
+        if (typeof current !== 'string' || typeof value !== 'string') return false
+        return op === 'gte' ? current >= value : current <= value
+      })
     ))
 
     const run = (): { rows: Row[]; error: FakeError | null } => {
@@ -92,6 +98,14 @@ export function createFakeClient(database: FakeDatabase) {
       },
       in: (column: string, values: unknown[]) => {
         inFilters[column] = values
+        return builder
+      },
+      gte: (column: string, value: unknown) => {
+        rangeFilters.push({ column, op: 'gte', value })
+        return builder
+      },
+      lte: (column: string, value: unknown) => {
+        rangeFilters.push({ column, op: 'lte', value })
         return builder
       },
       update: (values: Row) => {

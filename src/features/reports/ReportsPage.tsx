@@ -5,6 +5,7 @@ import { canAccessPage } from '../../lib/access'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
+import { aggregatePeriodEntry, indicatorResult, type AchievementEntry, type IndicatorResult, type IndicatorResultIndicator } from '../../lib/spm-achievement'
 import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import logoKutaiKartanegara from '../../assets/logo kutai kartanegara.png'
 import './ReportsPage.css'
@@ -77,6 +78,25 @@ function getAchievement(entry: IndicatorEntry) {
       ? entry.resultUnit ?? 'per 1.000'
       : '%'
   return `${result.toLocaleString('id-ID', { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ''}`
+}
+
+function toAchievementEntry(entry: IndicatorEntry | null): AchievementEntry | null {
+  if (!entry) return null
+  return {
+    numerator: entry.numerator === '' ? null : Number(entry.numerator),
+    denominator: entry.denominator === '' ? null : Number(entry.denominator),
+    result_text: entry.resultText ?? null,
+  }
+}
+
+function toResultIndicator(entry: IndicatorEntry): IndicatorResultIndicator {
+  return {
+    calculation_method: entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage'),
+    calculation_scale: entry.scale ?? null,
+    standard: entry.standard,
+    unit_label: entry.unit,
+    result_unit: entry.resultUnit,
+  }
 }
 
 function getPeriodMonths(period: ReportPeriod, month: number, quarter: number) {
@@ -243,6 +263,25 @@ function ReportsPage() {
     return row ? getAchievement({ ...entry, numerator: row.numerator === null ? '' : String(row.numerator), denominator: row.denominator === null ? '' : String(row.denominator), resultText: row.result_text ?? '' }) : '—'
   }
 
+  function getUnitMonthlyStatus(target: SpmUnit, entry: IndicatorEntry, monthNumber: number): IndicatorResult {
+    const indicator = toResultIndicator(entry)
+    if (auth.isPreview) return indicatorResult(indicator, year === '2026' && monthNumber === 10 ? toAchievementEntry(entry) : null)
+    return indicatorResult(indicator, toAchievementEntry(getUnitStoredEntry(target, entry, monthNumber)))
+  }
+
+  function getUnitPeriodStatus(target: SpmUnit, entry: IndicatorEntry): IndicatorResult {
+    const indicator = toResultIndicator(entry)
+    const values: AchievementEntry[] = []
+    for (const monthNumber of periodMonths) {
+      const stored = auth.isPreview
+        ? year === '2026' && monthNumber === 10 ? entry : null
+        : getUnitStoredEntry(target, entry, monthNumber)
+      const value = toAchievementEntry(stored)
+      if (value) values.push(value)
+    }
+    return indicatorResult(indicator, aggregatePeriodEntry(values, indicator))
+  }
+
   async function fetchAllUnitsData(): Promise<AllUnitsData> {
     if (!client) throw new Error('Klien data tidak tersedia.')
     const yearStart = `${year}-01-01`
@@ -313,7 +352,7 @@ function ReportsPage() {
       <div className="reports-heading">
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
         <div className="reports-heading-actions">
-          {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={printAllUnits}><Printer size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak semua unit'}</strong><small>Seluruh unit dalam satu PDF</small></span></button>}
+          {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={printAllUnits}><Printer size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak semua unit'}</strong><small>Semua unit dalam satu tabel</small></span></button>}
           <button className="print-action" type="button" disabled={loading || indicatorEntries.length === 0} onClick={openSignatureModal}><Printer size={17} /><span className="print-action-text"><strong>Cetak PDF</strong><small>Unit terpilih saja</small></span></button>
         </div>
       </div>
@@ -364,35 +403,40 @@ function ReportsPage() {
               <div><dt>Periode</dt><dd>{periodName} {year}</dd></div>
               <div><dt>Jumlah unit</dt><dd>{allUnitsView.length}</dd></div>
             </dl>
-            {allUnitsView.map(({ unit: rowUnit, entries: rowEntries }) => (
-              <section className="report-print-unit" key={rowUnit.id}>
-                <h2 className="report-print-unit-name">{rowUnit.name}</h2>
-                <table className="report-print-table">
-                  <colgroup>
-                    <col style={{ width: '4%' }} />
-                    <col style={{ width: period === 'monthly' ? '19%' : period === 'yearly' ? '20%' : '21%' }} />
-                    <col style={{ width: period === 'monthly' ? '22%' : period === 'yearly' ? '21%' : '24%' }} />
-                    <col style={{ width: period === 'monthly' ? '9%' : period === 'yearly' ? '7%' : '10%' }} />
-                    {period === 'monthly'
-                      ? <><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '19%' }} /></>
-                      : periodMonths.map((monthNumber) => <col key={monthNumber} style={{ width: `${(period === 'yearly' ? 48 : 41) / periodMonths.length}%` }} />)}
-                  </colgroup>
-                  <thead><tr><th>No</th><th>Indikator</th><th>Definisi Operasional</th><th className="rp-center">Standar</th>{period === 'monthly' ? <><th className="rp-center">Numerator</th><th className="rp-center">Denominator</th><th className="rp-center">Capaian</th><th>Analisa</th></> : periodMonths.map((monthNumber) => <th key={monthNumber} className="rp-center">{period === 'yearly' ? shortMonths[monthNumber - 1] : months[monthNumber - 1]}</th>)}</tr></thead>
-                  <tbody>{rowEntries.map((entry, index) => {
-                    const stored = getUnitStoredEntry(rowUnit, entry, month)
-                    return <tr key={entry.code}>
-                      <td className="rp-center">{index + 1}</td>
-                      <td className="report-print-indicator">{entry.name}</td>
-                      <td className="report-print-definition">{entry.definition}</td>
-                      <td className="rp-center">{entry.standard}</td>
-                      {period === 'monthly'
-                        ? <><td className="rp-center">{stored?.numerator || '—'}</td><td className="rp-center">{stored?.denominator || '—'}</td><td className="rp-center">{getUnitMonthlyValue(rowUnit, entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
-                        : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getUnitMonthlyValue(rowUnit, entry, monthNumber)}</td>)}
-                    </tr>
-                  })}</tbody>
-                </table>
-              </section>
-            ))}
+            <table className="report-print-table report-print-all-table">
+              <colgroup>
+                <col style={{ width: '4%' }} />
+                <col style={{ width: '18%' }} />
+                <col style={{ width: period === 'monthly' ? '26%' : period === 'yearly' ? '25%' : '27%' }} />
+                <col style={{ width: '8%' }} />
+                {period === 'monthly'
+                  ? <><col style={{ width: '8%' }} /><col style={{ width: '8%' }} /><col style={{ width: '8%' }} /><col style={{ width: '14%' }} /></>
+                  : periodMonths.map((monthNumber) => <col key={monthNumber} style={{ width: `${37 / periodMonths.length}%` }} />)}
+                <col style={{ width: period === 'monthly' ? '6%' : period === 'yearly' ? '8%' : '6%' }} />
+              </colgroup>
+              {allUnitsView.map(({ unit: rowUnit, entries: rowEntries }) => (
+                <tbody key={rowUnit.id} className="report-print-unit-group">
+                  <tr className="report-print-unit-title"><td colSpan={period === 'monthly' ? 9 : 5 + periodMonths.length}>{rowUnit.name}</td></tr>
+                  <tr className="report-print-unit-head"><th scope="col">No</th><th scope="col">Indikator</th><th scope="col">Definisi Operasional</th><th scope="col" className="rp-center">Standar</th>{period === 'monthly' ? <><th scope="col" className="rp-center">Numerator</th><th scope="col" className="rp-center">Denominator</th><th scope="col" className="rp-center">Capaian</th><th scope="col">Analisa</th></> : periodMonths.map((monthNumber) => <th scope="col" key={monthNumber} className="rp-center">{period === 'yearly' ? shortMonths[monthNumber - 1] : months[monthNumber - 1]}</th>)}<th scope="col" className="rp-center">Status</th></tr>
+                  {rowEntries.length === 0
+                    ? <tr><td colSpan={period === 'monthly' ? 9 : 5 + periodMonths.length} className="rp-center">Belum ada indikator</td></tr>
+                    : rowEntries.map((entry, index) => {
+                      const stored = getUnitStoredEntry(rowUnit, entry, month)
+                      const status = period === 'monthly' ? getUnitMonthlyStatus(rowUnit, entry, month) : getUnitPeriodStatus(rowUnit, entry)
+                      return <tr key={entry.code}>
+                        <td className="rp-center">{index + 1}</td>
+                        <td className="report-print-indicator">{entry.name}</td>
+                        <td className="report-print-definition">{entry.definition}</td>
+                        <td className="rp-center">{entry.standard}</td>
+                        {period === 'monthly'
+                          ? <><td className="rp-center">{stored?.numerator || '—'}</td><td className="rp-center">{stored?.denominator || '—'}</td><td className="rp-center">{getUnitMonthlyValue(rowUnit, entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
+                          : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getUnitMonthlyValue(rowUnit, entry, monthNumber)}</td>)}
+                        <td className={`rp-center report-print-status is-${status.tone}`}>{status.badge}</td>
+                      </tr>
+                    })}
+                </tbody>
+              ))}
+            </table>
             <div className="report-print-head"><p className="report-print-place">Muara Badak, {printDate}</p></div>
             <div className="report-print-signatures">
               <div className="report-print-signature">

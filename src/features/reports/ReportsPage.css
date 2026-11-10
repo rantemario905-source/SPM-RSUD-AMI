@@ -119,8 +119,12 @@
 	.report-print-signature i { height: 50px; }
 	.report-print-signature strong { line-height: 1.15; border-bottom: 1px solid #333; font-weight: 600; }
 	.report-print-signature small { margin-top: 4px; color: #333; font-size: 9pt; }
-	.report-print-unit { margin-top: 4px; }
-	.report-print-unit + .report-print-unit { break-before: page; page-break-before: always; }
-	.report-print-unit-name { margin: 0 0 6px; font-family: 'Times New Roman', Times, serif; font-size: 11pt; font-weight: 700; text-transform: uppercase; }
+	.report-print-unit-title { break-after: avoid; }
+	.report-print-unit-title td { padding: 5px 6px; background: #e6ece6; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .03em; }
+	.report-print-unit-head { break-after: avoid; }
+	.report-print-unit-head th { background: #eef2ee; }
+	.report-print-status { font-weight: 700; font-size: 7.5pt; }
+	.report-print-status.is-baik { color: #1a7f37; }
+	.report-print-status.is-perhatian { color: #8a1f1f; }
 	.report-print-signatures { break-inside: avoid; }
 }

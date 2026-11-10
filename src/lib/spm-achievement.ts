@@ -50,6 +50,37 @@ export function entryHasValue(entry: AchievementEntry, indicator: AchievementInd
   return indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct' || entry.denominator !== null
 }
 
+export function aggregatePeriodEntry(entries: AchievementEntry[], indicator: AchievementIndicator): AchievementEntry | null {
+  if (indicator.calculation_method === 'free_text') {
+    let text: string | null = null
+    for (const entry of entries) {
+      const value = (entry.result_text ?? '').trim()
+      if (value) text = value
+    }
+    return text ? { numerator: null, denominator: null, result_text: text } : null
+  }
+  if (indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct') {
+    let total = 0
+    let found = false
+    for (const entry of entries) {
+      if (entry.numerator === null) continue
+      total += entry.numerator
+      found = true
+    }
+    return found ? { numerator: total, denominator: null, result_text: null } : null
+  }
+  let numerator = 0
+  let denominator = 0
+  let found = false
+  for (const entry of entries) {
+    if (entry.numerator === null || entry.denominator === null || entry.denominator <= 0) continue
+    numerator += entry.numerator
+    denominator += entry.denominator
+    found = true
+  }
+  return found ? { numerator, denominator, result_text: null } : null
+}
+
 export function meetsStandard(value: number, target: StandardTarget): boolean {
   return target.comparator === '<=' ? value <= target.target : value >= target.target
 }
