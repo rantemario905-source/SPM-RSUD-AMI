@@ -50,6 +50,13 @@ describe('achievement', () => {
     expect(achievement({ numerator: 5, denominator: null }, percentage)).toBeNull()
   })
 
+  it('menghitung capaian nol ketika pembilang dan penyebut sama-sama nol', () => {
+    expect(achievement({ numerator: 0, denominator: 0 }, percentage)).toBe(0)
+    expect(achievement({ numerator: 0, denominator: 0 }, average)).toBe(0)
+    expect(achievement({ numerator: 0, denominator: 0 }, scaled)).toBe(0)
+    expect(formatAchievement(0, percentage)).toBe('0 %')
+  })
+
   it('mengabaikan denominator untuk numerator dan direct', () => {
     expect(achievement({ numerator: 7, denominator: null }, numerator)).toBe(7)
     expect(achievement({ numerator: 7, denominator: 3 }, numerator)).toBe(7)
@@ -109,6 +116,12 @@ describe('aggregatePeriodEntry', () => {
       { numerator: 1, denominator: null, result_text: null },
       { numerator: 2, denominator: 10, result_text: null },
     ], percentage)).toEqual({ numerator: 2, denominator: 10, result_text: null })
+  })
+
+  it('mempertahankan bulan yang berisi nol sebagai capaian nol', () => {
+    const combined = aggregatePeriodEntry([{ numerator: 0, denominator: 0, result_text: null }], percentage)
+    expect(combined).toEqual({ numerator: 0, denominator: 0, result_text: null })
+    expect(achievement(combined!, percentage)).toBe(0)
   })
 
   it('menjumlahkan numerator dan direct tanpa penyebut', () => {

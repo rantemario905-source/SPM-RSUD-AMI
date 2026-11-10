@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { calculationOption } from '../../lib/spm-calculation'
+import { achievement, formatAchievement } from '../../lib/spm-achievement'
 import type { HelperKind } from '../../lib/spm-helper'
 import { currentMonthStart, loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, profileUnitIds, scopedUnitIds, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import HelperRecordsModal from './HelperRecordsModal'
@@ -139,13 +140,14 @@ function InputReportPage() {
   function getAchievement(entry: IndicatorEntry) {
     const calculation = entryCalculation(entry)
     if (calculation === 'free_text') return entry.resultText?.trim() || 'Belum diisi'
-    const numerator = Number(entry.numerator)
-    const denominator = Number(entry.denominator)
     if (entry.numerator === '') return 'Belum dihitung'
-    if (calculation !== 'numerator' && calculation !== 'direct' && (entry.denominator === '' || denominator <= 0)) return 'Belum dihitung'
-    const result = calculation === 'average' ? numerator / denominator : calculation === 'numerator' || calculation === 'direct' ? numerator : (numerator / denominator) * (calculation === 'scaled' ? entry.scale ?? 1000 : 100)
-    const unit = calculation === 'average' || calculation === 'numerator' || calculation === 'direct' ? entry.unit : calculation === 'scaled' ? entry.resultUnit ?? 'per 1.000' : '%'
-    return `${result.toLocaleString('id-ID', { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ''}`
+    if (calculation !== 'numerator' && calculation !== 'direct' && entry.denominator === '') return 'Belum dihitung'
+    const value = achievement(
+      { numerator: Number(entry.numerator), denominator: entry.denominator === '' ? null : Number(entry.denominator) },
+      { calculation_method: calculation, calculation_scale: entry.scale ?? null },
+    )
+    if (value === null) return 'Belum dihitung'
+    return formatAchievement(value, { calculation_method: calculation, unit_label: entry.unit, result_unit: entry.resultUnit })
   }
 
   async function saveEntries() {

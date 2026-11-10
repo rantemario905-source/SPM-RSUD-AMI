@@ -29,7 +29,8 @@ export function achievement(entry: AchievementEntry, indicator: AchievementIndic
   if (indicator.calculation_method === 'free_text') return null
   if (numerator === null) return null
   if (indicator.calculation_method === 'numerator' || indicator.calculation_method === 'direct') return numerator
-  if (denominator === null || denominator <= 0) return null
+  if (denominator === null) return null
+  if (denominator <= 0) return numerator === 0 ? 0 : null
   if (indicator.calculation_method === 'average') return numerator / denominator
   if (indicator.calculation_method === 'scaled') return (numerator / denominator) * (indicator.calculation_scale ?? 1000)
   return (numerator / denominator) * 100
@@ -73,7 +74,8 @@ export function aggregatePeriodEntry(entries: AchievementEntry[], indicator: Ach
   let denominator = 0
   let found = false
   for (const entry of entries) {
-    if (entry.numerator === null || entry.denominator === null || entry.denominator <= 0) continue
+    if (entry.numerator === null || entry.denominator === null) continue
+    if (entry.denominator <= 0 && entry.numerator > 0) continue
     numerator += entry.numerator
     denominator += entry.denominator
     found = true

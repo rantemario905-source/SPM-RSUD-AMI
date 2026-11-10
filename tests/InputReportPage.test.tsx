@@ -233,4 +233,15 @@ describe('InputReportPage', () => {
     const select = screen.getByLabelText('Pilih unit atau instalasi') as HTMLSelectElement
     expect(Array.from(select.options).map((option) => option.textContent)).toEqual(['Rawat Inap'])
   })
+
+  it('menampilkan capaian 0 ketika jumlah dan total sama-sama diisi nol', async () => {
+    database.indicators = [indicatorRow({ id: 'ind-pct', code: 'RJ-01', name: 'Kepatuhan cuci tangan', calculation_method: 'percentage', helper_kind: null, unit_label: '%', standard: '≥ 85%', unit_id: 'u1' })]
+    render(<InputReportPage />)
+
+    fireEvent.change(await screen.findByLabelText('Jumlah (pembilang) Kepatuhan cuci tangan'), { target: { value: '0' } })
+    fireEvent.change(screen.getByLabelText('Total (penyebut) Kepatuhan cuci tangan'), { target: { value: '0' } })
+
+    expect(screen.getByText('0 %')).toBeTruthy()
+    expect(screen.queryByText('Belum dihitung')).toBeNull()
+  })
 })

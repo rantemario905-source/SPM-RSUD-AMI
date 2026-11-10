@@ -5,7 +5,7 @@ import { canAccessPage } from '../../lib/access'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
-import { aggregatePeriodEntry, indicatorResult, type AchievementEntry, type IndicatorResult, type IndicatorResultIndicator } from '../../lib/spm-achievement'
+import { achievement, aggregatePeriodEntry, formatAchievement, indicatorResult, type AchievementEntry, type IndicatorResult, type IndicatorResultIndicator } from '../../lib/spm-achievement'
 import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import logoKutaiKartanegara from '../../assets/logo kutai kartanegara.png'
 import './ReportsPage.css'
@@ -62,22 +62,14 @@ function toIndicatorEntry(indicator: SpmIndicator): IndicatorEntry {
 function getAchievement(entry: IndicatorEntry) {
   const calculation = entry.calculation ?? (entry.type === 'duration' ? 'average' : entry.type === 'category' ? 'numerator' : entry.scale ? 'scaled' : 'percentage')
   if (calculation === 'free_text') return entry.resultText?.trim() || '—'
-  const numerator = Number(entry.numerator)
-  const denominator = Number(entry.denominator)
   if (entry.numerator === '') return '—'
-  if (calculation !== 'numerator' && calculation !== 'direct' && (entry.denominator === '' || denominator <= 0)) return '—'
-
-  const result = calculation === 'average'
-    ? numerator / denominator
-    : calculation === 'numerator' || calculation === 'direct'
-      ? numerator
-      : (numerator / denominator) * (calculation === 'scaled' ? entry.scale ?? 1000 : 100)
-  const unit = calculation === 'average' || calculation === 'numerator' || calculation === 'direct'
-    ? entry.unit
-    : calculation === 'scaled'
-      ? entry.resultUnit ?? 'per 1.000'
-      : '%'
-  return `${result.toLocaleString('id-ID', { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ''}`
+  if (calculation !== 'numerator' && calculation !== 'direct' && entry.denominator === '') return '—'
+  const value = achievement(
+    { numerator: Number(entry.numerator), denominator: entry.denominator === '' ? null : Number(entry.denominator) },
+    { calculation_method: calculation, calculation_scale: entry.scale ?? null },
+  )
+  if (value === null) return '—'
+  return formatAchievement(value, { calculation_method: calculation, unit_label: entry.unit, result_unit: entry.resultUnit })
 }
 
 function toAchievementEntry(entry: IndicatorEntry | null): AchievementEntry | null {
@@ -376,7 +368,7 @@ function ReportsPage() {
       <div className="reports-table-wrap">
         <table className={`reports-table period-report-table${period === 'monthly' ? ' is-monthly' : ''}`}>
           <thead><tr><th>NO</th><th>INDIKATOR / DEFINISI OPERASIONAL</th><th>STANDAR</th>{period === 'monthly' ? <><th>NUMERATOR</th><th>DENOMINATOR</th><th>CAPAIAN</th><th>ANALISA</th></> : periodMonths.map((monthNumber) => <th key={monthNumber}>{months[monthNumber - 1]}</th>)}</tr></thead>
-          <tbody>{visibleIndicators.map((entry, index) => { const stored = getStoredEntry(entry, month); return <tr key={entry.code}><td>{index + 1}</td><td className="report-indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span>{entry.code}</span></td><td className="standard-cell">{entry.standard}</td>{period === 'monthly' ? <><td>{stored?.numerator || '—'}</td><td>{stored?.denominator || '—'}</td><td>{getMonthlyValue(entry, month)}</td><td className="report-analysis-cell">{stored?.analysis || '—'}</td></> : periodMonths.map((monthNumber) => <td className={getMonthlyValue(entry, monthNumber) === '—' ? 'no-period-data' : 'period-value'} key={monthNumber}>{getMonthlyValue(entry, monthNumber)}</td>)}</tr>})}</tbody>
+          <tbody>{visibleIndicators.map((entry, index) => { const stored = getStoredEntry(entry, month); return <tr key={entry.code}><td>{index + 1}</td><td className="report-indicator-cell"><strong>{entry.name}</strong><small>{entry.definition}</small><span>{entry.code}</span></td><td className="standard-cell">{entry.standard}</td>{period === 'monthly' ? <><td>{stored?.numerator ?? '—'}</td><td>{stored?.denominator ?? '—'}</td><td>{getMonthlyValue(entry, month)}</td><td className="report-analysis-cell">{stored?.analysis || '—'}</td></> : periodMonths.map((monthNumber) => <td className={getMonthlyValue(entry, monthNumber) === '—' ? 'no-period-data' : 'period-value'} key={monthNumber}>{getMonthlyValue(entry, monthNumber)}</td>)}</tr>})}</tbody>
         </table>
         {(loading || visibleIndicators.length === 0) && <div className="empty-state">{loading ? 'Memuat rekap…' : 'Belum ada data indikator atau hasil yang cocok.'}</div>}
       </div>
@@ -429,7 +421,7 @@ function ReportsPage() {
                         <td className="report-print-definition">{entry.definition}</td>
                         <td className="rp-center">{entry.standard}</td>
                         {period === 'monthly'
-                          ? <><td className="rp-center">{stored?.numerator || '—'}</td><td className="rp-center">{stored?.denominator || '—'}</td><td className="rp-center">{getUnitMonthlyValue(rowUnit, entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
+                          ? <><td className="rp-center">{stored?.numerator ?? '—'}</td><td className="rp-center">{stored?.denominator ?? '—'}</td><td className="rp-center">{getUnitMonthlyValue(rowUnit, entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
                           : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getUnitMonthlyValue(rowUnit, entry, monthNumber)}</td>)}
                         <td className={`rp-center report-print-status is-${status.tone}`}>{status.badge}</td>
                       </tr>
@@ -482,7 +474,7 @@ function ReportsPage() {
               <td className="report-print-definition">{entry.definition}</td>
               <td className="rp-center">{entry.standard}</td>
               {period === 'monthly'
-                ? <><td className="rp-center">{stored?.numerator || '—'}</td><td className="rp-center">{stored?.denominator || '—'}</td><td className="rp-center">{getMonthlyValue(entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
+                ? <><td className="rp-center">{stored?.numerator ?? '—'}</td><td className="rp-center">{stored?.denominator ?? '—'}</td><td className="rp-center">{getMonthlyValue(entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
                 : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getMonthlyValue(entry, monthNumber)}</td>)}
             </tr>
           })}</tbody>
