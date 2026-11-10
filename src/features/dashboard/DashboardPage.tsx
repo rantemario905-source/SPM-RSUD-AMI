@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { demoReports, serviceProgress } from '../../data/demo'
 import { getSupabaseClient } from '../../lib/supabase'
 import { isSimpleView } from '../../lib/access'
-import { loadIndicators, loadPeriods, loadUnits, periodLabel, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
+import { loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, scopedUnitIds, type SpmPeriod, type SpmUnit } from '../../lib/spm-data'
 import { entryHasValue, indicatorResult, type IndicatorResultTone } from '../../lib/spm-achievement'
 import type { AppPage, ReportStatus } from '../../types/spm'
 import './DashboardPage.css'
@@ -60,14 +60,17 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [indicatorQuery, setIndicatorQuery] = useState('')
   const [loading, setLoading] = useState(!auth.isPreview)
   const [error, setError] = useState('')
+  const [seesAllUnits, setSeesAllUnits] = useState(true)
 
   useEffect(() => {
     if (!client || auth.isPreview || !auth.userId) return
     let active = true
-    Promise.all([loadUnits(client), loadPeriods(client)])
-      .then(([allUnits, nextPeriods]) => {
+    Promise.all([loadUnits(client), loadPeriods(client), loadProfile(client, auth.userId)])
+      .then(([allUnits, nextPeriods, profile]) => {
         if (!active) return
-        setUnits(allUnits)
+        const scope = scopedUnitIds(profile)
+        setSeesAllUnits(scope === null)
+        setUnits(scope ? allUnits.filter((unit) => scope.includes(unit.id)) : allUnits)
         setPeriods(nextPeriods)
         setPeriodStart((current) => nextPeriods.some((item) => item.period_start === current) ? current : nextPeriods[0]?.period_start ?? '')
       })
@@ -167,7 +170,7 @@ function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   return (
     <div className="dashboard-page">
-      <div className="page-heading"><div><span className="eyebrow">{formattedDate}</span><h1>Ringkasan SPM</h1><p>{simpleView ? 'Capaian Standar Pelayanan Minimal seluruh unit.' : 'Pantau pengumpulan dan capaian Standar Pelayanan Minimal rumah sakit.'}</p></div><div className="heading-actions"><label className="period-select"><CalendarDays size={15} /><select aria-label="Pilih periode laporan" value={periodStart} onChange={(event) => { setLoading(true); setPeriodStart(event.target.value) }}>{periods.map((item) => <option key={item.period_start} value={item.period_start}>{periodLabel(item.period_start)}</option>)}</select></label>{!simpleView && <button className="primary-button" type="button" onClick={() => onNavigate('entry')}><Plus size={16} /> Input laporan</button>}</div></div>
+      <div className="page-heading"><div><span className="eyebrow">{formattedDate}</span><h1>Ringkasan SPM</h1><p>{simpleView ? `Capaian Standar Pelayanan Minimal ${seesAllUnits ? 'seluruh unit' : 'unit Anda'}.` : 'Pantau pengumpulan dan capaian Standar Pelayanan Minimal rumah sakit.'}</p></div><div className="heading-actions"><label className="period-select"><CalendarDays size={15} /><select aria-label="Pilih periode laporan" value={periodStart} onChange={(event) => { setLoading(true); setPeriodStart(event.target.value) }}>{periods.map((item) => <option key={item.period_start} value={item.period_start}>{periodLabel(item.period_start)}</option>)}</select></label>{!simpleView && <button className="primary-button" type="button" onClick={() => onNavigate('entry')}><Plus size={16} /> Input laporan</button>}</div></div>
       {auth.isPreview && <div className="data-notice"><CircleAlert size={16} /><span><strong>Data simulasi.</strong> Angka di halaman ini hanya contoh untuk pratinjau, bukan data resmi RSUD.</span></div>}
       {error && <div className="data-notice" role="alert"><CircleAlert size={16} /><span>{error}</span></div>}
       <section className="metric-grid" aria-label="Ringkasan periode">

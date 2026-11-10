@@ -56,7 +56,7 @@ beforeEach(() => {
     { id: 'u1', code: 'RANAP', name: 'Rawat Inap' },
     { id: 'u2', code: 'BEDAH', name: 'Bedah' },
   ]
-  database.profiles = []
+  database.profiles = [{ id: 'dir-1', full_name: 'Direktur RSUD', role: 'leadership', unit_id: null, unit_ids: [], email: 'direktur@rsud-ami.go.id', permissions: { view_dashboard: true, simple_view: true, view_all_reports: true }, active: true }]
   database.report_periods = [{ period_start: periodStart, period_end: periodEnd, state: 'open' }]
   database.indicators = [
     indicatorRow({ id: 'ind-1', code: 'RANAP-01', service_name: 'Rawat Inap', name: 'Kepatuhan kebersihan tangan', unit_id: 'u1' }),
@@ -115,5 +115,25 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Perlu perhatian')).toBeTruthy()
     expect(screen.getByRole('button', { name: /Input laporan/ })).toBeTruthy()
     expect(screen.queryByText('Capaian indikator per unit')).toBeNull()
+  })
+
+  it('membatasi Ringkasan ke unit sendiri untuk Kepala Ruangan', async () => {
+    authState.role = 'officer'
+    authState.userId = 'officer-1'
+    authState.permissions = { view_dashboard: true, input_reports: true }
+    database.profiles = [{ id: 'officer-1', full_name: 'Petugas Rawat Inap', role: 'officer', unit_id: 'u1', unit_ids: ['u1'], email: 'officer@rsud-ami.go.id', permissions: { view_dashboard: true, input_reports: true }, active: true }]
+    render(<DashboardPage onNavigate={() => undefined} />)
+
+    expect(await screen.findByText('Perlu perhatian')).toBeTruthy()
+    expect((await screen.findAllByText('Rawat Inap')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Bedah')).toBeNull()
+  })
+
+  it('menampilkan semua unit untuk Pimpinan', async () => {
+    render(<DashboardPage onNavigate={() => undefined} />)
+
+    expect(await screen.findByText('Capaian indikator per unit')).toBeTruthy()
+    expect(await screen.findByText('Waktu tunggu operasi elektif')).toBeTruthy()
+    expect(screen.getByText('Kepatuhan kebersihan tangan')).toBeTruthy()
   })
 })

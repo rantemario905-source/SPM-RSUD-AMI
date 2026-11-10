@@ -5,7 +5,7 @@ import { sampleUnits, type IndicatorCalculation, type IndicatorEntry } from '../
 import { getSupabaseClient } from '../../lib/supabase'
 import { calculationOption } from '../../lib/spm-calculation'
 import type { HelperKind } from '../../lib/spm-helper'
-import { currentMonthStart, loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, profileUnitIds, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
+import { currentMonthStart, loadIndicators, loadPeriods, loadProfile, loadUnits, periodLabel, profileUnitIds, scopedUnitIds, type SpmIndicator, type SpmPeriod, type SpmProfile, type SpmUnit } from '../../lib/spm-data'
 import HelperRecordsModal from './HelperRecordsModal'
 import './InputReportPage.css'
 
@@ -62,10 +62,12 @@ function InputReportPage() {
     Promise.all([loadUnits(client), loadPeriods(client), loadProfile(client, auth.userId)])
       .then(([nextUnits, nextPeriods, nextProfile]) => {
         if (!active) return
-        setUnits(nextUnits)
+        const scope = scopedUnitIds(nextProfile)
+        const scopedUnits = scope ? nextUnits.filter((unit) => scope.includes(unit.id)) : nextUnits
+        setUnits(scopedUnits)
         setPeriods(nextPeriods)
         setProfile(nextProfile)
-        setUnitId(nextProfile.unit_id ?? nextUnits[0]?.id ?? '')
+        setUnitId(nextProfile.unit_id && scopedUnits.some((unit) => unit.id === nextProfile.unit_id) ? nextProfile.unit_id : scopedUnits[0]?.id ?? '')
         const runningNow = new Date()
         const runningStart = `${runningNow.getFullYear()}-${String(runningNow.getMonth() + 1).padStart(2, '0')}-01`
         setPeriodStart(nextPeriods.find((item) => item.period_start === runningStart)?.period_start ?? nextPeriods.find((item) => item.period_start <= runningStart)?.period_start ?? nextPeriods[0]?.period_start ?? '')

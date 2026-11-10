@@ -224,4 +224,13 @@ describe('InputReportPage', () => {
     const filled = screen.getByLabelText('Jumlah (pembilang) Waktu tunggu') as HTMLInputElement
     expect(filled.value).toBe('30')
   })
+
+  it('hanya menampilkan unit yang dipegang pada dropdown unit', async () => {
+    database.units = [{ ...unit }, { id: 'u2', code: 'BEDAH', name: 'Bedah' }]
+    render(<InputReportPage />)
+
+    await screen.findByRole('option', { name: 'Rawat Inap' })
+    const select = screen.getByLabelText('Pilih unit atau instalasi') as HTMLSelectElement
+    expect(Array.from(select.options).map((option) => option.textContent)).toEqual(['Rawat Inap'])
+  })
 })
