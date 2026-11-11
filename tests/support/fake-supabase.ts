@@ -27,6 +27,7 @@ export function createFakeClient(database: FakeDatabase) {
     const filters: Row = {}
     const inFilters: Record<string, unknown[]> = {}
     const rangeFilters: { column: string; op: 'gte' | 'lte'; value: unknown }[] = []
+    const orGroups: ((row: Row) => boolean)[][] = []
     let operation: Operation = 'select'
     let payload: Row | null = null
     let insertPayload: Row[] | null = null
@@ -40,6 +41,7 @@ export function createFakeClient(database: FakeDatabase) {
         if (typeof current !== 'string' || typeof value !== 'string') return false
         return op === 'gte' ? current >= value : current <= value
       })
+      && orGroups.every((group) => group.some((predicate) => predicate(row)))
     ))
 
     const run = (): { rows: Row[]; error: FakeError | null } => {
@@ -91,7 +93,20 @@ export function createFakeClient(database: FakeDatabase) {
     const builder = {
       select: () => builder,
       order: () => builder,
-      or: () => builder,
+      or: (expression: string) => {
+        orGroups.push(expression.split(',').map((clause) => {
+          const [column, operator, ...rest] = clause.trim().split('.')
+          const value = rest.join('.')
+          if (operator === 'is' && value === 'null') return (row: Row) => row[column] === null || row[column] === undefined
+          if (operator === 'eq') return (row: Row) => row[column] !== undefined && String(row[column]) === value
+          if (operator === 'in') {
+            const items = value.replace(/^\(/, '').replace(/\)$/, '').split(',').filter(Boolean)
+            return (row: Row) => row[column] !== undefined && items.includes(String(row[column]))
+          }
+          return () => true
+        }))
+        return builder
+      },
       eq: (column: string, value: unknown) => {
         filters[column] = value
         return builder

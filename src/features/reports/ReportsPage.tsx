@@ -274,6 +274,25 @@ function ReportsPage() {
     return indicatorResult(indicator, aggregatePeriodEntry(values, indicator))
   }
 
+  function getMonthlyStatus(entry: IndicatorEntry, monthNumber: number): IndicatorResult {
+    const indicator = toResultIndicator(entry)
+    if (auth.isPreview) return indicatorResult(indicator, year === '2026' && monthNumber === 10 ? toAchievementEntry(entry) : null)
+    return indicatorResult(indicator, toAchievementEntry(getStoredEntry(entry, monthNumber)))
+  }
+
+  function getPeriodStatus(entry: IndicatorEntry): IndicatorResult {
+    const indicator = toResultIndicator(entry)
+    const values: AchievementEntry[] = []
+    for (const monthNumber of periodMonths) {
+      const stored = auth.isPreview
+        ? year === '2026' && monthNumber === 10 ? entry : null
+        : getStoredEntry(entry, monthNumber)
+      const value = toAchievementEntry(stored)
+      if (value) values.push(value)
+    }
+    return indicatorResult(indicator, aggregatePeriodEntry(values, indicator))
+  }
+
   async function fetchAllUnitsData(): Promise<AllUnitsData> {
     if (!client) throw new Error('Klien data tidak tersedia.')
     const yearStart = `${year}-01-01`
@@ -458,16 +477,18 @@ function ReportsPage() {
         <table className="report-print-table">
           <colgroup>
             <col style={{ width: '4%' }} />
-            <col style={{ width: period === 'monthly' ? '19%' : period === 'yearly' ? '20%' : '21%' }} />
-            <col style={{ width: period === 'monthly' ? '22%' : period === 'yearly' ? '21%' : '24%' }} />
-            <col style={{ width: period === 'monthly' ? '9%' : period === 'yearly' ? '7%' : '10%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: period === 'monthly' ? '26%' : period === 'yearly' ? '25%' : '27%' }} />
+            <col style={{ width: '8%' }} />
             {period === 'monthly'
-              ? <><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '19%' }} /></>
-              : periodMonths.map((monthNumber) => <col key={monthNumber} style={{ width: `${(period === 'yearly' ? 48 : 41) / periodMonths.length}%` }} />)}
+              ? <><col style={{ width: '8%' }} /><col style={{ width: '8%' }} /><col style={{ width: '8%' }} /><col style={{ width: '14%' }} /></>
+              : periodMonths.map((monthNumber) => <col key={monthNumber} style={{ width: `${37 / periodMonths.length}%` }} />)}
+            <col style={{ width: period === 'monthly' ? '6%' : period === 'yearly' ? '8%' : '6%' }} />
           </colgroup>
-          <thead><tr><th>No</th><th>Indikator</th><th>Definisi Operasional</th><th className="rp-center">Standar</th>{period === 'monthly' ? <><th className="rp-center">Numerator</th><th className="rp-center">Denominator</th><th className="rp-center">Capaian</th><th>Analisa</th></> : periodMonths.map((monthNumber) => <th key={monthNumber} className="rp-center">{period === 'yearly' ? shortMonths[monthNumber - 1] : months[monthNumber - 1]}</th>)}</tr></thead>
+          <thead><tr><th>No</th><th>Indikator</th><th>Definisi Operasional</th><th className="rp-center">Standar</th>{period === 'monthly' ? <><th className="rp-center">Numerator</th><th className="rp-center">Denominator</th><th className="rp-center">Capaian</th><th>Analisa</th></> : periodMonths.map((monthNumber) => <th key={monthNumber} className="rp-center">{period === 'yearly' ? shortMonths[monthNumber - 1] : months[monthNumber - 1]}</th>)}<th className="rp-center">Status</th></tr></thead>
           <tbody>{indicatorEntries.map((entry, index) => {
             const stored = getStoredEntry(entry, month)
+            const status = period === 'monthly' ? getMonthlyStatus(entry, month) : getPeriodStatus(entry)
             return <tr key={entry.code}>
               <td className="rp-center">{index + 1}</td>
               <td className="report-print-indicator">{entry.name}</td>
@@ -476,6 +497,7 @@ function ReportsPage() {
               {period === 'monthly'
                 ? <><td className="rp-center">{stored?.numerator ?? '—'}</td><td className="rp-center">{stored?.denominator ?? '—'}</td><td className="rp-center">{getMonthlyValue(entry, month)}</td><td className="report-print-analysis">{stored?.analysis || '—'}</td></>
                 : periodMonths.map((monthNumber) => <td key={monthNumber} className="rp-center">{getMonthlyValue(entry, monthNumber)}</td>)}
+              <td className={`rp-center report-print-status is-${status.tone}`}>{status.badge}</td>
             </tr>
           })}</tbody>
         </table>
@@ -489,8 +511,8 @@ function ReportsPage() {
             {signature.headNip && <small>NIP. {signature.headNip}</small>}
           </div>
           <div className="report-print-signature">
-            <span>Pengumpul Data</span>
-            <em>Kepala Ruangan</em>
+            <span>Kepala Ruangan</span>
+            <em>&nbsp;</em>
             <i />
             <strong>{signature.collectorName}</strong>
             {signature.collectorNip && <small>NIP. {signature.collectorNip}</small>}
@@ -508,8 +530,8 @@ function ReportsPage() {
           </div>
           <form className="report-sign-form" onSubmit={submitSignature}>
             <fieldset className="report-sign-fieldset">
-              <legend>Pengumpul Data · Kepala Ruangan</legend>
-              <label>Nama pengumpul data<input required value={signatureDraft.collectorName} onChange={(event) => setSignatureDraft((current) => ({ ...current, collectorName: event.target.value }))} /></label>
+              <legend>Kepala Ruangan</legend>
+              <label>Nama kepala ruangan<input required value={signatureDraft.collectorName} onChange={(event) => setSignatureDraft((current) => ({ ...current, collectorName: event.target.value }))} /></label>
               <label>NIP (opsional)<input value={signatureDraft.collectorNip} onChange={(event) => setSignatureDraft((current) => ({ ...current, collectorNip: event.target.value }))} placeholder="Kosongkan bila tidak ada" /></label>
             </fieldset>
             <fieldset className="report-sign-fieldset">

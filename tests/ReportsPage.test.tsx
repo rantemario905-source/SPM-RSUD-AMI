@@ -118,3 +118,47 @@ describe('ReportsPage cetak semua unit', () => {
     ])
   })
 })
+
+describe('ReportsPage cetak unit terpilih', () => {
+  function singlePrintTable(container: HTMLElement) {
+    return container.querySelector('.report-print-table:not(.report-print-all-table)') as HTMLTableElement | null
+  }
+
+  function statusByIndicator(table: HTMLTableElement) {
+    const rows = Array.from(table.querySelectorAll('tbody tr'))
+    return Object.fromEntries(rows.map((row) => [
+      row.querySelector('.report-print-indicator')?.textContent,
+      row.querySelector('.report-print-status')?.textContent,
+    ]))
+  }
+
+  it('menambahkan kolom status gabungan periode pada tabel cetak unit terpilih', async () => {
+    const { container } = render(<ReportsPage />)
+    const table = await waitFor(() => {
+      const element = singlePrintTable(container)
+      expect(element?.querySelectorAll('tbody tr')).toHaveLength(2)
+      return element as HTMLTableElement
+    })
+
+    const headers = Array.from(table.querySelectorAll('thead th')).map((cell) => cell.textContent)
+    expect(headers.at(-1)).toBe('Status')
+    expect(statusByIndicator(table)).toEqual({
+      'Kepatuhan kebersihan tangan': 'Tidak tercapai',
+      'Skor kepuasan pelanggan': 'Tercapai',
+    })
+  })
+
+  it('memakai status bulan terpilih saat cetak bulanan', async () => {
+    const { container } = render(<ReportsPage />)
+    await waitFor(() => expect(singlePrintTable(container)?.querySelectorAll('tbody tr')).toHaveLength(2))
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Bulanan' }))
+    fireEvent.change(screen.getByLabelText('Pilih bulan'), { target: { value: String(secondMonth) } })
+
+    const table = singlePrintTable(container) as HTMLTableElement
+    expect(statusByIndicator(table)).toEqual({
+      'Kepatuhan kebersihan tangan': 'Tercapai',
+      'Skor kepuasan pelanggan': 'Belum diisi',
+    })
+  })
+})
