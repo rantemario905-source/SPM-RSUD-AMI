@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { CalendarDays, CircleAlert, FileSpreadsheet, Printer, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, CircleAlert, FileSpreadsheet, Printer, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { canAccessPage } from '../../lib/access'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
@@ -121,6 +121,7 @@ function ReportsPage() {
   const [printRequested, setPrintRequested] = useState(false)
   const [excelFile, setExcelFile] = useState<string | null>(null)
   const printRef = useRef<HTMLDivElement>(null)
+  const printMenuRef = useRef<HTMLDetailsElement>(null)
   const [printMode, setPrintMode] = useState<PrintMode>('single')
   const [allUnitsData, setAllUnitsData] = useState<AllUnitsData | null>(null)
   const [allLoading, setAllLoading] = useState(false)
@@ -352,11 +353,17 @@ function ReportsPage() {
     }
   }
 
+  function closePrintMenu() {
+    if (printMenuRef.current) printMenuRef.current.open = false
+  }
+
   function printAllUnits() {
+    closePrintMenu()
     return prepareAllUnits(() => setPrintRequested(true))
   }
 
   function exportAllUnitsExcel() {
+    closePrintMenu()
     const periodSlug = period === 'monthly' ? months[month - 1] : period === 'quarterly' ? `Triwulan-${['I', 'II', 'III', 'IV'][quarter - 1]}` : 'Tahunan'
     return prepareAllUnits(() => setExcelFile(`Laporan-SPM-Semua-Unit-${periodSlug}-${year}.xls`))
   }
@@ -387,8 +394,13 @@ function ReportsPage() {
       <div className="reports-heading">
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
         <div className="reports-heading-actions">
-          {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={printAllUnits}><Printer size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak semua unit'}</strong><small>Semua unit dalam satu tabel</small></span></button>}
-          {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={exportAllUnitsExcel}><FileSpreadsheet size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak Excel'}</strong><small>Semua unit · format sama</small></span></button>}
+          {canPrintAllUnits && <details className="print-menu" ref={printMenuRef}>
+            <summary className="print-action print-action-all" onClick={(event) => { if (allLoading || loading) event.preventDefault() }}><Printer size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak semua unit'}</strong><small>Pilih PDF atau Excel</small></span><ChevronDown size={14} className="print-menu-caret" /></summary>
+            <div className="print-menu-list">
+              <button type="button" disabled={allLoading || loading} onClick={printAllUnits}><Printer size={15} /><span className="print-action-text"><strong>Cetak PDF</strong><small>Seluruh unit dalam satu PDF</small></span></button>
+              <button type="button" disabled={allLoading || loading} onClick={exportAllUnitsExcel}><FileSpreadsheet size={15} /><span className="print-action-text"><strong>Cetak Excel</strong><small>Seluruh unit dalam satu berkas .xls</small></span></button>
+            </div>
+          </details>}
           <button className="print-action" type="button" disabled={loading || indicatorEntries.length === 0} onClick={openSignatureModal}><Printer size={17} /><span className="print-action-text"><strong>Cetak PDF</strong><small>Unit terpilih saja</small></span></button>
         </div>
       </div>

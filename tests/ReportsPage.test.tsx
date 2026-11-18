@@ -97,9 +97,12 @@ describe('ReportsPage cetak Excel semua unit', () => {
     })
 
     render(<ReportsPage />)
+    const menu = document.querySelector('details.print-menu') as HTMLDetailsElement
     const button = await screen.findByRole('button', { name: /Cetak Excel/ })
     await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false))
+    menu.open = true
     fireEvent.click(button)
+    expect(menu.open).toBe(false)
 
     await waitFor(() => expect(blobs).toHaveLength(1))
     expect(blobs[0].type).toContain('application/vnd.ms-excel')
@@ -133,9 +136,16 @@ describe('ReportsPage cetak Excel semua unit', () => {
 describe('ReportsPage cetak semua unit', () => {
   it('menggabungkan semua unit dalam satu tabel dengan kolom unit dan status triwulan gabungan', async () => {
     const { container } = render(<ReportsPage />)
-    const button = await screen.findByRole('button', { name: /Cetak semua unit/ })
-    await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false))
-    fireEvent.click(button)
+    const menu = container.querySelector('details.print-menu') as HTMLDetailsElement
+    const pdfItem = await waitFor(() => {
+      const item = menu.querySelector('.print-menu-list button') as HTMLButtonElement
+      expect(item.disabled).toBe(false)
+      return item
+    })
+    fireEvent.click(menu.querySelector('summary') as HTMLElement)
+    expect(menu.open).toBe(true)
+    fireEvent.click(pdfItem)
+    expect(menu.open).toBe(false)
 
     const table = await waitFor(() => {
       const element = container.querySelector('.report-print-all-table')
