@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { CalendarDays, CircleAlert, Printer, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { CalendarDays, CircleAlert, FileSpreadsheet, Printer, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { canAccessPage } from '../../lib/access'
 import { sampleUnits, type IndicatorEntry } from '../../data/sample-indicators'
 import { getSupabaseClient } from '../../lib/supabase'
 import { loadIndicators, loadPeriods, loadProfile, loadUnits, scopedUnitIds, type SpmIndicator, type SpmUnit } from '../../lib/spm-data'
 import { achievement, aggregatePeriodEntry, formatAchievement, indicatorResult, type AchievementEntry, type IndicatorResult, type IndicatorResultIndicator } from '../../lib/spm-achievement'
+import { exportPrintBlockAsExcel } from '../../lib/spm-excel'
 import logoRsudAmi from '../../assets/logo-rsud-ami.png'
 import logoKutaiKartanegara from '../../assets/logo kutai kartanegara.png'
 import './ReportsPage.css'
@@ -118,6 +119,8 @@ function ReportsPage() {
   const [signatureDraft, setSignatureDraft] = useState<SignatureFields>(signature)
   const [signatureModal, setSignatureModal] = useState(false)
   const [printRequested, setPrintRequested] = useState(false)
+  const [excelFile, setExcelFile] = useState<string | null>(null)
+  const printRef = useRef<HTMLDivElement>(null)
   const [printMode, setPrintMode] = useState<PrintMode>('single')
   const [allUnitsData, setAllUnitsData] = useState<AllUnitsData | null>(null)
   const [allLoading, setAllLoading] = useState(false)
@@ -210,6 +213,18 @@ function ReportsPage() {
     })
     return () => window.cancelAnimationFrame(frame)
   }, [printRequested])
+
+  useEffect(() => {
+    if (!excelFile) return
+    const node = printRef.current
+    if (!node) return
+    const frame = window.requestAnimationFrame(() => {
+      void exportPrintBlockAsExcel(node, excelFile)
+        .catch((exportError: unknown) => setError(exportError instanceof Error ? exportError.message : 'Berkas Excel gagal dibuat.'))
+        .finally(() => setExcelFile(null))
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [excelFile])
 
   const periodMonths = getPeriodMonths(period, month, quarter)
   const indicatorEntries = useMemo(() => auth.isPreview
@@ -319,7 +334,7 @@ function ReportsPage() {
     return { indicators: nextIndicators, entries }
   }
 
-  async function printAllUnits() {
+  async function prepareAllUnits(next: () => void) {
     if (allLoading) return
     setAllLoading(true)
     setError('')
@@ -329,12 +344,21 @@ function ReportsPage() {
         setAllUnitsData(data)
       }
       setPrintMode('all')
-      setPrintRequested(true)
+      next()
     } catch (loadError: unknown) {
       setError(loadError instanceof Error ? loadError.message : 'Rekap semua unit gagal dimuat.')
     } finally {
       setAllLoading(false)
     }
+  }
+
+  function printAllUnits() {
+    return prepareAllUnits(() => setPrintRequested(true))
+  }
+
+  function exportAllUnitsExcel() {
+    const periodSlug = period === 'monthly' ? months[month - 1] : period === 'quarterly' ? `Triwulan-${['I', 'II', 'III', 'IV'][quarter - 1]}` : 'Tahunan'
+    return prepareAllUnits(() => setExcelFile(`Laporan-SPM-Semua-Unit-${periodSlug}-${year}.xls`))
   }
 
   function openSignatureModal() {
@@ -364,6 +388,7 @@ function ReportsPage() {
         <div><span className="eyebrow">DOKUMEN LAPORAN</span><h1>Rekap &amp; unduh</h1><p>Lihat capaian indikator per bulan dalam laporan bulanan, triwulanan, atau tahunan.</p></div>
         <div className="reports-heading-actions">
           {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={printAllUnits}><Printer size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak semua unit'}</strong><small>Semua unit dalam satu tabel</small></span></button>}
+          {canPrintAllUnits && <button className="print-action print-action-all" type="button" disabled={allLoading || loading} onClick={exportAllUnitsExcel}><FileSpreadsheet size={17} /><span className="print-action-text"><strong>{allLoading ? 'Menyiapkan…' : 'Cetak Excel'}</strong><small>Semua unit · format sama</small></span></button>}
           <button className="print-action" type="button" disabled={loading || indicatorEntries.length === 0} onClick={openSignatureModal}><Printer size={17} /><span className="print-action-text"><strong>Cetak PDF</strong><small>Unit terpilih saja</small></span></button>
         </div>
       </div>
@@ -394,7 +419,7 @@ function ReportsPage() {
 
       <div className="report-format-note"><strong>Format rekap:</strong> bulanan memuat numerator, denominator, capaian, dan analisa. Rekap triwulan menampilkan Januari–Maret, April–Juni, Juli–September, atau Oktober–Desember sebagai kolom terpisah. Rekap tahunan menampilkan Januari–Desember.</div>
 
-      <div className="report-print" aria-hidden="true">
+      <div className="report-print" aria-hidden="true" ref={printRef}>
         <header className="report-print-kop">
           <img className="report-print-logo" src={logoKutaiKartanegara} alt="Logo Kutai Kartanegara" />
           <div className="report-print-identity">

@@ -82,6 +82,50 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+describe('ReportsPage cetak Excel semua unit', () => {
+  it('mengunduh berkas .xls berisi tabel semua unit tanpa membuka dialog cetak', async () => {
+    const blobs: Blob[] = []
+    const downloads: string[] = []
+    Object.defineProperty(URL, 'createObjectURL', { value: (blob: Blob) => { blobs.push(blob); return 'blob:mock' }, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: () => undefined, configurable: true })
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      downloads.push(this.download)
+    })
+    vi.stubGlobal('fetch', vi.fn(async () => ({ blob: async () => new Blob(['logo'], { type: 'image/png' }) })))
+
+    render(<ReportsPage />)
+    const button = await screen.findByRole('button', { name: /Cetak Excel/ })
+    await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(button)
+
+    await waitFor(() => expect(blobs).toHaveLength(1))
+    expect(blobs[0].type).toContain('application/vnd.ms-excel')
+    expect(downloads[0]).toMatch(/^Laporan-SPM-Semua-Unit-Triwulan-[IV]+-\d{4}\.xls$/)
+    const html = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = () => reject(reader.error)
+      reader.readAsText(blobs[0])
+    })
+    expect(html).toContain('xmlns:x="urn:schemas-microsoft-com:office:excel"')
+    expect(html).toContain('<div class="xl-identity-strong">RUMAH SAKIT UMUM DAERAH AJI MUHAMMAD IDRIS</div>')
+    expect(html).toContain('<div class="xl-title">Laporan Capaian Standar Pelayanan Minimal</div>')
+    expect(html).toContain('Rawat Inap')
+    expect(html).toContain('Bedah')
+    expect(html).toContain('<table class="xl-sign"')
+    expect(html).toContain('<colgroup><col width=')
+    expect(html).not.toContain('style="width: 4%"')
+    const parsed = new DOMParser().parseFromString(html, 'text/html')
+    expect(parsed.querySelectorAll('.xl-kop > tbody > tr > td')).toHaveLength(3)
+    expect(parsed.querySelectorAll('.xl-sign > tbody > tr')).toHaveLength(2)
+    expect(parsed.querySelectorAll('.xl-meta td')).toHaveLength(2)
+    expect(parsed.querySelectorAll('.report-print-all-table tbody').length).toBeGreaterThanOrEqual(2)
+    expect(window.print).not.toHaveBeenCalled()
+  })
 })
 
 describe('ReportsPage cetak semua unit', () => {
