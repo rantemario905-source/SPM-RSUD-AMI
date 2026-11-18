@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, CircleAlert, Plus, Save, TriangleAlert, Trash2, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { Check, CircleAlert, Plus, Printer, Save, TriangleAlert, Trash2, X } from 'lucide-react'
 import { getSupabaseClient } from '../../lib/supabase'
+import { periodLabel } from '../../lib/spm-data'
 import { formatHelperValue, helperRowResult, helperSummary, type HelperKind, type HelperSaveResult } from '../../lib/spm-helper'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -21,6 +23,7 @@ interface HelperRecordsModalProps {
   indicatorName: string
   kind: HelperKind
   unitLabel: string
+  unitName: string
   unitId: string
   periodStart: string
   reportId: string | null
@@ -51,13 +54,17 @@ function toRow(record: Record<string, unknown>): HelperRow {
   }
 }
 
+function rowTouched(row: HelperRow): boolean {
+  return Boolean(row.subject_name.trim() || row.start_date || row.start_time || row.end_time || row.end_date || row.room.trim())
+}
+
 function rowComplete(kind: HelperKind, row: HelperRow): boolean {
   if (!row.subject_name.trim() || !row.start_date) return false
   if (kind === 'date_span') return Boolean(row.end_date)
   return Boolean(row.start_time && row.end_time)
 }
 
-function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitId, periodStart, reportId, userId, minSample, canEdit, isPreview, onClose, onSaved }: HelperRecordsModalProps) {
+function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitName, unitId, periodStart, reportId, userId, minSample, canEdit, isPreview, onClose, onSaved }: HelperRecordsModalProps) {
   const client = getSupabaseClient()
   const [rows, setRows] = useState<HelperRow[]>([newRow()])
   const shouldLoad = !isPreview && Boolean(client) && Boolean(reportId)
@@ -65,6 +72,7 @@ function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitI
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [printRequested, setPrintRequested] = useState(false)
   const tableWrapRef = useRef<HTMLDivElement | null>(null)
   const [tableMaxHeight, setTableMaxHeight] = useState<number | null>(null)
 
@@ -96,6 +104,15 @@ function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitI
   }, [onClose])
 
   useEffect(() => {
+    if (!printRequested) return
+    const frame = window.requestAnimationFrame(() => {
+      window.print()
+      setPrintRequested(false)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [printRequested])
+
+  useEffect(() => {
     function measureTable() {
       const wrap = tableWrapRef.current
       if (!wrap) return
@@ -114,6 +131,7 @@ function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitI
 
   const summary = useMemo(() => helperSummary(kind, unitLabel, rows), [kind, unitLabel, rows])
   const rowErrors = useMemo(() => rows.map((row) => helperRowResult(kind, unitLabel, row).error), [kind, unitLabel, rows])
+  const printRows = useMemo(() => rows.filter(rowTouched), [rows])
   const shortOfSample = minSample !== null && summary.filled < minSample
 
   function updateRow(key: string, field: keyof HelperRow, value: string) {
@@ -133,8 +151,7 @@ function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitI
 
   async function save() {
     setError('')
-    const touched = (row: HelperRow) => Boolean(row.subject_name.trim() || row.start_date || row.start_time || row.end_time || row.end_date || row.room.trim())
-    const invalid = rows.some((row, index) => touched(row) && (!rowComplete(kind, row) || Boolean(rowErrors[index])))
+    const invalid = rows.some((row, index) => rowTouched(row) && (!rowComplete(kind, row) || Boolean(rowErrors[index])))
     if (invalid) {
       setError('Lengkapi nama, tanggal, dan jam/tanggal selesai pada setiap baris (selesai tidak boleh lebih awal).')
       return
@@ -245,12 +262,39 @@ function HelperRecordsModal({ indicatorId, indicatorName, kind, unitLabel, unitI
           </div>
           <div className="helper-actions">
             {canEdit && <button className="secondary-button" type="button" onClick={addRow} disabled={saving}><Plus size={14} /> Tambah baris</button>}
+            <button className="secondary-button" type="button" onClick={() => setPrintRequested(true)} disabled={loading}><Printer size={14} /> Cetak PDF</button>
             <button className="secondary-button" type="button" onClick={onClose}>Tutup</button>
             {canEdit && <button className="primary-button" type="button" onClick={() => void save()} disabled={saving || loading}><Save size={14} /> {saving ? 'Menyimpan…' : saved ? 'Tersimpan' : 'Simpan'}{saved && <Check size={14} />}</button>}
           </div>
         </div>
         <p className="helper-note">Nilai Jumlah/Total pada laporan akan diperbarui otomatis dari tabel ini. Menyimpan ulang menimpa koreksi manual sebelumnya.</p>
       </section>
+      {printRequested && createPortal(
+        <div className="helper-print" aria-hidden="true">
+          <style>{'@page { size: A4 portrait; margin: 12mm; }'}</style>
+          <div className="helper-print-eyebrow">ALAT BANTU PERHITUNGAN</div>
+          <h1 className="helper-print-title">{indicatorName}</h1>
+          <p className="helper-print-meta">{unitName || '—'} · {periodLabel(periodStart)}</p>
+          {printRows.length > 0
+            ? <table className="helper-print-table">
+              <thead><tr><th>NO</th><th>NAMA PASIEN / NO. RM</th>{kind === 'date_span' && <th>RUANGAN</th>}<th>TANGGAL</th>{kind === 'time_span' ? <><th>JAM MULAI</th><th>JAM SELESAI</th></> : <th>TANGGAL DILAYANI</th>}<th>HASIL</th></tr></thead>
+              <tbody>{printRows.map((row, index) => {
+                const result = helperRowResult(kind, unitLabel, row)
+                return <tr key={row.key}>
+                  <td className="helper-print-center">{index + 1}</td>
+                  <td>{row.subject_name}</td>
+                  {kind === 'date_span' && <td>{row.room || '—'}</td>}
+                  <td className="helper-print-center">{row.start_date}</td>
+                  {kind === 'time_span' ? <><td className="helper-print-center">{row.start_time}</td><td className="helper-print-center">{row.end_time}</td></> : <td className="helper-print-center">{row.end_date || '—'}</td>}
+                  <td className="helper-print-center">{result.error ?? formatHelperValue(result.value, unitLabel)}</td>
+                </tr>
+              })}</tbody>
+            </table>
+            : <p className="helper-print-empty">Belum ada data pasien pada alat bantu ini.</p>}
+          <p className="helper-print-summary">Sampel: <strong>{summary.filled}{minSample !== null ? ` / minimal ${minSample}` : ''}</strong> · Total: <strong>{formatHelperValue(summary.total, unitLabel)}</strong> · Rata-rata: <strong>{formatHelperValue(summary.average, unitLabel)}</strong></p>
+        </div>,
+        document.body,
+      )}
     </div>
   )
 }

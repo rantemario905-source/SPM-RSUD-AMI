@@ -31,5 +31,21 @@
 .helper-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; flex-wrap: wrap; }.helper-summary { display: flex; flex-wrap: wrap; gap: 14px; color: #6b7a72; font-size: 10px; }.helper-summary strong { color: #325d47; }.helper-actions { display: flex; gap: 8px; }.helper-actions .primary-button, .helper-actions .secondary-button { display: inline-flex; align-items: center; gap: 6px; }
 .helper-note { margin: 10px 0 0; color: #8b978f; font-size: 9px; line-height: 1.5; }
 .helper-sample-warning { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding: 8px 11px; color: #7a5a1e; background: #fff9e9; border: 1px solid #f1e5c3; border-radius: 5px; font-size: 9.5px; line-height: 1.5; }.helper-sample-warning svg { flex: 0 0 auto; }
+.helper-print { display: none; }
+@media print {
+  body:has(.helper-print) .app-frame { display: none !important; }
+  body:has(.helper-print) .helper-print { display: block !important; color: #000; background: #fff; font-family: 'Times New Roman', Times, serif; }
+  .helper-print-eyebrow { font-size: 8pt; letter-spacing: .08em; text-transform: uppercase; }
+  .helper-print-title { margin: 2px 0 4px; font-size: 13pt; font-weight: 700; }
+  .helper-print-meta { margin: 0 0 10px; font-size: 10pt; }
+  .helper-print-table { width: 100%; border-collapse: collapse; }
+  .helper-print-table thead { display: table-header-group; }
+  .helper-print-table tr { break-inside: avoid; }
+  .helper-print-table th, .helper-print-table td { padding: 3px 5px; border: 1px solid #333; font-size: 9pt; vertical-align: top; overflow-wrap: break-word; }
+  .helper-print-table th { background: #eef2ee; text-align: center; }
+  .helper-print-center { text-align: center; }
+  .helper-print-summary { margin-top: 10px; font-size: 10pt; }
+  .helper-print-empty { font-size: 10pt; }
+}
 @media (max-width: 680px) { .helper-modal { padding: 16px; }.helper-footer { align-items: stretch; flex-direction: column; }.helper-actions { flex-wrap: wrap; }.helper-actions .primary-button, .helper-actions .secondary-button { flex: 1 1 auto; justify-content: center; } }
 @media (max-width: 680px) { .input-heading { align-items: flex-start; flex-direction: column; }.input-heading h1 { font-size: 24px; }.input-controls { width: 100%; flex-wrap: wrap; }.input-controls > label { flex: 1 1 100%; }.input-period select { max-width: none; flex: 1; }.period-state { align-items: flex-start; flex-wrap: wrap; }.completion-count { margin-left: 38px; } }

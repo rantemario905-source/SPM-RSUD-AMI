@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Row } from './support/fake-supabase'
 import InputReportPage from '../src/features/reports/InputReportPage'
@@ -184,6 +184,36 @@ describe('InputReportPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Simpan$/ }))
     await screen.findByRole('button', { name: /Tersimpan/ })
     expect(database.report_entries.find((row) => row.indicator_id === 'ind-rm')).toMatchObject({ numerator: 5, denominator: 1 })
+  })
+
+  it('mencetak alat bantu lewat blok cetak terpisah', async () => {
+    let printedHtml = ''
+    let printedParent = ''
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {
+      const node = document.querySelector('.helper-print')
+      printedHtml = node?.outerHTML ?? ''
+      printedParent = node?.parentElement?.tagName ?? ''
+    })
+    database.indicators = [indicatorRow({ id: 'ind-wait', code: 'RJ-04', name: 'Waktu tunggu', calculation_method: 'average', helper_kind: 'time_span', unit_label: 'menit', standard: '≤ 60 menit', unit_id: 'u1' })]
+    render(<InputReportPage />)
+    fireEvent.click(await screen.findByRole('button', { name: /Alat bantu/ }))
+
+    fireEvent.change(await screen.findByLabelText('Nama pasien / No. RM baris 1'), { target: { value: 'Pasien Cetak' } })
+    fireEvent.change(screen.getByLabelText('Tanggal baris 1'), { target: { value: '2026-11-03' } })
+    fireEvent.change(screen.getByLabelText('Jam mulai baris 1'), { target: { value: '08:00' } })
+    fireEvent.change(screen.getByLabelText('Jam selesai baris 1'), { target: { value: '08:30' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /Cetak PDF/ }))
+    await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1))
+
+    expect(printedParent).toBe('BODY')
+    expect(printedHtml).toContain('Waktu tunggu')
+    expect(printedHtml).toContain('Pasien Cetak')
+    expect(printedHtml).toContain('30 menit')
+    expect(printedHtml).toContain('Rata-rata')
+    expect(printedHtml).toContain('@page { size: A4 portrait')
+    expect(printedHtml.match(/<tbody><tr>/g)).toHaveLength(1)
+    expect(document.querySelector('.helper-print')).toBeNull()
   })
 
   it('menolak jam selesai sebelum jam mulai', async () => {

@@ -226,6 +226,7 @@ function InputReportPage() {
         indicatorName={helperEntry.name}
         kind={helperEntry.helperKind}
         unitLabel={helperEntry.unit}
+        unitName={selectedUnit?.name ?? ''}
         unitId={unitId}
         periodStart={periodStart}
         reportId={reportId}
